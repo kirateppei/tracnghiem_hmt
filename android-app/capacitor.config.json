@@ -1,0 +1,17 @@
+{
+  "appId": "com.hiepminhthinh.tracnghiem",
+  "appName": "Trắc Nghiệm ĐMT",
+  "webDir": "www",
+  "backgroundColor": "#1B3A2F",
+  "server": {
+    "url": "https://kirateppei.github.io/tracnghiem_hmt/",
+    "cleartext": false,
+    "errorPath": "offline.html"
+  },
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": ["google.com"]
+    }
+  }
+}

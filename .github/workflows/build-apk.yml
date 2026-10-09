@@ -1,0 +1,67 @@
+name: Dựng APK Android
+
+# Tự chạy mỗi khi sửa thư mục android-app/ trên nhánh trang-web, hoặc bấm tay: Actions → Dựng APK Android → Run workflow.
+on:
+  push:
+    branches: [trang-web]
+    paths: ['android-app/**', '.github/workflows/build-apk.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Kiểm tra google-services.json
+        run: |
+          if [ ! -s android/app/google-services.json ]; then
+            echo "::error::Thiếu android-app/android/app/google-services.json. Tải file này từ Firebase (Cài đặt dự án → Ứng dụng Android) rồi tải lên repo, xem HUONG_DAN.md."
+            exit 1
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: android-app/package-lock.json
+
+      - run: npm ci --no-audit --no-fund
+
+      - run: npx cap sync android
+
+      - name: Dựng APK (ký bằng khoá cố định)
+        working-directory: android-app/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Đặt tên file
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/app-release.apk out/trac-nghiem-dmt.apk
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trac-nghiem-dmt-apk
+          path: android-app/out/trac-nghiem-dmt.apk
+
+      - name: Đăng lên mục Releases (liên kết tải cố định)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk-latest --yes --cleanup-tag || true
+          gh release create apk-latest out/trac-nghiem-dmt.apk \
+            --title "Ứng dụng Android (APK) mới nhất" \
+            --notes "Bản dựng tự động từ commit ${GITHUB_SHA::7}. Tải file trac-nghiem-dmt.apk về điện thoại để cài." \
+            --target "$GITHUB_SHA"

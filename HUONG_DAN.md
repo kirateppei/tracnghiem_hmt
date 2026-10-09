@@ -75,35 +75,32 @@ Nếu thấy người lạ làm bài: chuyển sang "Chỉ email trong danh sác
 ## iPhone
 Mở link bằng **Safari → Chia sẻ → Thêm vào Màn hình chính**. Nếu đăng nhập Google trục trặc ở chế độ này thì dùng thẳng trong Safari.
 
-## Làm lại app Android (APK)
-APK cũ chứa bản web cũ, kèm mật khẩu admin cũ: **ngừng dùng và gỡ**. Làm lại APK một lần để app mở thẳng trang web (sau này sửa web là mọi người tự có bản mới) và có đăng nhập Google gốc.
+## App Android (APK) — dựng tự động trên GitHub
+APK cũ chứa bản web cũ, kèm mật khẩu admin cũ: **gỡ bản cũ khỏi điện thoại** (khoá ký bản mới khác bản cũ nên không cài đè được). Bản mới mở thẳng trang web (sửa web là mọi người tự có bản mới) và đăng nhập Google bằng plugin gốc của Android. Mã dự án nằm trong thư mục `android-app/`; GitHub tự dựng file APK, không cần Android Studio.
 
-Trong Firebase: **Project settings → Your apps → Add app → Android**, tên gói `com.hiepminhthinh.tracnghiem`, SHA-1 của khoá ký APK hiện tại:
-`28:75:27:53:DB:04:98:BA:03:2C:81:C8:30:A5:E5:40:36:C9:40:6E` → tải `google-services.json`.
+**Làm một lần (khoảng 5 phút):**
+1. Vào Firebase → **Project settings (Cài đặt dự án) → Your apps**. Nếu chưa có app Android thì **Add app → Android**, tên gói `com.hiepminhthinh.tracnghiem`. Trong app Android đó bấm **Add fingerprint** và dán SHA-1 của khoá ký mới:
+   `48:0E:61:34:59:F5:E1:A4:54:79:19:62:B1:DD:52:B9:57:99:B7:C4`
+   (có thể giữ thêm SHA-1 cũ nếu đang có).
+2. Bấm **Download google-services.json**.
+3. Vào repo trên GitHub → thư mục `android-app/android/app` → **Add file → Upload files** → kéo file `google-services.json` vào → Commit (nhánh `trang-web`).
+4. GitHub tự chạy **Actions → Dựng APK Android** (khoảng 5–10 phút). Xong thì file nằm ở **Releases → "Ứng dụng Android (APK) mới nhất"** (tên `trac-nghiem-dmt.apk`), tải về điện thoại và cài. Android sẽ hỏi cho phép cài từ nguồn ngoài.
+Nếu quy trình đỏ chữ "Thiếu google-services.json" nghĩa là chưa làm bước 3.
 
-Dán đoạn sau cho phiên Claude chạy trên máy tính của bạn (nơi có dự án Capacitor):
+**Lưu ý bảo mật:** để đăng nhập Google luôn dùng cùng một SHA-1, khoá ký (`android-app/tracnghiem.keystore`, mật khẩu `tracnghiem-dmt`) được đặt luôn trong repo. Khoá này chỉ dùng cho app nội bộ; nếu lo ngại có người giả mạo bản cập nhật app, hãy đổi sang lưu khoá trong GitHub Secrets (biến `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` trong `android-app/android/app/build.gradle`) và đăng ký lại SHA-1 mới.
 
-```
-Dự án Android Capacitor "Trắc Nghiệm ĐMT" (appId com.hiepminhthinh.tracnghiem). Hãy làm lại APK để:
-1. Mở thẳng trang web https://kirateppei.github.io/tracnghiem_hmt/ : thêm "server": {"url": "https://kirateppei.github.io/tracnghiem_hmt/"} vào capacitor.config.json, giữ nguyên appId và appName.
-2. Có đăng nhập Google gốc: kiểm tra phiên bản @capacitor/core đang dùng, cài @capacitor-firebase/authentication cùng bản chính (major) với nó (gói "firebase" không bắt buộc). Trong capacitor.config.json thêm "plugins": {"FirebaseAuthentication": {"skipNativeAuth": true, "providers": ["google.com"]}}.
-3. Đặt google-services.json (tôi cung cấp, tải từ Firebase cho app Android com.hiepminhthinh.tracnghiem) vào android/app/. Không đưa file này lên GitHub.
-4. Dùng ảnh docs/icons/icon-1024.png của repo tracnghiem_hmt làm icon app (dùng @capacitor/assets hoặc cách tương đương).
-5. Chạy npx cap sync android rồi build APK bằng ĐÚNG khoá debug đang dùng (SHA-1 28:75:27:53:DB:04:98:BA:03:2C:81:C8:30:A5:E5:40:36:C9:40:6E), không tạo khoá mới. Khác khoá thì Android không cho cài đè và nhân viên phải gỡ bản cũ trước.
-6. Đặt versionName của app là 1.0.0 (mỗi lần làm lại app thì tăng số này) để tính năng báo bản app mới hoạt động.
-Mã web đã sẵn sàng: trang gọi plugin qua Capacitor.nativePromise('FirebaseAuthentication', 'signInWithGoogle', {skipNativeAuth: true}), không cần sửa mã web.
-```
+**Khi cập nhật app:** sửa số `versionCode`/`versionName` trong `android-app/android/app/build.gradle`, đẩy lên; sau khi có APK mới, chạy
+`python3 tools/bump_version.py --apk-version <số mới> --apk-url https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk --apk-notes "Nội dung"`
+để app cũ báo có bản mới.
 
 ## Cập nhật phần mềm cho mọi người (kể cả app Android)
 - **Cách hoạt động:** sau mỗi lần có bản mới trên GitHub (chờ Pages build xong), người đang mở trang hoặc app sẽ thấy **thanh vàng ở đầu màn hình**: "Có bản cập nhật mới — nội dung". Thanh hiện trong vòng 5 phút hoặc ngay khi mở lại app. Bấm **Cập nhật ngay** để tải bản mới, **Để sau** thì chưa nhắc lại cho tới khi có bản mới hơn.
 - Phần mềm **không tự tải lại** để khỏi mất bài đang làm; nếu đang làm bài dở sẽ hỏi xác nhận. Cuối trang có dòng "Phiên bản … · Kiểm tra cập nhật" để kiểm tra bằng tay.
-- **Áp dụng cho:** trang web, iPhone (thêm vào Màn hình chính) và app Android **sau khi làm lại APK** theo mục trên (app mở thẳng trang web). APK cũ chứa bản web cũ bên trong nên không có tính năng này.
+- **Áp dụng cho:** trang web, iPhone (thêm vào Màn hình chính) và app Android **sau khi cài APK mới** theo mục trên (app mở thẳng trang web). APK cũ chứa bản web cũ bên trong nên không có tính năng này.
 - **Người cập nhật (chủ phần mềm hoặc Claude):** trước mỗi lần commit có sửa trong `docs/`, chạy
   `python3 tools/bump_version.py --notes "Nội dung bản mới"`
   Script tự đóng dấu phiên bản theo nội dung (không phải tăng số tay) và cập nhật `docs/version.js`, `docs/version.json`, `docs/index.html`. Quên chạy thì điện thoại sẽ không biết có bản mới.
-- **Khi nào phải cài lại file APK:** chỉ khi đổi phần vỏ Android (ví dụ thêm plugin). Khi đó build APK mới (tăng versionName), đưa file lên GitHub **Releases** (Releases → Draft a new release → kéo file APK vào → Publish), rồi chạy
-  `python3 tools/bump_version.py --apk-version 1.1.0 --apk-url <liên kết tải file APK> --apk-notes "Nội dung"`
-  và đẩy lên: app cũ sẽ hiện nút **Tải về**. Android sẽ hỏi cho phép cài từ nguồn ngoài, và bản mới phải ký bằng cùng khoá mới cài đè được.
+- **Khi nào phải cài lại file APK:** chỉ khi đổi phần vỏ Android (ví dụ thêm plugin hoặc đổi biểu tượng); xem mục "App Android (APK)" ở trên.
 
 ## Giới hạn cần biết
 - **Gói miễn phí (Spark)** cho 50.000 lượt đọc và 20.000 lượt ghi mỗi ngày, dư cho 20 người. Xem bảng xếp hạng cả **Năm** tải nhiều dữ liệu nhất nên chỉ tải khi mở và nhớ tạm 5 phút (bấm lại nút kỳ để làm mới).

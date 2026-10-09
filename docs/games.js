@@ -92,18 +92,23 @@
   #view-games .gm-step b{ flex:1; text-align:center; font-size:.95rem; }
   #view-games .gm-modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:150; display:flex; align-items:center; justify-content:center; padding:16px; }
   #view-games .gm-modal .gm-panel{ width:100%; max-width:380px; margin:0; max-height:90vh; overflow:auto; }
-  /* thùng hải tặc */
-  .gm-barrel{ position:relative; width:290px; height:290px; margin:6px auto 0; border-radius:50%; background:
-    radial-gradient(circle at 50% 50%, #5b3a1c 0 38%, transparent 39%),
-    repeating-conic-gradient(#a8742f 0 15deg, #8a5a22 15deg 30deg); border:6px solid #5b3a1c; box-shadow:0 8px 22px rgba(0,0,0,.35); }
-  .gm-slot{ position:absolute; width:44px; height:44px; margin:-22px 0 0 -22px; border-radius:50%; border:3px solid #2c1a08; background:#1d1006; cursor:pointer; padding:0; font-size:1.5rem; line-height:1; display:flex; align-items:center; justify-content:center; transition:transform .12s; }
-  .gm-slot:active{ transform:scale(.9); }
-  .gm-slot .knife{ display:block; }
-  .gm-slot.used{ cursor:default; background:#3a3a3a; }
-  .gm-pirate{ position:absolute; left:50%; top:50%; font-size:3rem; transform:translate(-50%,-50%) scale(.1); opacity:0; pointer-events:none; }
-  .gm-barrel.boom .gm-pirate{ animation:gm-pop 1.1s forwards; }
-  .gm-barrel.boom{ animation:gm-shake .5s 2; }
-  @keyframes gm-pop{ 0%{ opacity:1; transform:translate(-50%,-50%) scale(.2); } 55%{ opacity:1; transform:translate(-50%,-190%) scale(1.6) rotate(200deg); } 100%{ opacity:1; transform:translate(-50%,-120%) scale(1.4) rotate(360deg); } }
+  /* thùng hải tặc (cảnh bãi biển, thùng gỗ xoay được, hải tặc nhảy ra) */
+  #view-games .gm-beach{ position:relative; border-radius:18px; padding:12px 8px 14px; overflow:hidden; background:linear-gradient(#ffb74d 0%,#ff8a65 14%,#6ec6f0 38%,#2aa7dd 52%,#ecc980 53%,#d8a65a 100%); box-shadow:inset 0 0 40px rgba(0,0,0,.2); }
+  #view-games .gm-beach .deco{ position:absolute; font-size:3rem; line-height:1; pointer-events:none; }
+  #view-games .gm-restart{ position:absolute; right:10px; top:10px; width:42px; height:42px; border-radius:8px; border:2px solid #4b2e12; background:linear-gradient(#a8742f,#7a4d1b); color:#fff; font-size:1.3rem; cursor:pointer; z-index:5; }
+  #view-games .gm-pbarrel{ position:relative; width:260px; max-width:92%; aspect-ratio:260/330; margin:46px auto 0; touch-action:pan-y; user-select:none; -webkit-user-select:none; }
+  #view-games .gm-pbarrel .layer{ position:absolute; inset:0; width:100%; height:100%; }
+  #view-games .gm-pbarrel .pirate{ position:absolute; left:0; top:0; width:100%; height:100%; transform-origin:50% 40%; }
+  #view-games .gm-pbarrel.boom .pirate{ animation:gm-rocket 1.3s cubic-bezier(.2,.7,.3,1) forwards; }
+  @keyframes gm-rocket{ 0%{ transform:translateY(0) rotate(0) scale(1); opacity:1; } 35%{ transform:translateY(-120px) rotate(300deg) scale(1.15); opacity:1; } 100%{ transform:translateY(-70px) rotate(720deg) scale(1.3); opacity:1; } }
+  #view-games .gm-pbarrel.boom{ animation:gm-shake .4s 2; }
+  #view-games .gm-pslot{ position:absolute; width:11px; height:40px; margin:-20px 0 0 -5.5px; border-radius:6px; background:#1a0e05; border:2px solid #4b2e12; padding:0; cursor:pointer; box-shadow:inset 0 0 4px #000; }
+  #view-games .gm-pslot.used{ cursor:default; }
+  #view-games .gm-pknife{ position:absolute; height:8px; margin-top:-4px; pointer-events:none; filter:drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+  #view-games .gm-pknife i{ display:block; height:100%; border-radius:4px; background:linear-gradient(#eceff1,#90a4ae); }
+  #view-games .gm-pknife b{ position:absolute; top:-3px; width:12px; height:14px; border-radius:3px; background:#6d4c41; }
+  #view-games .gm-rot{ display:flex; justify-content:center; gap:16px; margin-top:8px; }
+  #view-games .gm-rot button{ width:48px; height:40px; border-radius:20px; border:2px solid #4b2e12; background:linear-gradient(#e7b562,#b9812f); font-size:1.3rem; font-weight:900; color:#3b2410; cursor:pointer; }
   /* xí ngầu */
   .gm-dice{ display:flex; flex-wrap:wrap; gap:14px; justify-content:center; margin:14px 0; min-height:84px; }
   .gm-die{ width:76px; height:76px; background:#fff; border-radius:14px; border:2px solid #cfd8dc; box-shadow:0 4px 0 #b7c3c9, 0 8px 14px rgba(0,0,0,.25); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); padding:9px; gap:2px; }
@@ -168,14 +173,14 @@
     const title = kind === 'croc' ? '🐊 Khám răng cá sấu' : '🏴‍☠️ Nhét dao thùng hải tặc';
     const rule = kind === 'croc'
       ? 'Một số chiếc răng "đau" (răng phạt) được chọn ngẫu nhiên. Lần lượt mỗi người chạm một chiếc răng, ai chạm trúng răng phạt thì bị cạp và thua. Bạn chọn nhân vật, số răng và số răng phạt (tối đa là toàn bộ răng) ở bên dưới.'
-      : 'Có một khe bí mật được chọn ngẫu nhiên. Lần lượt mỗi người nhét một con dao vào một khe, ai nhét trúng khe bí mật thì hải tặc bật ra và người đó thua.';
+      : 'Thùng có một khe bí mật được chọn ngẫu nhiên. Vuốt thùng để xoay, lần lượt mỗi người nhét một con dao vào một khe, ai nhét trúng khe bí mật thì hải tặc bật ra và người đó thua.';
     render(`${topBar(title)}
       <div class="gm-panel">
         <p style="margin:0 0 10px;font-size:.85rem;line-height:1.5">${rule}</p>
         <label>Số người chơi (chơi 1 người để thử vận may)</label>
         <div class="gm-seg" id="gm-count">${[1,2,3,4,5,6].map((n) => `<button data-n="${n}" class="${n === players.count ? 'on' : ''}">${n}</button>`).join('')}</div>
         <div class="gm-names" id="gm-names"></div>
-        ${kind === 'croc' ? '<div id="gm-crocset" style="margin-top:14px">' + crocSettingsHtml() + '</div>' : ''}
+        ${kind === 'croc' ? '<div id="gm-crocset" style="margin-top:14px">' + crocSettingsHtml() + '</div>' : '<div id="gm-pirset" style="margin-top:14px">' + pirateSettingsHtml() + '</div>'}
         <button class="gm-primary" id="gm-start">Bắt đầu chơi</button>
       </div>`);
     bindBack();
@@ -186,7 +191,7 @@
       names.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', () => { players.names[+inp.dataset.i] = inp.value; }));
     }
     drawNames();
-    if(kind === 'croc') bindCrocSettings($('gm-crocset'));
+    if(kind === 'croc') bindCrocSettings($('gm-crocset')); else bindPirateSettings($('gm-pirset'));
     $('gm-count').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       players.count = +b.dataset.n;
       $('gm-count').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
@@ -329,34 +334,110 @@
   }
 
   /* ---------- Nhét dao thùng hải tặc ---------- */
+  let pirateCfg = Object.assign({ slots: 12 }, store('pirate') || {});
+  const normPirate = () => { pirateCfg.slots = Math.min(16, Math.max(6, parseInt(pirateCfg.slots, 10) || 12)); };
+  function pirateSettingsHtml(){
+    return `<label>Số khe trên thùng</label>
+      <div class="gm-step"><button type="button" data-act="s-">‹</button><b id="gm-sv"></b><button type="button" data-act="s+">›</button></div>`;
+  }
+  function bindPirateSettings(box){
+    const draw = () => { normPirate(); box.querySelector('#gm-sv').textContent = pirateCfg.slots; store('pirate', pirateCfg); };
+    box.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => { pirateCfg.slots += b.dataset.act === 's+' ? 1 : -1; draw(); beep(480, 0.05, 'triangle', 0.08); }));
+    draw();
+  }
+  const PIRATE_BG = `<svg class="layer" viewBox="0 0 260 330" aria-hidden="true"><ellipse cx="130" cy="112" rx="92" ry="26" fill="#2b1608" stroke="#4b2e12" stroke-width="5"/></svg>`;
+  const PIRATE_MAN = `<svg viewBox="0 0 260 330" aria-hidden="true">
+      <ellipse cx="130" cy="150" rx="46" ry="30" fill="#2a5db0"/>
+      <circle cx="130" cy="96" r="38" fill="#c98b5a" stroke="#7a4a25" stroke-width="3"/>
+      <path d="M92 90 Q130 40 168 90 Q150 70 130 70 Q110 70 92 90Z" fill="#ec407a" stroke="#ad1457" stroke-width="2.5"/>
+      <path d="M162 84 L196 70 L176 100Z" fill="#ec407a" stroke="#ad1457" stroke-width="2.5"/>
+      <circle cx="146" cy="98" r="8" fill="#fff"/><circle cx="148" cy="99" r="4" fill="#1b1b1b"/>
+      <ellipse cx="112" cy="97" rx="12" ry="10" fill="#1b1b1b"/><path d="M98 88 L146 80" stroke="#1b1b1b" stroke-width="3"/>
+      <path d="M110 118 Q130 134 152 118" fill="none" stroke="#4a2511" stroke-width="4" stroke-linecap="round"/>
+    </svg>`;
+  const PIRATE_FRONT = `<svg class="layer" viewBox="0 0 260 330" aria-hidden="true">
+      <defs><pattern id="gmStave" width="26" height="10" patternUnits="userSpaceOnUse"><rect width="26" height="10" fill="#a2672b"/><rect width="3" height="10" fill="#6b4119"/><rect x="13" width="1.2" height="10" fill="#c58a4a"/></pattern>
+      <linearGradient id="gmShade" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset=".7" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient></defs>
+      <path id="gmBody" d="M38 112 Q130 158 222 112 Q256 205 222 292 Q130 322 38 292 Q4 205 38 112Z" fill="url(#gmStave)" stroke="#4b2e12" stroke-width="5"/>
+      <path d="M38 112 Q130 158 222 112 Q256 205 222 292 Q130 322 38 292 Q4 205 38 112Z" fill="url(#gmShade)"/>
+      <path d="M26 160 Q130 204 234 160" fill="none" stroke="#3a2a1a" stroke-width="9"/><path d="M12 250 Q130 296 248 250" fill="none" stroke="#3a2a1a" stroke-width="9"/>
+      <circle cx="130" cy="214" r="21" fill="#f3e5c8" stroke="#4b2e12" stroke-width="3"/><text x="130" y="224" text-anchor="middle" font-size="26" fill="#1b1b1b">☠</text>
+      <path d="M38 112 Q130 158 222 112" fill="none" stroke="#d29a55" stroke-width="4"/>
+    </svg>`;
   function startPirate(){
-    clearTimers(); screen = 'pirate';
-    const N = 12;
+    clearTimers(); screen = 'pirate'; normPirate();
+    const N = pirateCfg.slots;
     const g = makeTurnGame(N); g.total = N;
-    const R = 112, C = 145;
-    const slots = Array.from({ length: N }, (_, i) => {
-      const a = (i / N) * Math.PI * 2 - Math.PI / 2;
-      return `<button class="gm-slot" data-i="${i}" style="left:${(C + R * Math.cos(a)).toFixed(1)}px;top:${(C + R * Math.sin(a)).toFixed(1)}px" aria-label="Khe ${i + 1}"></button>`;
-    }).join('');
+    let rot = 0;
     render(`${topBar('🏴‍☠️ Nhét dao thùng hải tặc')}
-      <div class="gm-status" id="gm-status">${statusText(g)}</div>
-      <div class="gm-barrel" id="gm-barrel">${slots}<div class="gm-pirate">🏴‍☠️</div></div>
-      <button class="gm-primary" id="gm-again" style="display:none">Chơi lại</button>`);
+      <div class="gm-beach">
+        <span class="deco" style="left:4px;top:78px">🌴</span><span class="deco" style="right:6px;top:92px;font-size:2.4rem">🌴</span>
+        <button class="gm-restart" id="gm-again2" aria-label="Chơi lại">⟲</button>
+        <div class="gm-banner" id="gm-status" style="margin-top:44px">${players.count > 1 ? 'Lượt của ' + esc(nameOf(0)) + ' · rút dao vào một khe' : 'Nhét dao vào một khe bất kỳ'}</div>
+        <div class="gm-pbarrel" id="gm-barrel">${PIRATE_BG}<div class="pirate">${PIRATE_MAN}</div>${PIRATE_FRONT}<div id="gm-pslots"></div></div>
+        <div class="gm-rot"><button id="gm-rl" aria-label="Xoay trái">⟲</button><button id="gm-rr" aria-label="Xoay phải">⟳</button></div>
+      </div>
+      <button class="gm-primary" id="gm-again" style="display:none">Chơi lại</button>
+      <p class="gm-hint">Vuốt ngang trên thùng hoặc bấm nút xoay để tìm khe.</p>`);
     bindBack();
-    const st = $('gm-status'), barrel = $('gm-barrel');
-    root.querySelectorAll('.gm-slot').forEach((s) => s.addEventListener('click', () => {
-      const i = +s.dataset.i;
+    const st = $('gm-status'), barrel = $('gm-barrel'), box = $('gm-pslots');
+    const pat = barrel.querySelector('#gmStave');
+    const pos = [];
+    for(let i = 0; i < N; i++){
+      const b = document.createElement('button'); b.className = 'gm-pslot'; b.setAttribute('aria-label', 'Khe ' + (i + 1)); b.dataset.i = i;
+      const k = document.createElement('div'); k.className = 'gm-pknife'; k.style.display = 'none'; k.innerHTML = '<i></i><b></b>';
+      box.appendChild(b); box.appendChild(k); pos.push({ b, k });
+      b.addEventListener('click', () => pick(i));
+    }
+    function layout(){
+      for(let i = 0; i < N; i++){
+        const th = rot + (i / N) * Math.PI * 2, c = Math.cos(th), sn = Math.sin(th);
+        const { b, k } = pos[i];
+        const vis = c > 0.14;
+        b.style.display = vis ? '' : 'none';
+        const x = 130 + 86 * sn, y = 208 + (i % 2 ? 26 : -22) + (1 - c) * 10;
+        b.style.left = (x / 260 * 100) + '%'; b.style.top = (y / 330 * 100) + '%';
+        b.style.transform = `scaleX(${(0.35 + 0.65 * c).toFixed(2)})`;
+        if(g.used.has(i)){
+          k.style.display = vis ? '' : 'none';
+          const len = 44 * (0.4 + 0.6 * c), dir = sn >= 0 ? 1 : -1;
+          k.style.width = len + 'px'; k.style.top = (y / 330 * 100) + '%';
+          k.style.left = (dir > 0 ? (x / 260 * 100) + '%' : 'auto'); k.style.right = (dir > 0 ? 'auto' : (100 - x / 260 * 100) + '%');
+          k.style.marginLeft = dir > 0 ? '-4px' : '0'; k.style.marginRight = dir > 0 ? '0' : '-4px';
+          k.querySelector('b').style.cssText = dir > 0 ? 'right:-8px' : 'left:-8px';
+        }
+      }
+      if(pat) pat.setAttribute('patternTransform', `translate(${(rot * 60).toFixed(1)} 0)`);
+    }
+    layout();
+    function pick(i){
       turnPick(g, i, () => {
-        s.classList.add('used'); s.innerHTML = '<span class="knife">🗡️</span>'; beep(300, 0.08, 'square', 0.1); buzz(15);
-        st.innerHTML = statusText(g);
+        pos[i].b.classList.add('used'); layout(); beep(300, 0.08, 'square', 0.1); buzz(15);
+        st.innerHTML = players.count < 2 ? `Còn ${N - 1 - g.safe} khe an toàn · đã qua ${g.safe} lượt` : `Lượt của <span style="color:var(--accent,#f2b705)">${esc(nameOf(g.turn))}</span>`;
       }, () => {
-        s.classList.add('used'); s.innerHTML = '<span class="knife">🗡️</span>';
+        pos[i].b.classList.add('used'); layout();
         barrel.classList.add('boom'); noise(0.3, 0.2); beep(660, 0.12, 'square', 0.15); beep(220, 0.5, 'sawtooth', 0.15, 0.1); buzz([40, 30, 40, 30, 150]);
-        st.classList.add('lose'); st.innerHTML = endText(g);
+        st.classList.add('lose'); st.innerHTML = '🏴‍☠️ Hải tặc bật ra! ' + endText(g).replace('💥 ', '');
         $('gm-again').style.display = 'block';
       });
-    }));
+    }
+    // xoay thùng: vuốt ngang hoặc bấm nút
+    let drag = null;
+    barrel.addEventListener('pointerdown', (e) => { if(e.target.closest('.gm-pslot')) return; drag = { x: e.clientX, r: rot }; barrel.setPointerCapture && barrel.setPointerCapture(e.pointerId); });
+    barrel.addEventListener('pointermove', (e) => { if(!drag) return; rot = drag.r + (e.clientX - drag.x) * 0.012; layout(); });
+    const endDrag = () => { drag = null; };
+    barrel.addEventListener('pointerup', endDrag); barrel.addEventListener('pointercancel', endDrag);
+    let spinRaf = 0;
+    function turnBy(delta){
+      cancelAnimationFrame(spinRaf);
+      const from = rot, to = rot + delta, t0 = performance.now(), dur = FAST ? 20 : 260;
+      (function f(now){ const p = Math.min(1, (now - t0) / dur); rot = from + (to - from) * (1 - Math.pow(1 - p, 3)); layout(); if(p < 1) spinRaf = requestAnimationFrame(f); })(t0);
+      beep(200, 0.04, 'triangle', 0.05);
+    }
+    $('gm-rl').addEventListener('click', () => turnBy((Math.PI * 2) / N * 1.5));
+    $('gm-rr').addEventListener('click', () => turnBy(-(Math.PI * 2) / N * 1.5));
     $('gm-again').addEventListener('click', startPirate);
+    $('gm-again2').addEventListener('click', startPirate);
   }
 
   /* ---------- Lắc xí ngầu ---------- */

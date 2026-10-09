@@ -1,4 +1,4 @@
-/* Tab "Trò chơi": 4 mini game giải trí (khám răng cá sấu, nhét dao thùng hải tặc, lắc xí ngầu, vòng quay may mắn).
+/* Tab "Trò chơi": 4 mini game giải trí (khám răng cá sấu, thùng gỗ cướp biển, lắc xí ngầu, vòng quay may mắn).
    Chạy hoàn toàn trên máy, không ghi gì lên Firebase. Dựng giao diện vào #view-games khi mở tab lần đầu. */
 (function(){
   'use strict';
@@ -175,7 +175,7 @@
       <div class="gm-top"><h2>🎮 Trò chơi</h2><button class="gm-mini" id="gm-mute">${muted ? '🔇 Tắt tiếng' : '🔊 Có tiếng'}</button></div>
       <div class="gm-menu">
         <button class="gm-card" data-g="croc"><span class="ico">🐊</span><b>Khám răng cá sấu</b><small>Bấm răng, ai bấm trúng răng đau thì bị cạp</small></button>
-        <button class="gm-card" data-g="pirate"><span class="ico">🏴‍☠️</span><b>Nhét dao thùng hải tặc</b><small>Nhét dao vào khe, coi chừng hải tặc bật ra</small></button>
+        <button class="gm-card" data-g="pirate"><span class="ico">🏴‍☠️</span><b>Thùng gỗ cướp biển</b><small>Nhét dao vào khe, coi chừng hải tặc bật ra</small></button>
         <button class="gm-card" data-g="dice"><span class="ico">🎲</span><b>Lắc xí ngầu</b><small>Lắc điện thoại hoặc bấm nút để gieo</small></button>
         <button class="gm-card" data-g="wheel"><span class="ico">🎡</span><b>Vòng quay may mắn</b><small>Tự nhập các ô rồi quay</small></button>
       </div>
@@ -197,7 +197,7 @@
   /* ---------- Chọn người chơi (cá sấu, hải tặc) ---------- */
   function showSetup(kind){
     screen = 'setup-' + kind;
-    const title = kind === 'croc' ? '🐊 Khám răng cá sấu' : '🏴‍☠️ Nhét dao thùng hải tặc';
+    const title = kind === 'croc' ? '🐊 Khám răng cá sấu' : '🏴‍☠️ Thùng gỗ cướp biển';
     const rule = kind === 'croc'
       ? 'Một số chiếc răng "đau" (răng phạt) được chọn ngẫu nhiên. Lần lượt mỗi người chạm một chiếc răng, ai chạm trúng răng phạt thì bị cạp và thua. Bạn chọn nhân vật, số răng và số răng phạt (tối đa là toàn bộ răng) ở bên dưới.'
       : 'Thùng có một khe bí mật được chọn ngẫu nhiên. Vuốt thùng để xoay, lần lượt mỗi người nhét một con dao vào một khe, ai nhét trúng khe bí mật thì hải tặc bật ra và người đó thua.';
@@ -365,7 +365,7 @@
     $('gm-again').addEventListener('click', startCroc);
   }
 
-  /* ---------- Nhét dao thùng hải tặc ---------- */
+  /* ---------- Thùng gỗ cướp biển ---------- */
   let pirateCfg = Object.assign({ slots: 12 }, store('pirate') || {});
   const normPirate = () => { pirateCfg.slots = Math.min(16, Math.max(6, parseInt(pirateCfg.slots, 10) || 12)); };
   function pirateSettingsHtml(){
@@ -401,7 +401,7 @@
     const N = pirateCfg.slots;
     const g = makeTurnGame(N); g.total = N;
     let rot = 0;
-    render(`${topBar('🏴‍☠️ Nhét dao thùng hải tặc')}
+    render(`${topBar('🏴‍☠️ Thùng gỗ cướp biển')}
       <div class="gm-beach">
         <span class="deco" style="left:4px;top:78px">🌴</span><span class="deco" style="right:6px;top:92px;font-size:2.4rem">🌴</span>
         <button class="gm-restart" id="gm-again2" aria-label="Chơi lại">⟲</button>

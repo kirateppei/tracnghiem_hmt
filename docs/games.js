@@ -109,21 +109,48 @@
   #view-games .gm-pknife b{ position:absolute; top:-3px; width:12px; height:14px; border-radius:3px; background:#6d4c41; }
   #view-games .gm-rot{ display:flex; justify-content:center; gap:16px; margin-top:8px; }
   #view-games .gm-rot button{ width:48px; height:40px; border-radius:20px; border:2px solid #4b2e12; background:linear-gradient(#e7b562,#b9812f); font-size:1.3rem; font-weight:900; color:#3b2410; cursor:pointer; }
-  /* xí ngầu */
-  .gm-dice{ display:flex; flex-wrap:wrap; gap:14px; justify-content:center; margin:14px 0; min-height:84px; }
-  .gm-die{ width:76px; height:76px; background:#fff; border-radius:14px; border:2px solid #cfd8dc; box-shadow:0 4px 0 #b7c3c9, 0 8px 14px rgba(0,0,0,.25); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); padding:9px; gap:2px; }
-  .gm-die i{ border-radius:50%; background:transparent; }
-  .gm-die i.p{ background:#1b3a2f; }
-  .gm-die.red i.p{ background:#c62828; }
-  .gm-die.rolling{ animation:gm-roll .35s infinite; }
-  @keyframes gm-roll{ 0%{ transform:rotate(0) translateY(0); } 25%{ transform:rotate(18deg) translateY(-8px); } 50%{ transform:rotate(-12deg) translateY(0); } 75%{ transform:rotate(10deg) translateY(-6px); } 100%{ transform:rotate(0) translateY(0); } }
-  .gm-sum{ text-align:center; font-size:1.3rem; font-weight:800; }
-  .gm-hist{ text-align:center; font-size:.82rem; opacity:.85; margin-top:6px; }
+  /* xí ngầu 3D */
+  #view-games .gm-dicestage{ border-radius:18px; padding:14px 8px 10px; background:radial-gradient(circle at 50% 30%,#3b2a9a,#1a1050 70%); box-shadow:inset 0 0 40px rgba(0,0,0,.35); }
+  #view-games .gm-dice{ display:flex; flex-wrap:wrap; gap:26px 22px; justify-content:center; margin:6px 0 4px; min-height:150px; align-items:center; }
+  #view-games .gm-scene{ width:var(--s); height:var(--s); perspective:520px; margin:18px 12px; }
+  #view-games .gm-camera{ width:100%; height:100%; transform-style:preserve-3d; transform:rotateX(-26deg) rotateY(-32deg); }
+  #view-games .gm-hop{ width:100%; height:100%; transform-style:preserve-3d; }
+  #view-games .gm-hop.go{ animation:gm-hop .95s ease-out; }
+  @keyframes gm-hop{ 0%{ transform:translateY(0); } 25%{ transform:translateY(-34px); } 55%{ transform:translateY(0); } 70%{ transform:translateY(-10px); } 100%{ transform:translateY(0); } }
+  #view-games .gm-cube{ position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform 1.05s cubic-bezier(.2,.8,.25,1); }
+  #view-games .gm-face{ position:absolute; inset:0; border-radius:calc(var(--s) * .16); background:var(--bg); display:flex; align-items:center; justify-content:center; box-shadow:inset 0 0 calc(var(--s) * .16) rgba(0,0,0,.45); backface-visibility:hidden; overflow:hidden; }
+  #view-games .gm-face.f1{ transform:rotateX(90deg) translateZ(calc(var(--s) / 2)); }
+  #view-games .gm-face.f2{ transform:translateZ(calc(var(--s) / 2)); }
+  #view-games .gm-face.f3{ transform:rotateY(90deg) translateZ(calc(var(--s) / 2)); }
+  #view-games .gm-face.f4{ transform:rotateY(-90deg) translateZ(calc(var(--s) / 2)); }
+  #view-games .gm-face.f5{ transform:rotateY(180deg) translateZ(calc(var(--s) / 2)); }
+  #view-games .gm-face.f6{ transform:rotateX(-90deg) translateZ(calc(var(--s) / 2)); }
+  #view-games .gm-ring{ position:absolute; left:6%; top:6%; width:88%; height:88%; border-radius:50%; border:calc(var(--s) * .028) solid var(--ring); box-shadow:0 0 calc(var(--s) * .08) var(--glow), inset 0 0 calc(var(--s) * .08) var(--glow); }
+  #view-games .gm-ring::after{ content:''; position:absolute; left:19%; top:19%; width:62%; height:62%; border-radius:50%; border:calc(var(--s) * .02) solid var(--ring); }
+  #view-games .gm-ring i{ position:absolute; left:50%; top:50%; width:0; height:0; font-style:normal; color:var(--glyph); font-size:calc(var(--s) * .115); line-height:0; text-align:center; }
+  #view-games .gm-ring i span{ position:absolute; left:-.5em; top:-.5em; width:1em; height:1em; line-height:1em; }
+  #view-games .gm-num{ position:relative; font-weight:900; font-size:calc(var(--s) * .46); color:var(--num); font-family:'Trebuchet MS',Arial,sans-serif; text-shadow:0 2px 6px rgba(0,0,0,.45); }
+  #view-games .gm-skins{ display:flex; gap:8px; justify-content:center; margin:6px 0 10px; }
+  #view-games .gm-skins button{ width:44px; height:44px; border-radius:12px; border:3px solid transparent; cursor:pointer; padding:0; }
+  #view-games .gm-skins button.on{ border-color:#fff; box-shadow:0 0 10px rgba(255,255,255,.6); }
+  #view-games .gm-sum{ text-align:center; font-size:1.3rem; font-weight:800; }
+  #view-games .gm-hist{ text-align:center; font-size:.82rem; opacity:.85; margin-top:6px; }
   /* vòng quay */
-  .gm-wheelbox{ position:relative; width:300px; max-width:100%; margin:6px auto; }
-  .gm-wheelbox canvas{ width:100%; height:auto; display:block; }
-  .gm-pointer{ position:absolute; left:50%; top:-6px; transform:translateX(-50%); font-size:2rem; line-height:1; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.6); }
-  .gm-result{ text-align:center; font-size:1.25rem; font-weight:800; margin:10px 0 4px; min-height:1.6em; }
+  #view-games .gm-wheelstage{ position:relative; border-radius:18px; padding:26px 8px 10px; background:radial-gradient(circle at 50% 25%,#7a3bd0 0%,#35176f 45%,#150836 100%); box-shadow:inset 0 0 50px rgba(0,0,0,.4); overflow:hidden; }
+  #view-games .gm-wheelstage::before{ content:''; position:absolute; left:50%; top:-40px; width:340px; height:340px; margin-left:-170px; background:radial-gradient(circle,rgba(255,236,160,.35),transparent 65%); pointer-events:none; }
+  #view-games .gm-wheelbox{ position:relative; width:310px; max-width:100%; margin:4px auto; }
+  #view-games .gm-wheelbox canvas{ width:100%; height:auto; display:block; filter:drop-shadow(0 10px 14px rgba(0,0,0,.55)); }
+  #view-games .gm-pointer{ position:absolute; left:50%; top:-14px; width:34px; height:46px; margin-left:-17px; z-index:2; transform-origin:50% 12%; filter:drop-shadow(0 3px 3px rgba(0,0,0,.6)); }
+  #view-games .gm-pointer::before{ content:''; position:absolute; left:0; top:0; width:34px; height:34px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b705 55%,#b8860b); }
+  #view-games .gm-pointer::after{ content:''; position:absolute; left:6px; top:22px; border-left:11px solid transparent; border-right:11px solid transparent; border-top:24px solid #d62828; }
+  #view-games .gm-pointer.flick{ animation:gm-flick .16s ease-out; }
+  @keyframes gm-flick{ 0%{ transform:rotate(0); } 35%{ transform:rotate(-26deg); } 100%{ transform:rotate(0); } }
+  #view-games .gm-result{ text-align:center; font-size:1.45rem; font-weight:900; margin:12px 0 4px; min-height:1.9em; color:#ffe27a; text-shadow:0 2px 0 #7a4b00,0 0 14px rgba(255,200,60,.7); }
+  #view-games .gm-result.pop{ animation:gm-resultpop .7s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes gm-resultpop{ 0%{ transform:scale(.3); opacity:0; } 100%{ transform:scale(1); opacity:1; } }
+  #view-games .gm-spinbtn{ width:100%; padding:14px; border:0; border-radius:14px; background:linear-gradient(#ffd54a,#f2a100); color:#3b2400; font:inherit; font-weight:900; font-size:1.1rem; letter-spacing:.06em; cursor:pointer; box-shadow:0 4px 0 #9a6200, 0 8px 16px rgba(0,0,0,.35); animation:gm-glow 1.6s ease-in-out infinite; }
+  #view-games .gm-spinbtn:disabled{ opacity:.6; animation:none; }
+  @keyframes gm-glow{ 0%,100%{ box-shadow:0 4px 0 #9a6200, 0 8px 16px rgba(0,0,0,.35); } 50%{ box-shadow:0 4px 0 #9a6200, 0 0 24px rgba(255,214,74,.85); } }
   `;
   function injectCss(){
     if($('gm-style')) return;
@@ -440,57 +467,93 @@
     $('gm-again2').addEventListener('click', startPirate);
   }
 
-  /* ---------- Lắc xí ngầu ---------- */
-  const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
-  const dieHtml = (v, cls) => `<div class="gm-die ${cls || ''}" data-v="${v}">${Array.from({ length: 9 }, (_, k) => `<i class="${PIPS[v].indexOf(k) >= 0 ? 'p' : ''}"></i>`).join('')}</div>`;
+  /* ---------- Lắc xí ngầu (khối 3D) ---------- */
+  const SKINS = [
+    { id: 'navy',   name: 'Xanh hoàng đạo', bg: 'radial-gradient(circle at 50% 40%,#25388f,#0d1650 75%)', ring: '#e8b04a', glow: 'rgba(232,176,74,.55)', glyph: '#fff', num: '#fff' },
+    { id: 'gold',   name: 'Vàng đen',       bg: 'radial-gradient(circle at 50% 40%,#2a1c0c,#0c0703 80%)', ring: '#d9ac52', glow: 'rgba(217,172,82,.5)', glyph: '#e6c06a', num: '#f1cf7a' },
+    { id: 'violet', name: 'Tím phát sáng',  bg: 'radial-gradient(circle at 50% 40%,#6a4bd0,#3a2790 80%)', ring: '#ffffff', glow: 'rgba(255,255,255,.7)', glyph: '#fff', num: '#fff' },
+    { id: 'royal',  name: 'Xanh vàng',      bg: 'radial-gradient(circle at 50% 40%,#103070,#050f2e 80%)', ring: '#2f86f0', glow: 'rgba(47,134,240,.7)', glyph: '#f2c14e', num: '#f7cf55' }
+  ];
+  const ZODIAC = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+  // mặt trên = 1, đáy = 6, trước = 2, sau = 5, phải = 3, trái = 4. Phép xoay đưa mặt có giá trị v lên trên:
+  const TOP_ROT = { 1: [0, 0, 0], 2: [90, 0, 0], 5: [-90, 0, 0], 6: [180, 0, 0], 3: [0, 0, -90], 4: [0, 0, 90] };
   let diceCount = +store('dice') || 2;
+  let skinIdx = Math.max(0, SKINS.findIndex((k) => k.id === store('dskin')));
   let diceHist = [];
   let shakeHandler = null, shakeLast = 0, rolling = false;
 
+  function faceHtml(n, r){
+    const gl = ZODIAC.map((z, k) => `<i style="transform:rotate(${k * 30}deg) translateY(calc(var(--s) * -.355))"><span style="transform:rotate(${-k * 30}deg)">${z}︎</span></i>`).join('');
+    return `<div class="gm-face f${n}"><div class="gm-ring">${gl}</div><span class="gm-num">${n}</span></div>`;
+  }
+  function cubeHtml(i){
+    return `<div class="gm-scene"><div class="gm-camera"><div class="gm-hop"><div class="gm-cube" data-v="1" data-i="${i}">${[1, 2, 3, 4, 5, 6].map(faceHtml).join('')}</div></div></div></div>`;
+  }
+  const rotCss = (r, k) => `rotateX(${r[0] + 360 * k[0]}deg) rotateY(${r[1] + 360 * k[1]}deg) rotateZ(${r[2] + 360 * k[2]}deg)`;
+  function applySkin(){
+    const k = SKINS[skinIdx], st = $('gm-dice');
+    if(!st) return;
+    st.style.setProperty('--bg', k.bg); st.style.setProperty('--ring', k.ring); st.style.setProperty('--glow', k.glow);
+    st.style.setProperty('--glyph', k.glyph); st.style.setProperty('--num', k.num);
+  }
   function stopShake(){ if(shakeHandler){ window.removeEventListener('devicemotion', shakeHandler); shakeHandler = null; } }
   function showDice(){
-    clearTimers(); screen = 'dice'; diceHist = [];
+    clearTimers(); screen = 'dice'; diceHist = []; rolling = false;
     render(`${topBar('🎲 Lắc xí ngầu')}
       <div class="gm-panel">
         <label>Số viên xúc xắc</label>
-        <div class="gm-seg" id="gm-dcount">${[1,2,3,4,5,6].map((n) => `<button data-n="${n}" class="${n === diceCount ? 'on' : ''}">${n}</button>`).join('')}</div>
+        <div class="gm-seg" id="gm-dcount">${[1, 2, 3, 4, 5, 6].map((n) => `<button data-n="${n}" class="${n === diceCount ? 'on' : ''}">${n}</button>`).join('')}</div>
+        <label style="margin-top:12px">Kiểu xúc xắc</label>
+        <div class="gm-skins" id="gm-skins">${SKINS.map((k, i) => `<button data-i="${i}" class="${i === skinIdx ? 'on' : ''}" title="${esc(k.name)}" aria-label="${esc(k.name)}" style="background:${k.bg}"></button>`).join('')}</div>
       </div>
-      <div class="gm-dice" id="gm-dice"></div>
-      <div class="gm-sum" id="gm-sum">Bấm nút để gieo</div>
+      <div class="gm-dicestage"><div class="gm-dice" id="gm-dice"></div></div>
+      <div class="gm-sum" id="gm-sum" style="margin-top:12px">Bấm nút để gieo</div>
       <button class="gm-primary" id="gm-roll">🎲 Lắc!</button>
       <button class="gm-mini" id="gm-shake" style="display:block;margin:10px auto 0">📳 Bật lắc điện thoại để gieo</button>
       <div class="gm-hist" id="gm-hist"></div>`);
     bindBack();
-    drawDice(Array.from({ length: diceCount }, () => 1));
+    drawDice();
     $('gm-dcount').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       diceCount = +b.dataset.n; store('dice', diceCount);
       $('gm-dcount').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
-      drawDice(Array.from({ length: diceCount }, () => 1)); $('gm-sum').textContent = 'Bấm nút để gieo';
+      drawDice(); $('gm-sum').textContent = 'Bấm nút để gieo';
+    }));
+    $('gm-skins').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      skinIdx = +b.dataset.i; store('dskin', SKINS[skinIdx].id);
+      $('gm-skins').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); applySkin();
     }));
     $('gm-roll').addEventListener('click', rollDice);
     $('gm-shake').addEventListener('click', toggleShake);
   }
-  function drawDice(vals, cls){ $('gm-dice').innerHTML = vals.map((v, i) => dieHtml(v, (cls || '') + (i % 2 ? ' red' : ''))).join(''); }
+  function drawDice(){
+    const box = $('gm-dice'); if(!box) return;
+    box.style.setProperty('--s', (diceCount <= 2 ? 92 : diceCount <= 4 ? 76 : 64) + 'px');
+    box.innerHTML = Array.from({ length: diceCount }, (_, i) => cubeHtml(i)).join('');
+    applySkin();
+  }
   function rollDice(){
     if(rolling) return;
     rolling = true;
     const final = Array.from({ length: diceCount }, () => 1 + rand(6));
-    const dur = FAST ? 60 : 900;
-    const t0 = Date.now();
+    const dur = FAST ? 40 : 1100;
     $('gm-sum').textContent = '…';
-    const iv = setInterval(() => {
-      drawDice(Array.from({ length: diceCount }, () => 1 + rand(6)), 'rolling');
-      noise(0.05, 0.1); buzz(10);
-      if(Date.now() - t0 >= dur){
-        clearInterval(iv); rolling = false;
-        drawDice(final);
-        const sum = final.reduce((a, b) => a + b, 0);
-        $('gm-sum').textContent = diceCount > 1 ? `Tổng: ${sum}  (${final.join(' + ')})` : `Ra mặt ${sum}`;
-        diceHist.unshift(diceCount > 1 ? `${final.join('+')}=${sum}` : String(sum)); diceHist = diceHist.slice(0, 6);
-        $('gm-hist').textContent = 'Các lượt trước: ' + diceHist.slice(1).join(' · ');
-        beep(660, 0.12, 'triangle'); beep(880, 0.15, 'triangle', 0.1, 0.1);
-      }
-    }, FAST ? 15 : 80);
+    $('gm-dice').querySelectorAll('.gm-cube').forEach((c, i) => {
+      const k = [2 + rand(2), 2 + rand(3), 1 + rand(2)];
+      c.style.transitionDuration = (dur / 1000 + i * (FAST ? 0 : 0.08)) + 's';
+      c.style.transform = rotCss(TOP_ROT[final[i]], k);
+      c.dataset.v = final[i];
+      const hop = c.parentNode; hop.classList.remove('go'); void hop.offsetWidth; hop.classList.add('go');
+    });
+    const t0 = Date.now();
+    const iv = setInterval(() => { noise(0.05, 0.1); buzz(10); if(Date.now() - t0 > dur * 0.8) clearInterval(iv); }, FAST ? 15 : 90);
+    later(() => {
+      rolling = false;
+      const sum = final.reduce((a, b) => a + b, 0);
+      $('gm-sum').textContent = diceCount > 1 ? `Tổng: ${sum}  (${final.join(' + ')})` : `Ra mặt ${sum}`;
+      diceHist.unshift(diceCount > 1 ? `${final.join('+')}=${sum}` : String(sum)); diceHist = diceHist.slice(0, 6);
+      $('gm-hist').textContent = 'Các lượt trước: ' + diceHist.slice(1).join(' · ');
+      beep(660, 0.12, 'triangle'); beep(880, 0.15, 'triangle', 0.1, 0.1);
+    }, dur + diceCount * 80 + 60);
   }
   async function toggleShake(){
     const btn = $('gm-shake');
@@ -518,13 +581,24 @@
   let wheelItems = (function(){ const w = store('wheel'); return (Array.isArray(w) && w.length >= 2) ? w : WHEEL_DEFAULT.slice(); })();
   let wheelAngle = 0, wheelRaf = 0, wheelSpinning = false, removeWinner = !!store('wheelRemove');
 
-  function stopWheelAnim(){ if(wheelRaf){ cancelAnimationFrame(wheelRaf); wheelRaf = 0; } wheelSpinning = false; }
+  let ledRaf = 0, ledPhase = 0, wheelHL = -1, lastLed = 0;
+  function stopWheelAnim(){ if(wheelRaf){ cancelAnimationFrame(wheelRaf); wheelRaf = 0; } if(ledRaf){ cancelAnimationFrame(ledRaf); ledRaf = 0; } wheelSpinning = false; }
+  function startLeds(){
+    if(ledRaf) cancelAnimationFrame(ledRaf);
+    (function f(now){
+      if(screen !== 'wheel' || !$('gm-canvas')){ ledRaf = 0; return; }
+      if(now - lastLed > 90){ lastLed = now; ledPhase++; if(!wheelSpinning) drawWheel(now); }
+      ledRaf = requestAnimationFrame(f);
+    })(performance.now());
+  }
   function showWheel(){
-    clearTimers(); screen = 'wheel';
+    clearTimers(); screen = 'wheel'; wheelHL = -1;
     render(`${topBar('🎡 Vòng quay may mắn')}
-      <div class="gm-wheelbox"><div class="gm-pointer">▼</div><canvas id="gm-canvas" width="600" height="600"></canvas></div>
-      <div class="gm-result" id="gm-result"></div>
-      <button class="gm-primary" id="gm-spin">QUAY!</button>
+      <div class="gm-wheelstage">
+        <div class="gm-wheelbox"><div class="gm-pointer" id="gm-pointer"></div><canvas id="gm-canvas" width="640" height="640"></canvas></div>
+        <div class="gm-result" id="gm-result"></div>
+        <button class="gm-spinbtn" id="gm-spin">🎡 QUAY!</button>
+      </div>
       <div class="gm-panel" style="margin-top:14px">
         <label>Các ô trên vòng quay (mỗi dòng một ô, tối đa 12 ô)</label>
         <textarea id="gm-items" rows="6">${esc(wheelItems.join('\n'))}</textarea>
@@ -533,56 +607,95 @@
       </div>`);
     bindBack();
     drawWheel();
+    startLeds();
     $('gm-items').addEventListener('input', () => {
       const v = $('gm-items').value.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 12);
-      if(v.length >= 2){ wheelItems = v; store('wheel', v); drawWheel(); }
+      if(v.length >= 2){ wheelItems = v; store('wheel', v); wheelHL = -1; drawWheel(); }
     });
     $('gm-remove').addEventListener('change', (e) => { removeWinner = e.target.checked; store('wheelRemove', removeWinner); });
-    $('gm-reset').addEventListener('click', () => { wheelItems = WHEEL_DEFAULT.slice(); store('wheel', wheelItems); $('gm-items').value = wheelItems.join('\n'); drawWheel(); });
+    $('gm-reset').addEventListener('click', () => { wheelItems = WHEEL_DEFAULT.slice(); store('wheel', wheelItems); wheelHL = -1; $('gm-items').value = wheelItems.join('\n'); drawWheel(); });
     $('gm-spin').addEventListener('click', spinWheel);
   }
-  function drawWheel(){
+  function shade(hex, f){
+    const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    const m = (v) => Math.max(0, Math.min(255, Math.round(f < 0 ? v * (1 + f) : v + (255 - v) * f)));
+    return `rgb(${m(r)},${m(g)},${m(b)})`;
+  }
+  function drawWheel(now){
     const cv = $('gm-canvas'); if(!cv) return;
-    const c = cv.getContext('2d'), W = cv.width, R = W / 2 - 8, n = wheelItems.length, s = (Math.PI * 2) / n;
+    const c = cv.getContext('2d'), W = cv.width, M = W / 2, Rw = M - 52, n = wheelItems.length, s = (Math.PI * 2) / n, t = now || performance.now();
     c.clearRect(0, 0, W, W);
-    c.save(); c.translate(W / 2, W / 2); c.rotate(wheelAngle);
+    // vành vàng
+    const rim = c.createRadialGradient(M, M, Rw - 4, M, M, M - 4);
+    rim.addColorStop(0, '#8a5a00'); rim.addColorStop(.35, '#ffd86b'); rim.addColorStop(.7, '#d69a1b'); rim.addColorStop(1, '#6b4300');
+    c.beginPath(); c.arc(M, M, M - 4, 0, Math.PI * 2); c.fillStyle = rim; c.fill();
+    // các ô
+    c.save(); c.translate(M, M); c.rotate(wheelAngle);
     for(let i = 0; i < n; i++){
-      c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, R, i * s, (i + 1) * s); c.closePath();
-      c.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length]; c.fill();
-      c.lineWidth = 3; c.strokeStyle = '#fff'; c.stroke();
-      c.save(); c.rotate(i * s + s / 2); c.textAlign = 'right'; c.fillStyle = '#fff'; c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 4;
-      const label = wheelItems[i]; c.font = `700 ${n > 8 ? 26 : 32}px sans-serif`;
-      let t = label; while(t.length > 3 && c.measureText(t).width > R - 50) t = t.slice(0, -2);
-      c.fillText(t === label ? t : t + '…', R - 22, 10); c.restore();
+      const col = WHEEL_COLORS[i % WHEEL_COLORS.length];
+      const g = c.createRadialGradient(0, 0, 30, 0, 0, Rw);
+      g.addColorStop(0, shade(col, -.35)); g.addColorStop(.55, col); g.addColorStop(1, shade(col, .18));
+      c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, Rw, i * s, (i + 1) * s); c.closePath();
+      c.fillStyle = g; c.fill(); c.lineWidth = 4; c.strokeStyle = '#ffe9a8'; c.stroke();
+      c.save(); c.rotate(i * s + s / 2); c.textAlign = 'right'; c.textBaseline = 'middle';
+      const label = wheelItems[i]; c.font = `800 ${n > 8 ? 30 : 36}px 'Trebuchet MS',Arial,sans-serif`;
+      let txt = label; while(txt.length > 3 && c.measureText(txt).width > Rw - 90) txt = txt.slice(0, -2);
+      txt = txt === label ? txt : txt + '…';
+      c.lineWidth = 6; c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineJoin = 'round'; c.strokeText(txt, Rw - 26, 0);
+      c.fillStyle = '#fff'; c.fillText(txt, Rw - 26, 0); c.restore();
+    }
+    // nhấp nháy ô trúng
+    if(wheelHL >= 0 && wheelHL < n){
+      c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, Rw, wheelHL * s, (wheelHL + 1) * s); c.closePath();
+      c.fillStyle = `rgba(255,255,255,${(0.22 + 0.2 * Math.sin(t / 140)).toFixed(3)})`; c.fill();
     }
     c.restore();
-    c.beginPath(); c.arc(W / 2, W / 2, 34, 0, Math.PI * 2); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 6; c.strokeStyle = '#1b3a2f'; c.stroke();
+    // đèn LED quanh vành
+    const bulbs = 28;
+    for(let i = 0; i < bulbs; i++){
+      const a = (i / bulbs) * Math.PI * 2, x = M + Math.cos(a) * (Rw + 24), y = M + Math.sin(a) * (Rw + 24);
+      const on = (i + ledPhase) % 3 === 0 || (wheelSpinning && (i + ledPhase) % 2 === 0);
+      c.beginPath(); c.arc(x, y, 8, 0, Math.PI * 2);
+      c.fillStyle = on ? '#fffbd0' : '#a8681a'; c.shadowColor = on ? '#ffd84a' : 'transparent'; c.shadowBlur = on ? 18 : 0; c.fill(); c.shadowBlur = 0;
+      c.lineWidth = 2; c.strokeStyle = '#6b4300'; c.stroke();
+    }
+    // trục giữa
+    const hub = c.createRadialGradient(M - 8, M - 10, 4, M, M, 44);
+    hub.addColorStop(0, '#fff6c8'); hub.addColorStop(.5, '#f2b705'); hub.addColorStop(1, '#8a5a00');
+    c.beginPath(); c.arc(M, M, 44, 0, Math.PI * 2); c.fillStyle = hub; c.fill(); c.lineWidth = 6; c.strokeStyle = '#5b3a00'; c.stroke();
+    c.fillStyle = '#7a1f1f'; c.font = '700 40px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('★', M, M + 2);
   }
   function winnerIndex(angle){
     const n = wheelItems.length, s = (Math.PI * 2) / n, two = Math.PI * 2;
     const a = (((Math.PI * 1.5 - angle) % two) + two) % two;
     return Math.min(n - 1, Math.floor(a / s));
   }
+  function flickPointer(){
+    const p = $('gm-pointer'); if(!p) return;
+    p.classList.remove('flick'); void p.offsetWidth; p.classList.add('flick');
+  }
   function spinWheel(){
     if(wheelSpinning) return;
     if(wheelItems.length < 2){ $('gm-result').textContent = 'Cần ít nhất 2 ô'; return; }
-    wheelSpinning = true; $('gm-result').textContent = '';
-    const start = wheelAngle, extra = (5 + rand(4)) * Math.PI * 2 + (rand(1000) / 1000) * Math.PI * 2, dur = FAST ? 120 : 4800;
+    wheelSpinning = true; wheelHL = -1; $('gm-result').textContent = ''; $('gm-result').classList.remove('pop'); $('gm-spin').disabled = true;
+    const start = wheelAngle, extra = (5 + rand(4)) * Math.PI * 2 + (rand(1000) / 1000) * Math.PI * 2, dur = FAST ? 120 : 5200;
     const t0 = performance.now();
     let lastIdx = winnerIndex(start);
     (function frame(now){
-      const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
-      wheelAngle = start + extra * e; drawWheel();
+      const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3.2);
+      wheelAngle = start + extra * e; ledPhase++; drawWheel(now);
       const idx = winnerIndex(wheelAngle);
-      if(idx !== lastIdx){ lastIdx = idx; beep(900, 0.03, 'square', 0.06); }
+      if(idx !== lastIdx){ lastIdx = idx; beep(900 + (1 - p) * 300, 0.03, 'square', 0.06); flickPointer(); }
       if(p < 1){ wheelRaf = requestAnimationFrame(frame); return; }
       wheelRaf = 0; wheelSpinning = false;
-      const w = winnerIndex(wheelAngle);
-      $('gm-result').textContent = '🎉 ' + wheelItems[w];
+      const w = winnerIndex(wheelAngle); wheelHL = w;
+      const res = $('gm-result'); res.textContent = '🎉 ' + wheelItems[w]; void res.offsetWidth; res.classList.add('pop');
+      $('gm-spin').disabled = false;
       beep(660, 0.15, 'triangle'); beep(880, 0.15, 'triangle', 0.1, 0.12); beep(1100, 0.25, 'triangle', 0.1, 0.24); buzz([80, 40, 80]);
+      try{ if(typeof launchConfetti === 'function') launchConfetti(); }catch(e){}
       if(removeWinner && wheelItems.length > 2){
         wheelItems.splice(w, 1); store('wheel', wheelItems);
-        later(() => { if(screen === 'wheel'){ $('gm-items').value = wheelItems.join('\n'); drawWheel(); } }, 1400);
+        later(() => { if(screen === 'wheel'){ wheelHL = -1; $('gm-items').value = wheelItems.join('\n'); drawWheel(); } }, FAST ? 30 : 2200);
       }
     })(t0);
   }

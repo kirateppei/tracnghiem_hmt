@@ -1,4 +1,4 @@
-/* Tab "Trò chơi": 4 mini game giải trí (khám răng cá sấu, thùng gỗ cướp biển, lắc xí ngầu, vòng quay may mắn).
+/* Tab "Trò chơi": 4 mini game giải trí (khám răng cá sấu, thùng gỗ cướp biển, lắc xí ngầu, vòng quay may mắn, đá gà mini).
    Chạy hoàn toàn trên máy, không ghi gì lên Firebase. Dựng giao diện vào #view-games khi mở tab lần đầu. */
 (function(){
   'use strict';
@@ -151,6 +151,53 @@
   #view-games .gm-spinbtn{ width:100%; padding:14px; border:0; border-radius:14px; background:linear-gradient(#ffd54a,#f2a100); color:#3b2400; font:inherit; font-weight:900; font-size:1.1rem; letter-spacing:.06em; cursor:pointer; box-shadow:0 4px 0 #9a6200, 0 8px 16px rgba(0,0,0,.35); animation:gm-glow 1.6s ease-in-out infinite; }
   #view-games .gm-spinbtn:disabled{ opacity:.6; animation:none; }
   @keyframes gm-glow{ 0%,100%{ box-shadow:0 4px 0 #9a6200, 0 8px 16px rgba(0,0,0,.35); } 50%{ box-shadow:0 4px 0 #9a6200, 0 0 24px rgba(255,214,74,.85); } }
+  /* đá gà mini */
+  #view-games .gm-chk{ display:flex; gap:10px; align-items:center; background:#fff; border-radius:14px; padding:10px; margin-bottom:8px; border:3px solid transparent; }
+  #view-games .gm-chk.sel{ border-color:var(--accent,#f2b705); }
+  #view-games .gm-chk .em{ font-size:2.6rem; line-height:1; filter:hue-rotate(var(--hue)); flex:none; width:54px; text-align:center; cursor:pointer; }
+  #view-games .gm-chk .info{ flex:1; min-width:0; }
+  #view-games .gm-chk input.nm{ width:100%; box-sizing:border-box; border:1px solid #c5d3cb; border-radius:8px; padding:5px 8px; font:inherit; font-weight:800; font-size:.92rem; margin-bottom:5px; color:#1b3a2f; background:#fff; }
+  #view-games .gm-stat{ display:flex; align-items:center; gap:6px; font-size:.7rem; font-weight:700; color:#33493d; margin:2px 0; }
+  #view-games .gm-stat span{ width:62px; flex:none; }
+  #view-games .gm-stat u{ flex:1; height:8px; border-radius:4px; background:#e3eae5; text-decoration:none; overflow:hidden; display:block; }
+  #view-games .gm-stat u i{ display:block; height:100%; border-radius:4px; }
+  #view-games .gm-stat b{ width:26px; text-align:right; flex:none; }
+  #view-games .gm-secret{ font-size:.7rem; color:#7a5c00; font-weight:800; margin-top:3px; }
+  #view-games .gm-chk .re{ border:0; background:#eef3ef; border-radius:10px; width:36px; height:36px; font-size:1.1rem; cursor:pointer; flex:none; }
+  #view-games .gm-arena{ position:relative; border-radius:18px; padding:14px 8px 10px; background:linear-gradient(#2b1d12 0%,#4a3320 55%,#8a6236 56%,#a97c45 100%); display:flex; align-items:flex-end; justify-content:space-between; min-height:250px; overflow:hidden; box-shadow:inset 0 0 40px rgba(0,0,0,.5); }
+  #view-games .gm-arena::before{ content:''; position:absolute; left:6%; right:6%; bottom:14px; height:60px; border-radius:50%; background:radial-gradient(ellipse,rgba(0,0,0,.25),transparent 70%); }
+  #view-games .gm-cside{ position:relative; width:42%; text-align:center; z-index:1; }
+  #view-games .gm-cside .nm{ color:#fff; font-weight:900; font-size:.82rem; text-shadow:0 2px 3px #000; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #view-games .gm-cside .bar{ height:10px; background:rgba(0,0,0,.55); border-radius:6px; overflow:hidden; margin:2px 0; border:1px solid rgba(255,255,255,.25); }
+  #view-games .gm-cside .bar i{ display:block; height:100%; width:100%; transition:width .35s; }
+  #view-games .gm-cside .bar.hp i{ background:linear-gradient(#ff6b6b,#d62828); }
+  #view-games .gm-cside .bar.en i{ background:linear-gradient(#6ec6ff,#1e88e5); }
+  #view-games .gm-cside .hpnum{ color:#fff; font-size:.68rem; font-weight:700; text-shadow:0 1px 2px #000; }
+  #view-games .gm-cside .chick{ font-size:4.4rem; line-height:1.1; margin-top:6px; filter:hue-rotate(var(--hue)); display:inline-block; transition:transform .12s; }
+  #view-games .gm-cside.left .chick{ transform:scaleX(-1); }
+  #view-games .gm-cside.left .chick.atk{ animation:gm-atkL .45s; }
+  #view-games .gm-cside.right .chick.atk{ animation:gm-atkR .45s; }
+  @keyframes gm-atkL{ 0%{ transform:scaleX(-1) translateX(0); } 40%{ transform:scaleX(-1) translateX(-70px) rotate(-8deg); } 100%{ transform:scaleX(-1) translateX(0); } }
+  @keyframes gm-atkR{ 0%{ transform:translateX(0); } 40%{ transform:translateX(-70px) rotate(-8deg); } 100%{ transform:translateX(0); } }
+  #view-games .gm-cside .chick.hurt{ animation:gm-hurt .35s; }
+  @keyframes gm-hurt{ 0%,100%{ opacity:1; } 25%{ opacity:.35; margin-left:-8px; } 50%{ opacity:1; margin-left:8px; } 75%{ opacity:.5; margin-left:-4px; } }
+  #view-games .gm-cside .chick.dead{ transform:rotate(90deg) translateX(10px); opacity:.7; }
+  #view-games .gm-cside.left .chick.dead{ transform:scaleX(-1) rotate(90deg) translateX(10px); }
+  #view-games .gm-cside .chick.win{ animation:gm-win .6s infinite alternate; }
+  @keyframes gm-win{ from{ margin-top:6px; } to{ margin-top:-8px; } }
+  #view-games .gm-dmg{ position:absolute; left:50%; top:40px; font-weight:900; font-size:1.5rem; color:#fff176; text-shadow:0 2px 0 #b71c1c,0 0 8px #000; pointer-events:none; animation:gm-float 1s forwards; z-index:3; }
+  #view-games .gm-dmg.crit{ color:#ff5252; font-size:2rem; }
+  #view-games .gm-dmg.miss{ color:#b3e5fc; font-size:1.1rem; }
+  @keyframes gm-float{ 0%{ transform:translate(-50%,0) scale(.6); opacity:0; } 20%{ opacity:1; transform:translate(-50%,-10px) scale(1.2); } 100%{ transform:translate(-50%,-60px) scale(1); opacity:0; } }
+  #view-games .gm-sp{ position:absolute; left:0; right:0; top:10px; text-align:center; font-weight:900; font-size:1.25rem; color:#fff; text-shadow:0 0 12px #ff9800,0 2px 0 #b71c1c; opacity:0; pointer-events:none; z-index:4; }
+  #view-games .gm-sp.show{ animation:gm-spshow 1.4s forwards; }
+  @keyframes gm-spshow{ 0%{ opacity:0; transform:scale(.4); } 20%{ opacity:1; transform:scale(1.15); } 80%{ opacity:1; transform:scale(1); } 100%{ opacity:0; } }
+  #view-games .gm-vs{ position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); font-weight:900; color:rgba(255,255,255,.35); font-size:1.6rem; }
+  #view-games .gm-log{ background:rgba(0,0,0,.35); border-radius:12px; padding:8px 10px; margin-top:10px; font-size:.78rem; line-height:1.5; min-height:5.4em; max-height:9.5em; overflow:auto; }
+  #view-games .gm-log div{ opacity:.85; } #view-games .gm-log div:last-child{ opacity:1; font-weight:700; }
+  #view-games .gm-ctl{ display:flex; gap:8px; margin-top:10px; }
+  #view-games .gm-ctl button{ flex:1; padding:11px 6px; border-radius:12px; border:0; font:inherit; font-weight:800; cursor:pointer; background:#eef3ef; color:#1b3a2f; }
+  #view-games .gm-ctl button.pri{ background:var(--accent,#f2b705); color:var(--accent-ink,#1b3a2f); }
   `;
   function injectCss(){
     if($('gm-style')) return;
@@ -177,6 +224,7 @@
         <button class="gm-card" data-g="croc"><span class="ico">🐊</span><b>Khám răng cá sấu</b><small>Bấm răng, ai bấm trúng răng đau thì bị cạp</small></button>
         <button class="gm-card" data-g="pirate"><span class="ico">🏴‍☠️</span><b>Thùng gỗ cướp biển</b><small>Nhét dao vào khe, coi chừng hải tặc bật ra</small></button>
         <button class="gm-card" data-g="dice"><span class="ico">🎲</span><b>Lắc xí ngầu</b><small>Lắc điện thoại hoặc bấm nút để gieo</small></button>
+        <button class="gm-card" data-g="chicken"><span class="ico">🐓</span><b>Đá gà mini</b><small>Gà có chỉ số và tuyệt chiêu ẩn, xem con nào thắng</small></button>
         <button class="gm-card" data-g="wheel"><span class="ico">🎡</span><b>Vòng quay may mắn</b><small>Tự nhập các ô rồi quay</small></button>
       </div>
       <p class="gm-hint">Chỉ để giải trí, kết quả không tính vào bảng xếp hạng.</p>`);
@@ -188,6 +236,7 @@
     if(g === 'croc' || g === 'pirate') return showSetup(g);
     if(g === 'dice') return showDice();
     if(g === 'wheel') return showWheel();
+    if(g === 'chicken') return showChickens();
   }
   function topBar(title){
     return `<div class="gm-top"><button class="gm-mini" id="gm-back">← Menu</button><h2>${title}</h2><span></span></div>`;
@@ -724,6 +773,259 @@
     })(t0);
   }
 
+  /* ---------- Đá gà mini ---------- */
+  const rf = () => rand(1000000) / 1000000;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const CH_NAMES = ['Gà Lửa', 'Gà Sấm', 'Gà Bão', 'Gà Thép', 'Gà Băng', 'Gà Vàng', 'Gà Đen', 'Gà Ngọc'];
+  const CH_HUES = [0, 205, 120, 45, 255, 320, 80, 165];
+  const SPECIALS = {
+    revive:  { name: 'Hồi Sinh', desc: 'hồi 35% máu một lần khi gần gục' },
+    flurry:  { name: 'Mổ Liên Hoàn', desc: '4 cú mổ liên tiếp' },
+    phantom: { name: 'Ảo Ảnh', desc: 'né 3 đòn kế tiếp' },
+    steel:   { name: 'Gồng Thép', desc: 'giảm một nửa sát thương 4 đòn kế tiếp' },
+    thunder: { name: 'Cú Đá Sấm Sét', desc: 'cú đá cực mạnh làm đối thủ choáng' },
+    crow:    { name: 'Gáy Uy Lực', desc: 'rút 60% năng lượng và làm yếu đòn của đối thủ' }
+  };
+  const SP_KEYS = Object.keys(SPECIALS);
+  const STAT_DEFS = [['str', 'Sức mạnh', '#e53935'], ['spd', 'Tốc độ', '#fb8c00'], ['hp', 'Máu', '#43a047'], ['en', 'Năng lượng', '#1e88e5']];
+  let flock = [];
+  let selected = new Set();
+  let chickenCount = +store('chickCount') || 4;
+  function newChicken(idx, keepName){
+    const w = [rf() + .15, rf() + .15, rf() + .15, rf() + .15], sum = w.reduce((x, y) => x + y, 0);
+    const v = w.map((x) => clamp(Math.round(34 + (96 * x) / sum * 1.0), 30, 100));
+    return { name: keepName || CH_NAMES[idx % CH_NAMES.length], hue: CH_HUES[idx % CH_HUES.length], str: v[0], spd: v[1], hp: v[2], en: v[3], sp: SP_KEYS[rand(SP_KEYS.length)] };
+  }
+  function makeFlock(n){
+    const old = flock.map((c) => c.name);
+    flock = Array.from({ length: n }, (_, i) => newChicken(i, old[i] && old[i] !== CH_NAMES[i % CH_NAMES.length] ? old[i] : null));
+    selected = new Set();
+  }
+
+  /* Mô phỏng một trận: trả về danh sách sự kiện để phát hoạt hình (hoặc bỏ qua) */
+  function simulate(A, B){
+    const f = [A, B].map((c) => ({ c, maxHp: 120 + c.hp * 2, maxEn: 40 + c.en * 0.9, gauge: rf() * 40, used: false, phantom: 0, steel: 0, weak: 0, stun: false, dealt: 0, sp: '' }));
+    f.forEach((x) => { x.hp = x.maxHp; x.en = x.maxEn; });
+    const ev = [];
+    const snap = () => ({ hp: f.map((x) => Math.round(x.hp)), en: f.map((x) => Math.round(x.en)) });
+    function strike(i, mult, unavoidable){
+      const a = f[i], d = f[1 - i];
+      const dodge = clamp(0.08 + (d.c.spd - a.c.spd) / 300, 0.03, 0.35);
+      let miss = false, dmg = 0, crit = false;
+      if(d.phantom > 0){ d.phantom--; miss = true; }
+      else if(!unavoidable && rf() < dodge) miss = true;
+      if(!miss){
+        crit = rf() < 0.1;
+        dmg = a.c.str * 0.5 * (0.7 + 0.6 * rf()) * mult * (crit ? 1.8 : 1);
+        if(a.weak > 0) dmg *= 0.7;
+        if(d.steel > 0){ dmg *= 0.5; d.steel--; }
+        dmg = Math.max(1, Math.round(dmg)); d.hp = Math.max(0, d.hp - dmg); a.dealt += dmg;
+      }
+      if(a.weak > 0) a.weak--;
+      return { miss, dmg, crit };
+    }
+    let guard = 0, winner = -1;
+    while(winner < 0 && guard++ < 600){
+      const t = Math.min(...f.map((x) => (100 - x.gauge) / x.c.spd));
+      f.forEach((x) => { x.gauge += t * x.c.spd; });
+      const r0 = f[0].gauge, r1 = f[1].gauge;
+      const i = r0 > r1 ? 0 : r1 > r0 ? 1 : rand(2);
+      f[i].gauge = Math.max(0, f[i].gauge - 100);
+      const me = f[i], op = f[1 - i];
+      if(me.stun){ me.stun = false; ev.push({ t: 'stun', who: i, ...snap() }); continue; }
+      const key = me.c.sp;
+      // tuyệt chiêu ẩn
+      let used = false;
+      if(!me.used){
+        if(key === 'revive'){
+          if(me.hp < me.maxHp * 0.3){ me.used = used = true; me.hp = Math.min(me.maxHp, me.hp + me.maxHp * 0.35); me.sp = key; ev.push({ t: 'special', who: i, key, ...snap() }); }
+        }else if(me.en >= 20 && rf() < (me.hp < me.maxHp * 0.5 ? 0.34 : 0.16)){
+          me.used = used = true; me.sp = key; me.en -= 20;
+          if(key === 'flurry'){
+            ev.push({ t: 'special', who: i, key, ...snap() });
+            for(let k = 0; k < 4 && op.hp > 0; k++){ const h = strike(i, 0.6); ev.push({ t: 'attack', who: i, ...h, ...snap() }); }
+          }else if(key === 'phantom'){ me.phantom = 3; ev.push({ t: 'special', who: i, key, ...snap() }); }
+          else if(key === 'steel'){ me.steel = 4; ev.push({ t: 'special', who: i, key, ...snap() }); }
+          else if(key === 'thunder'){ const h = strike(i, 2.4, true); op.stun = true; ev.push({ t: 'special', who: i, key, ...snap() }); ev.push({ t: 'attack', who: i, ...h, ...snap() }); }
+          else if(key === 'crow'){ op.en = Math.max(0, op.en * 0.4); op.weak = 3; ev.push({ t: 'special', who: i, key, ...snap() }); }
+        }
+      }
+      if(!used){
+        if(me.en < 12){ me.en = Math.min(me.maxEn, me.en + me.maxEn * 0.3); ev.push({ t: 'rest', who: i, ...snap() }); }
+        else{ me.en -= 12; const h = strike(i, 1); ev.push({ t: 'attack', who: i, ...h, ...snap() }); }
+      }
+      if(op.hp <= 0) winner = i;
+    }
+    if(winner < 0) winner = f[0].hp / f[0].maxHp >= f[1].hp / f[1].maxHp ? 0 : 1;
+    ev.push({ t: 'end', winner, ...snap() });
+    return { ev, winner, maxHp: f.map((x) => x.maxHp), maxEn: f.map((x) => x.maxEn), dealt: f.map((x) => x.dealt), used: f.map((x) => x.sp) };
+  }
+
+  function statBars(c){
+    return STAT_DEFS.map(([k, label, col]) => `<div class="gm-stat"><span>${label}</span><u><i style="width:${c[k]}%;background:${col}"></i></u><b>${c[k]}</b></div>`).join('') +
+      '<div class="gm-secret">❓ Tuyệt chiêu bí mật</div>';
+  }
+
+  function showChickens(){
+    clearTimers(); screen = 'chicken';
+    if(flock.length !== chickenCount) makeFlock(chickenCount);
+    const cards = flock.map((c, i) => `<div class="gm-chk ${selected.has(i) ? 'sel' : ''}" data-i="${i}">
+        <div class="em" data-act="sel" style="--hue:${c.hue}deg" title="Chạm để chọn">🐓</div>
+        <div class="info"><input class="nm" maxlength="14" value="${esc(c.name)}" data-i="${i}">${statBars(c)}</div>
+        <button class="re" data-act="re" data-i="${i}" title="Tạo lại chỉ số">🎲</button></div>`).join('');
+    render(`${topBar('🐓 Đá gà mini')}
+      <div class="gm-panel">
+        <p style="margin:0 0 10px;font-size:.85rem;line-height:1.5">Mỗi chú gà có 4 chỉ số hiện ra và một <b>tuyệt chiêu bí mật</b> chỉ lộ ra khi ra đòn. Cho các chú gà đấu hoạt hình với nhau xem ai thắng. Game vui, không cá cược.</p>
+        <label>Số gà</label>
+        <div class="gm-seg" id="gm-ccount">${[2, 3, 4, 5, 6, 7, 8].map((n) => `<button data-n="${n}" class="${n === chickenCount ? 'on' : ''}">${n}</button>`).join('')}</div>
+        <button class="gm-mini" id="gm-newall" style="margin-top:10px;color:#1b3a2f;background:#eef3ef;border-color:#c5d3cb">🎲 Tạo gà mới (đổi hết chỉ số)</button>
+      </div>
+      ${cards}
+      <div class="gm-ctl" id="gm-cmodes"></div>
+      <p class="gm-hint">Chạm vào con gà để chọn 2 con đấu riêng. Gõ tên để đặt tên.</p>`);
+    bindBack();
+    const modes = $('gm-cmodes');
+    function drawModes(){
+      modes.innerHTML = flock.length === 2
+        ? '<button class="pri" id="gm-go">⚔ Bắt đầu trận đấu</button>'
+        : `<button class="pri" id="gm-go">🏆 Giải đấu (${flock.length} gà)</button><button id="gm-pair" ${selected.size === 2 ? '' : 'disabled style="opacity:.5"'}>⚔ Đấu cặp đã chọn</button>`;
+      $('gm-go').addEventListener('click', () => startTournament());
+      const p = $('gm-pair'); if(p) p.addEventListener('click', () => { if(selected.size === 2) startMatches([[...selected][0], [...selected][1]], true); });
+    }
+    drawModes();
+    $('gm-ccount').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { chickenCount = +b.dataset.n; store('chickCount', chickenCount); makeFlock(chickenCount); showChickens(); }));
+    $('gm-newall').addEventListener('click', () => { const names = flock.map((c) => c.name); flock = flock.map((c, i) => newChicken(i, names[i])); showChickens(); beep(520, 0.1, 'triangle'); });
+    root.querySelectorAll('.gm-chk').forEach((card) => {
+      const i = +card.dataset.i;
+      card.querySelector('.em').addEventListener('click', () => {
+        if(selected.has(i)) selected.delete(i); else { if(selected.size >= 2) selected.delete([...selected][0]); selected.add(i); }
+        root.querySelectorAll('.gm-chk').forEach((x) => x.classList.toggle('sel', selected.has(+x.dataset.i))); drawModes(); beep(600, 0.05, 'triangle', 0.08);
+      });
+      card.querySelector('input.nm').addEventListener('input', (e) => { flock[i].name = e.target.value; });
+      card.querySelector('.re').addEventListener('click', () => { const nm = flock[i].name; flock[i] = newChicken(i, nm); selected = new Set(); showChickens(); });
+    });
+  }
+
+  /* Giải đấu loại trực tiếp hoặc một trận đơn */
+  let tour = null;
+  function startTournament(){
+    const order = flock.map((_, i) => i).sort(() => rf() - 0.5);
+    tour = { round: 1, pending: [], winners: [], bye: null, single: false, results: [] };
+    planRound(order);
+    nextMatch();
+  }
+  function planRound(ids){
+    tour.pending = []; tour.bye = null;
+    const a = ids.slice();
+    if(a.length % 2){ tour.bye = a.pop(); }
+    for(let k = 0; k < a.length; k += 2) tour.pending.push([a[k], a[k + 1]]);
+    tour.total = tour.pending.length; tour.idx = 0;
+  }
+  function startMatches(pair, single){
+    tour = { round: 1, pending: [pair], winners: [], bye: null, single: !!single, results: [], total: 1, idx: 0 };
+    nextMatch();
+  }
+  function nextMatch(){
+    if(!tour.pending.length){
+      const ids = tour.winners.slice(); if(tour.bye !== null) ids.push(tour.bye);
+      if(ids.length === 1) return showChampion(ids[0]);
+      tour.round++; tour.winners = []; planRound(ids.sort(() => rf() - 0.5));
+    }
+    const [ia, ib] = tour.pending.shift(); tour.idx++;
+    playMatch(ia, ib);
+  }
+  function playMatch(ia, ib){
+    clearTimers(); screen = 'chicken-fight';
+    const A = flock[ia], B = flock[ib];
+    const sim = simulate(A, B);
+    const head = tour.single ? 'Trận đấu cặp' : `Vòng ${tour.round} · trận ${tour.idx}/${tour.total}` + (tour.bye !== null ? ` · ${esc(flock[tour.bye].name)} được đặc cách` : '');
+    const side = (c, k, cls) => `<div class="gm-cside ${cls}" id="gm-c${k}">
+        <div class="nm">${esc(c.name)}</div>
+        <div class="bar hp"><i id="hp${k}"></i></div><div class="hpnum" id="hpn${k}"></div>
+        <div class="bar en"><i id="en${k}"></i></div>
+        <div class="chick" id="ch${k}" style="--hue:${c.hue}deg">🐓</div></div>`;
+    render(`${topBar('🐓 Đá gà mini')}
+      <p style="text-align:center;margin:0 0 8px;font-weight:700">${head}</p>
+      <div class="gm-arena">${side(A, 0, 'left')}<div class="gm-vs">VS</div>${side(B, 1, 'right')}<div class="gm-sp" id="gm-sp"></div></div>
+      <div class="gm-log" id="gm-log"></div>
+      <div class="gm-ctl" id="gm-fctl"><button class="pri" id="gm-play">▶ Bắt đầu</button><button id="gm-quick">⏭ Xem kết quả</button></div>`);
+    bindBack();
+    const log = (txt) => { const l = $('gm-log'); if(!l) return; const d = document.createElement('div'); d.textContent = txt; l.appendChild(d); l.scrollTop = l.scrollHeight; };
+    const setBars = (e) => {
+      for(let k = 0; k < 2; k++){
+        $('hp' + k).style.width = (e.hp[k] / sim.maxHp[k] * 100) + '%'; $('hpn' + k).textContent = `${e.hp[k]} / ${sim.maxHp[k]}`;
+        $('en' + k).style.width = clamp(e.en[k] / sim.maxEn[k] * 100, 0, 100) + '%';
+      }
+    };
+    setBars({ hp: sim.maxHp, en: sim.maxEn });
+    const names = [A.name, B.name];
+    const speed = { v: 1 };
+    let stepI = 0, finished = false;
+    function pop(k, text, cls){
+      const el = document.createElement('div'); el.className = 'gm-dmg ' + (cls || ''); el.textContent = text;
+      $('gm-c' + k).appendChild(el); later(() => el.remove(), 1000);
+    }
+    function anim(k, cls, ms){ const el = $('ch' + k); if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); later(() => el.classList.remove(cls), ms); }
+    function finish(){
+      if(finished) return; finished = true;
+      const w = sim.winner, l = 1 - w, ia2 = [ia, ib];
+      tour.winners.push(ia2[w]);
+      const dead = $('ch' + l), win = $('ch' + w); if(dead) dead.classList.add('dead'); if(win) win.classList.add('win');
+      setBars(sim.ev[sim.ev.length - 1]);
+      const revealed = sim.used.map((u, k) => u ? `${names[k]} đã dùng tuyệt chiêu ${SPECIALS[u].name} (${SPECIALS[u].desc}).` : `${names[k]} chưa kịp dùng tuyệt chiêu bí mật.`);
+      const l2 = $('gm-log'); if(l2){ l2.innerHTML = ''; log(`🏆 ${names[w]} thắng! Gây ${sim.dealt[w]} sát thương, đối thủ gây ${sim.dealt[l]}.`); revealed.forEach(log); }
+      beep(660, 0.15, 'triangle'); beep(880, 0.2, 'triangle', 0.1, 0.12); buzz([60, 40, 100]);
+      const last = !tour.pending.length && (tour.winners.length + (tour.bye !== null ? 1 : 0)) === 1;
+      $('gm-fctl').innerHTML = `<button class="pri" id="gm-next">${tour.single ? 'Về danh sách gà' : last ? '🏆 Xem nhà vô địch' : 'Trận kế tiếp →'}</button>`;
+      $('gm-next').addEventListener('click', () => { if(tour.single) showChickens(); else nextMatch(); });
+    }
+    function step(){
+      if(finished) return;
+      const e = sim.ev[stepI++]; if(!e){ finish(); return; }
+      const k = e.who, o = 1 - k;
+      if(e.t === 'attack'){
+        anim(k, 'atk', 450);
+        later(() => {
+          if(e.miss){ pop(o, 'Né!', 'miss'); log(`${names[o]} né được đòn của ${names[k]}.`); beep(700, 0.08, 'sine', 0.08); }
+          else{ anim(o, 'hurt', 350); pop(o, '-' + e.dmg, e.crit ? 'crit' : ''); log(`${names[k]} ${e.crit ? 'đá CHÍ MẠNG' : 'mổ'} ${names[o]} mất ${e.dmg} máu.`); noise(0.08, e.crit ? 0.22 : 0.12); buzz(e.crit ? 40 : 15); }
+          setBars(e);
+        }, 220 / speed.v);
+      }else if(e.t === 'special'){
+        const sp = SPECIALS[e.key], el = $('gm-sp'); el.textContent = `✨ ${names[k]}: ${sp.name}!`; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+        log(`✨ ${names[k]} tung tuyệt chiêu ${sp.name}: ${sp.desc}.`); beep(440, 0.1, 'sawtooth', 0.12); beep(880, 0.25, 'triangle', 0.12, 0.1); anim(k, 'atk', 450); setBars(e);
+      }else if(e.t === 'rest'){ log(`${names[k]} thở dốc, lấy lại sức.`); setBars(e); }
+      else if(e.t === 'stun'){ log(`${names[k]} đang choáng, mất lượt!`); setBars(e); }
+      else if(e.t === 'end'){ later(finish, 500 / speed.v); return; }
+      later(step, (e.t === 'special' ? 1500 : 800) / speed.v);
+    }
+    $('gm-play').addEventListener('click', () => {
+      $('gm-fctl').innerHTML = '<button id="gm-fast">⏩ Nhanh x2</button><button id="gm-skip">⏭ Bỏ qua</button>';
+      $('gm-fast').addEventListener('click', () => { speed.v = speed.v === 1 ? 2.2 : 1; $('gm-fast').textContent = speed.v === 1 ? '⏩ Nhanh x2' : '⏩ Đang nhanh'; });
+      $('gm-skip').addEventListener('click', () => { clearTimers(); finish(); });
+      log(`🔔 ${names[0]} gặp ${names[1]}!`); step();
+    });
+    $('gm-quick').addEventListener('click', () => { clearTimers(); finish(); });
+  }
+
+  function showChampion(idx){
+    clearTimers(); screen = 'chicken-end';
+    const c = flock[idx];
+    const reveal = flock.map((x) => `<div class="gm-chk" style="--hue:${x.hue}deg"><div class="em" style="cursor:default">🐓</div><div class="info"><b>${esc(x.name)}</b>${statBars(x).replace('❓ Tuyệt chiêu bí mật', '✨ ' + SPECIALS[x.sp].name + ': ' + SPECIALS[x.sp].desc)}</div></div>`).join('');
+    render(`${topBar('🏆 Nhà vô địch')}
+      <div class="gm-panel" style="text-align:center">
+        <div style="font-size:4.5rem;line-height:1.1;filter:hue-rotate(${c.hue}deg)">🐓</div>
+        <div style="font-size:1.5rem;font-weight:900;margin:4px 0">🏆 ${esc(c.name)}</div>
+        <div style="font-size:.85rem">là nhà vô địch!</div>
+      </div>
+      <div class="gm-panel"><label>Tuyệt chiêu bí mật của các chú gà</label>${reveal}</div>
+      <div class="gm-ctl"><button class="pri" id="gm-again3">Đấu lại với đội hình này</button><button id="gm-newflock">🎲 Tạo gà mới</button></div>`);
+    bindBack();
+    beep(660, 0.15, 'triangle'); beep(880, 0.15, 'triangle', 0.1, 0.12); beep(1100, 0.3, 'triangle', 0.1, 0.24);
+    try{ if(typeof launchConfetti === 'function') launchConfetti(); }catch(e){}
+    $('gm-again3').addEventListener('click', startTournament);
+    $('gm-newflock').addEventListener('click', () => { const names = flock.map((x) => x.name); flock = flock.map((x, i) => newChicken(i, names[i])); showChickens(); });
+  }
+
   /* ---------- Cổng vào ---------- */
   window.renderGames = function(){
     root = $('view-games'); if(!root) return;
@@ -731,5 +1033,5 @@
     if(!root.dataset.ready){ root.dataset.ready = '1'; showMenu(); }
   };
   window.leaveGames = function(){ clearTimers(); };
-  window.__games = { openGame, showMenu, get screen(){ return screen; }, winnerIndex, get wheelItems(){ return wheelItems; } };
+  window.__games = { simulate, newChicken, SPECIALS, openGame, showMenu, get screen(){ return screen; }, winnerIndex, get wheelItems(){ return wheelItems; } };
 })();

@@ -1,4 +1,6 @@
 ext {
+    // Bắt buộc để plugin @capacitor-firebase/authentication đóng gói thư viện Google Sign-In (thiếu thì app tắt ngay khi mở)
+    rgcfaIncludeGoogle = true
     minSdkVersion = 22
     compileSdkVersion = 34
     targetSdkVersion = 34

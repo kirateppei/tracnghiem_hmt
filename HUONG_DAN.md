@@ -51,7 +51,7 @@ Trên GitHub mở `docs/firebase-config.js` → biểu tượng bút chì → th
 3. Gửi link cho nhân viên. Ai có tài khoản Google đều vào được; tên trên bảng xếp hạng là tên Google (hoặc tên bạn đặt trong tab Tài khoản).
 
 ## Làm bài và giao diện
-- Màn hình làm bài chọn bằng **nút bấm**: độ khó (Hỗn hợp, Dễ, Trung bình, Khó, Cực khó, Xuất sắc), số câu (10 đến 100), hai công tắc **Chỉ câu có hình/video** và **Làm bài ẩn danh**. Phần mềm **nhớ lựa chọn lần trước** trên từng máy.
+- Màn hình làm bài chọn bằng **nút bấm**: độ khó (Hỗn hợp, Dễ, Trung bình, Khó, Cực khó, Xuất sắc), số câu (10 đến 100), công tắc **Làm bài ẩn danh**. Phần mềm **nhớ lựa chọn lần trước** trên từng máy.
 - **Làm bài ẩn danh:** tên không hiện trên bảng xếp hạng, kết quả vẫn được tính và hiện là "Ẩn danh" (riêng bạn vẫn thấy dòng của mình có chữ "bạn"). Các lượt ẩn danh của một người không bị gộp với các lượt có tên. Về kỹ thuật, quản trị viên có quyền vào Firebase vẫn tra được mã tài khoản phía sau.
 - Thanh tab gồm **Làm bài, Xếp hạng, Tài liệu** và, với quản trị viên, **Quản trị** (Thêm câu, Quản lý, Tài khoản).
 

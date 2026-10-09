@@ -150,10 +150,8 @@ function backToSetup(){
 document.getElementById('setup-difficulty').addEventListener('change', updateSetupHint);
 function updateSetupHint(){
   const diff = document.getElementById('setup-difficulty').value;
-  const mediaOnly = document.getElementById('setup-media-only').checked;
   let pool = questions;
   if(diff !== '__ALL__') pool = pool.filter(q => (q.difficulty||'tb') === diff);
-  if(mediaOnly) pool = pool.filter(q => q.mediaType);
   const want = parseInt(document.getElementById('setup-count').value, 10) || 20;
   document.getElementById('setup-total-hint').textContent = pool.length === 0
     ? 'Không có câu hỏi nào phù hợp với lựa chọn này.'
@@ -239,11 +237,9 @@ function pickWeightedByDifficulty(basePool, count){
 function startQuiz(){
   if(questions.length === 0){ backToSetup(); return; }
   const diff = document.getElementById('setup-difficulty').value;
-  const mediaOnly = document.getElementById('setup-media-only').checked;
   const count = parseInt(document.getElementById('setup-count').value, 10);
   quizAnon = !!document.getElementById('setup-anon').checked;
   let basePool = questions;
-  if(mediaOnly) basePool = basePool.filter(q => q.mediaType);
   if(basePool.length === 0){ showToast('Không có câu hỏi phù hợp với lựa chọn này.'); return; }
 
   let selected;
@@ -1386,7 +1382,6 @@ function saveSetupPrefs(){
     localStorage.setItem(SETUP_PREFS_KEY, JSON.stringify({
       diff: document.getElementById('setup-difficulty').value,
       count: document.getElementById('setup-count').value,
-      media: document.getElementById('setup-media-only').checked,
       anon: document.getElementById('setup-anon').checked,
     }));
   }catch(e){}
@@ -1407,7 +1402,6 @@ function initSetupControls(){
       };
       setSel('setup-difficulty', p.diff);
       setSel('setup-count', p.count);
-      document.getElementById('setup-media-only').checked = !!p.media;
       document.getElementById('setup-anon').checked = !!p.anon;
     }
   }catch(e){}
@@ -1419,7 +1413,7 @@ function initSetupControls(){
       syncSegmented(); updateSetupHint(); saveSetupPrefs();
     });
   });
-  ['setup-media-only', 'setup-anon'].forEach((id) => {
+  ['setup-anon'].forEach((id) => {
     document.getElementById(id).addEventListener('change', () => { updateSetupHint(); saveSetupPrefs(); });
   });
   syncSegmented();

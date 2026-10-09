@@ -1,7 +1,7 @@
 {
-  "version": "dd2b0c23f1",
-  "date": "2026-10-09T20:30:47Z",
-  "notes": "Sửa câu hỏi: đồng nhất đơn vị, bỏ đáp án trùng, xoá 108 câu lặp",
+  "version": "54c5a33d75",
+  "date": "2026-10-09T20:32:56Z",
+  "notes": "Bỏ công tắc 'Chỉ câu có hình ảnh/video'",
   "apk": {
     "version": "",
     "url": "",

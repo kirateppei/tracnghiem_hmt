@@ -1,7 +1,7 @@
 {
-  "version": "584fb4c617",
-  "date": "2026-10-09T20:35:39Z",
-  "notes": "Vẽ lại 48 hình ký hiệu điện đúng chuẩn (cầu chì, biến tần, cầu dao/CB)",
+  "version": "b7426de729",
+  "date": "2026-10-09T20:41:39Z",
+  "notes": "Thêm mục Bản vẽ NLMT vào Tài liệu (4 bản vẽ, xem và phóng to)",
   "apk": {
     "version": "",
     "url": "",

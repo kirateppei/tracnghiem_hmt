@@ -1150,6 +1150,30 @@ function glossaryHtml(items, groupByCat){
   `).join('');
 }
 
+const GUIDE_DRAWINGS = [
+  { file: 'an-hung', title: 'An Hưng — phân vùng INV, lắp pin NLMT', note: 'Bản vẽ hoàn công (KC-00, 25/12/2020): mặt bằng mái, các dãy pin và phân vùng inverter.' },
+  { file: 'dong-tam', landscape: true, title: 'Đồng Tâm (HDV) — sơ đồ mái pin', note: 'Sơ đồ mái pin theo từng inverter, kèm bảng string và số tấm.' },
+  { file: 'loc-thai', landscape: true, title: 'Lộc Thái (HDV) — sơ đồ mái pin', note: 'Sơ đồ mái pin theo từng inverter, kèm bảng công suất, string và số tấm.' },
+  { file: 'loc-hiep-le-minh', landscape: true, title: 'Lộc Hiệp – Lê Minh — sơ đồ mái pin', note: 'Sơ đồ mái pin theo từng inverter, kèm bảng công suất, string và số tấm.' },
+];
+let drawingZoom = 1;
+function openDrawing(i){
+  const d = GUIDE_DRAWINGS[i]; if(!d) return;
+  document.getElementById('drawing-title').textContent = d.title;
+  const img = document.getElementById('drawing-img');
+  img.src = 'banve/' + d.file + '.png';
+  document.getElementById('drawing-pdf').href = 'banve/' + d.file + '.pdf';
+  setDrawingZoom(d.landscape && window.innerWidth < 700 ? 2 : 1);
+  document.getElementById('drawing-scroll').scrollTo(0, 0);
+  document.getElementById('drawing-backdrop').classList.add('show');
+}
+function closeDrawing(){ document.getElementById('drawing-backdrop').classList.remove('show'); }
+function setDrawingZoom(z){
+  drawingZoom = Math.max(1, Math.min(5, z));
+  document.getElementById('drawing-img').style.width = (drawingZoom * 100) + '%';
+  document.getElementById('drawing-zoom-label').textContent = Math.round(drawingZoom * 100) + '%';
+}
+
 const TOC_SECTIONS = [
   {
     id: 'wifi', title: 'Cấu hình WiFi', sub: '7 hãng biến tần · dongle/WiFi stick',
@@ -1182,6 +1206,18 @@ const TOC_SECTIONS = [
   {
     id: 'basics', title: 'Kiến thức cơ bản', sub: `${GUIDE_BASICS.length} khái niệm · điện mặt trời`,
     body: () => `<div class="card">${glossaryHtml(GUIDE_BASICS, true)}</div>`,
+  },
+  {
+    id: 'drawings', title: 'Bản vẽ NLMT', sub: `${GUIDE_DRAWINGS.length} bản vẽ · phân vùng inverter, sơ đồ mái pin`,
+    body: () => `
+      <p style="margin:0 0 12px; font-size:0.85rem; color:#5c6a63; line-height:1.55;">Bấm vào hình để xem toàn màn hình và phóng to. Có nút tải file PDF gốc.</p>
+      ${GUIDE_DRAWINGS.map((d, i) => `
+        <div class="card drawing-card">
+          <div class="drawing-title">${escapeHtml(d.title)}</div>
+          <div class="drawing-note">${escapeHtml(d.note)}</div>
+          <img class="drawing-thumb" src="banve/${d.file}.png" alt="${escapeHtml(d.title)}" loading="lazy" onclick="openDrawing(${i})">
+          <div class="drawing-actions"><button class="secondary" type="button" onclick="openDrawing(${i})">🔍 Xem &amp; phóng to</button><a class="btn-link" href="banve/${d.file}.pdf" target="_blank" rel="noopener" download>⬇ Tải PDF</a></div>
+        </div>`).join('')}`,
   },
   {
     id: 'safety', title: 'An toàn điện mặt trời', sub: `${GUIDE_SAFETY.length} nguyên tắc an toàn`,

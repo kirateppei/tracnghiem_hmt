@@ -53,6 +53,7 @@ Trên GitHub mở `docs/firebase-config.js` → biểu tượng bút chì → th
 ## Làm bài và giao diện
 - Màn hình làm bài chọn bằng **nút bấm**: độ khó (Hỗn hợp, Dễ, Trung bình, Khó, Cực khó, Xuất sắc), số câu (10 đến 100), công tắc **Làm bài ẩn danh**. Phần mềm **nhớ lựa chọn lần trước** trên từng máy.
 - **Làm bài ẩn danh:** tên không hiện trên bảng xếp hạng, kết quả vẫn được tính và hiện là "Ẩn danh" (riêng bạn vẫn thấy dòng của mình có chữ "bạn"). Các lượt ẩn danh của một người không bị gộp với các lượt có tên. Về kỹ thuật, quản trị viên có quyền vào Firebase vẫn tra được mã tài khoản phía sau.
+- **Tài liệu → Bản vẽ NLMT:** xem bản vẽ ngay trên màn hình, bấm vào hình để phóng to hoặc tải PDF. Muốn thêm bản vẽ: chép file PDF và ảnh xem trước (cùng tên, đuôi `.pdf` và `.png`) vào thư mục `docs/banve/`, rồi thêm một dòng vào danh sách `GUIDE_DRAWINGS` ở đầu mục `TOC_SECTIONS` trong `docs/app.js`.
 - Thanh tab gồm **Làm bài, Xếp hạng, Tài liệu** và, với quản trị viên, **Quản trị** (Thêm câu, Quản lý, Tài khoản).
 
 ## Quản lý quyền truy cập

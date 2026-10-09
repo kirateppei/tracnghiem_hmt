@@ -548,6 +548,21 @@
   .toc-body{ max-height:0; overflow:hidden; transition: max-height .35s ease; }
   .toc-item.open .toc-body{ max-height:30000px; }
   .toc-inner{ padding:0 16px 18px; }
+  #drawing-backdrop{ z-index:200; }
+  .drawing-card{ margin-bottom:14px; }
+  .drawing-title{ font-weight:700; color:var(--card-ink); margin-bottom:2px; }
+  .drawing-note{ font-size:0.8rem; color:#5c6a63; margin-bottom:10px; line-height:1.5; }
+  .drawing-thumb{ display:block; width:100%; max-height:320px; object-fit:contain; background:#fff; border:1px solid #d9e2dc; border-radius:10px; cursor:zoom-in; }
+  .drawing-actions{ display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+  .drawing-actions .btn-link, .drawing-ctrl a{ font-weight:700; font-size:0.85rem; color:var(--accent,#1b6b4a); text-decoration:none; padding:8px 10px; }
+  .drawing-modal{ position:fixed; inset:0; background:#fff; display:flex; flex-direction:column; }
+  .drawing-bar{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid #d9e2dc; font-size:0.85rem; color:#1b3a2f; }
+  .drawing-bar b{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .drawing-ctrl{ display:flex; align-items:center; gap:6px; flex:none; }
+  .drawing-ctrl button{ min-width:36px; height:36px; font-size:1.1rem; border-radius:8px; border:1px solid #c5d3cb; background:#f3f7f4; color:#1b3a2f; }
+  .drawing-scroll{ flex:1; overflow:auto; -webkit-overflow-scrolling:touch; background:#fff; touch-action:pan-x pan-y pinch-zoom; }
+  .drawing-scroll img{ display:block; width:100%; max-width:none; height:auto; }
+
 
   /* Glossary (mục lục 3, 4) */
   .gl-group-title{
@@ -1056,6 +1071,22 @@ nav.tabs button{ flex:1 1 0; min-width:0; padding:9px 2px; font-size:0.76rem; }
   </div>
 </div>
 
+<div class="modal-backdrop" id="drawing-backdrop">
+  <div class="drawing-modal">
+    <div class="drawing-bar">
+      <b id="drawing-title"></b>
+      <span class="drawing-ctrl">
+        <button type="button" onclick="setDrawingZoom(drawingZoom-0.5)" aria-label="Thu nhỏ">−</button>
+        <span id="drawing-zoom-label">100%</span>
+        <button type="button" onclick="setDrawingZoom(drawingZoom+0.5)" aria-label="Phóng to">+</button>
+        <a id="drawing-pdf" href="#" target="_blank" rel="noopener" download>PDF</a>
+        <button type="button" onclick="closeDrawing()" aria-label="Đóng">✕</button>
+      </span>
+    </div>
+    <div class="drawing-scroll" id="drawing-scroll"><img id="drawing-img" alt=""></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <button id="theme-picker-btn" onclick="openThemePicker()" title="Đổi giao diện">🎨</button>
@@ -1136,13 +1167,13 @@ nav.tabs button{ flex:1 1 0; min-width:0; padding:9px 2px; font-size:0.76rem; }
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=584fb4c617"></script>
-<script src="firebase-config.js?v=584fb4c617"></script>
-<script src="questions.js?v=584fb4c617"></script>
-<script src="music.js?v=584fb4c617"></script>
-<script src="app.js?v=584fb4c617"></script>
-<script src="leaderboard.js?v=584fb4c617"></script>
-<script src="auth.js?v=584fb4c617"></script>
-<script src="update.js?v=584fb4c617"></script>
+<script src="version.js?v=b7426de729"></script>
+<script src="firebase-config.js?v=b7426de729"></script>
+<script src="questions.js?v=b7426de729"></script>
+<script src="music.js?v=b7426de729"></script>
+<script src="app.js?v=b7426de729"></script>
+<script src="leaderboard.js?v=b7426de729"></script>
+<script src="auth.js?v=b7426de729"></script>
+<script src="update.js?v=b7426de729"></script>
 </body>
 </html>

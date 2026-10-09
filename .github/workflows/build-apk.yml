@@ -3,7 +3,7 @@ name: Dựng APK Android
 # Tự chạy mỗi khi sửa thư mục android-app/ trên nhánh trang-web, hoặc bấm tay: Actions → Dựng APK Android → Run workflow.
 on:
   push:
-    branches: [trang-web]
+    branches: [trang-web, apk-test]
     paths: ['android-app/**', '.github/workflows/build-apk.yml']
   workflow_dispatch:
 
@@ -57,6 +57,7 @@ jobs:
           path: android-app/out/trac-nghiem-dmt.apk
 
       - name: Đăng lên mục Releases (liên kết tải cố định)
+        if: github.ref == 'refs/heads/trang-web'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

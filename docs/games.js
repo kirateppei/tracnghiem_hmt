@@ -249,10 +249,12 @@
   #view-games svg[data-tier="1"]{ filter:drop-shadow(0 0 4px rgba(120,230,160,.8)); }
   #view-games svg[data-tier="2"]{ filter:drop-shadow(0 0 6px rgba(190,140,255,.95)) drop-shadow(0 0 12px rgba(255,236,130,.7)); }
   #view-games svg[data-tier="3"]{ filter:drop-shadow(0 0 7px #ffd54a) drop-shadow(0 0 18px #ff9800); }
+  #view-games svg[data-tier="4"]{ filter:drop-shadow(0 0 8px #fff59d) drop-shadow(0 0 20px #e040fb) drop-shadow(0 0 30px #ffd740); animation:gm-aura 1.6s ease-in-out infinite alternate; }
+  @keyframes gm-aura{ from{ filter:drop-shadow(0 0 6px #fff59d) drop-shadow(0 0 14px #e040fb); } to{ filter:drop-shadow(0 0 12px #fff59d) drop-shadow(0 0 28px #e040fb) drop-shadow(0 0 40px #ffd740); } }
   #view-games .tw{ transform-box:fill-box; transform-origin:center; animation:gm-tw 1.4s ease-in-out infinite; }
   @keyframes gm-tw{ 0%,100%{ opacity:.15; transform:scale(.4) rotate(0); } 50%{ opacity:1; transform:scale(1.2) rotate(45deg); } }
   #view-games .gm-tier{ font-size:.78rem; font-weight:900; letter-spacing:1px; margin-top:3px; }
-  #view-games .gm-tier.t0{ color:#78909c; } #view-games .gm-tier.t1{ color:#2e9e5b; } #view-games .gm-tier.t2{ color:#8e44ff; } #view-games .gm-tier.t3{ color:#e29a00; text-shadow:0 0 6px rgba(255,200,0,.6); }
+  #view-games .gm-tier.t0{ color:#78909c; } #view-games .gm-tier.t1{ color:#2e9e5b; } #view-games .gm-tier.t2{ color:#8e44ff; } #view-games .gm-tier.t3{ color:#e29a00; text-shadow:0 0 6px rgba(255,200,0,.6); } #view-games .gm-tier.t4{ color:#d500f9; text-shadow:0 0 8px rgba(255,214,0,.8); }
   #view-games .gm-chk .em svg{ width:54px; height:48px; display:block; overflow:visible; }
   #view-games .gm-dmg{ position:absolute; left:50%; top:40px; font-weight:900; font-size:1.5rem; color:#fff176; text-shadow:0 2px 0 #b71c1c,0 0 8px #000; pointer-events:none; animation:gm-float 1s forwards; z-index:3; }
   #view-games .gm-dmg.crit{ color:#ff5252; font-size:2rem; }
@@ -859,11 +861,12 @@
     { id: 'ngoc',   name: 'Gà Ngọc',         tier: 2, body: '#00897b', wing: '#004d40', hackle: '#b2dfdb', t1: '#00bfa5', t2: '#1de9b6', t3: '#64ffda', comb: '#e53935', pat: 'scales' },
     { id: 'phuong', name: 'Gà Phượng Hoàng', tier: 3, body: '#e53935', wing: '#ff6f00', hackle: '#ffeb3b', t1: '#ff1744', t2: '#ff9100', t3: '#ffea00', comb: '#ffd600', pat: 'flames' },
     { id: 'kim',    name: 'Gà Hoàng Kim',    tier: 3, body: '#ffc107', wing: '#ff8f00', hackle: '#fff8e1', t1: '#ffd54f', t2: '#ffb300', t3: '#fff176', comb: '#d50000', pat: 'scales' },
-    { id: 'rong',   name: 'Gà Rồng',         tier: 3, body: '#00c853', wing: '#00695c', hackle: '#ffd740', t1: '#00e5ff', t2: '#76ff03', t3: '#ffd600', comb: '#d50000', pat: 'scales' }
+    { id: 'rong',   name: 'Gà Rồng',         tier: 3, body: '#00c853', wing: '#00695c', hackle: '#ffd740', t1: '#00e5ff', t2: '#76ff03', t3: '#ffd600', comb: '#d50000', pat: 'scales' },
+    { id: 'than',   name: 'Gà Thần Đế',      tier: 4, body: '#6a1b9a', wing: '#ffd54a', hackle: '#fff9c4', t1: '#ff4081', t2: '#ffd740', t3: '#40c4ff', comb: '#ffd600', pat: 'cosmic' }
   ];
   const skinById = (id) => SKINS_CH.find((k) => k.id === id) || SKINS_CH[0];
-  const TIER_NAMES = ['Thường', 'Hiếm', 'Sử thi', 'Huyền thoại'];
-  const TIER_BUDGET = [[188, 214], [214, 240], [240, 266], [266, 292]];   // tổng 4 chỉ số theo hạng: hạng cao mạnh hơn
+  const TIER_NAMES = ['Thường', 'Hiếm', 'Sử thi', 'Huyền thoại', 'Thần thoại'];
+  const TIER_BUDGET = [[188, 214], [214, 240], [240, 266], [266, 292], [292, 322]];   // tổng 4 chỉ số theo hạng: hạng cao mạnh hơn
   const SPECIALS = {
     revive:  { name: 'Hồi Sinh', desc: 'hồi một phần lớn máu một lần khi gần gục' },
     flurry:  { name: 'Mổ Liên Hoàn', desc: 'chuỗi cú mổ liên tiếp rất khó né' },
@@ -877,7 +880,9 @@
   let flock = [];
   let selected = new Set();
   let chickenCount = +store('chickCount') || 4;
-  function pickTier(){ const r = rf(); return r < 0.38 ? 0 : r < 0.68 ? 1 : r < 0.9 ? 2 : 3; }
+  // tỉ lệ xuất hiện: 1 sao 45%, 2 sao 30%, 3 sao 16%, 4 sao 7%, 5 sao 2%
+  const TIER_RATES = [0.45, 0.30, 0.16, 0.07, 0.02];
+  function pickTier(){ let r = rf(), acc = 0; for(let t = 0; t < TIER_RATES.length; t++){ acc += TIER_RATES[t]; if(r < acc) return t; } return 0; }
   function newChicken(idx, keepName, usedNames, forceTier){
     const tier = forceTier === undefined ? pickTier() : forceTier;
     const pool = SKINS_CH.filter((k) => k.tier === tier), sk = pool[rand(pool.length)];
@@ -929,7 +934,7 @@
     }
     // gà yếu hơn được tuyệt chiêu mạnh hơn và dễ tung hơn (để có cửa lật kèo)
     const score = (c) => c.str + c.spd + c.hp + c.en;
-    f.forEach((x, k) => { x.u = clamp((score(f[1 - k].c) - score(x.c)) / 55, 0, 1); });
+    f.forEach((x, k) => { x.u = clamp((score(f[1 - k].c) - score(x.c)) / 55, 0, 1.5); });
     let guard = 0, winner = -1;
     while(winner < 0 && guard++ < 600){
       const t = Math.min(...f.map((x) => (100 - x.gauge) / x.c.spd));
@@ -980,13 +985,16 @@
       stripes: `<path d="M84 122 Q100 150 96 164 M100 114 Q118 148 112 166 M118 112 Q136 146 128 168 M136 116 Q152 146 146 168" fill="none" stroke="${dk}" stroke-width="4.5" stroke-linecap="round" opacity=".4"/>`,
       bolt: `<path d="M120 100 L102 132 L116 132 L106 160 L136 120 L121 120 L132 100Z" fill="#fff176" stroke="#f9a825" stroke-width="2" stroke-linejoin="round"/>`,
       flames: `<path d="M84 166 Q82 146 94 136 Q94 150 104 152 Q102 138 114 128 Q114 148 124 154 Q126 140 138 134 Q136 150 148 156 Q154 148 162 142 Q160 164 150 168Z" fill="#ffb300" stroke="#e65100" stroke-width="1.5" opacity=".92"/><path d="M96 166 Q96 152 106 146 Q106 158 114 160 Q116 150 124 146 Q124 160 132 164Z" fill="#fff59d" opacity=".9"/>`,
+      cosmic: `<g opacity=".95"><circle cx="104" cy="130" r="2.6" fill="#fff"/><circle cx="128" cy="118" r="2" fill="#ffe082"/><circle cx="142" cy="150" r="2.8" fill="#fff"/><circle cx="116" cy="156" r="2" fill="#80d8ff"/><circle cx="160" cy="128" r="2.2" fill="#fff"/><circle cx="90" cy="150" r="1.8" fill="#ffe082"/><path d="M96 118 Q130 100 152 124 Q130 112 108 132" fill="none" stroke="#ea80fc" stroke-width="2.5" opacity=".7"/></g>`,
       scales: `<g fill="none" stroke="${dk}" stroke-width="2" opacity=".5" stroke-linecap="round"><path d="M82 126 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0"/><path d="M88 140 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0"/><path d="M82 154 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0"/></g>`
     }[p.pat] || '';
     const gold = tier >= 1 ? `<rect x="104" y="170" width="10" height="5" rx="2" fill="#ffd54a" stroke="#b8860b"/><rect x="147" y="170" width="10" height="5" rx="2" fill="#ffd54a" stroke="#b8860b"/>` : '';
     const tail4 = tier >= 2 ? `<path d="M70 104 C22 88 6 30 40 -6 C50 40 64 70 94 92Z" fill="${shade(p.t1, .15)}" stroke="${shade(p.t1, -.4)}" stroke-width="2"/>` : '';
     const wingStroke = tier >= 2 ? '#ffd54f' : shade(p.wing, -.5);
+    const halo = tier >= 4 ? `<ellipse cx="178" cy="2" rx="30" ry="7" fill="none" stroke="#fff59d" stroke-width="5"/><ellipse cx="178" cy="2" rx="30" ry="7" fill="none" stroke="#ffd54a" stroke-width="2"/>` : '';
+    const tail5 = tier >= 4 ? `<path d="M72 100 C26 70 14 12 52 -14 C58 30 70 60 96 86Z" fill="${shade(p.t2, .1)}" stroke="${shade(p.t2, -.4)}" stroke-width="2"/>` : '';
     const crown = tier >= 3 ? `<path d="M158 36 L160 12 L169 27 L178 8 L187 27 L196 12 L198 38Z" fill="#ffd54a" stroke="#b8860b" stroke-width="2.5" stroke-linejoin="round"/><circle cx="178" cy="26" r="3.5" fill="#e53935" stroke="#7f0000"/><circle cx="163" cy="30" r="2.4" fill="#29b6f6"/><circle cx="193" cy="30" r="2.4" fill="#29b6f6"/>` : '';
-    const spark = tier >= 3 ? [[26, 40], [200, 20], [14, 120], [214, 100]].map(([x, y], k) => `<path class="tw" style="animation-delay:${k * 0.35}s" d="M0 -9 L2.5 -2.5 L9 0 L2.5 2.5 L0 9 L-2.5 2.5 L-9 0 L-2.5 -2.5Z" transform="translate(${x} ${y})" fill="#fffde7" stroke="#ffd54f" stroke-width="1"/>`).join('') : '';
+    const spark = tier >= 3 ? (tier >= 4 ? [[26, 40], [200, 20], [14, 120], [214, 100], [60, 10], [120, 6], [210, 150], [8, 170]] : [[26, 40], [200, 20], [14, 120], [214, 100]]).map(([x, y], k) => `<path class="tw" style="animation-delay:${k * 0.35}s" d="M0 -9 L2.5 -2.5 L9 0 L2.5 2.5 L0 9 L-2.5 2.5 L-9 0 L-2.5 -2.5Z" transform="translate(${x} ${y})" fill="#fffde7" stroke="#ffd54f" stroke-width="1"/>`).join('') : '';
     return `<svg viewBox="0 0 230 200" data-tier="${tier}" aria-hidden="true"><defs>
       <linearGradient id="${u}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(p.body, .3)}"/><stop offset=".55" stop-color="${p.body}"/><stop offset="1" stop-color="${shade(p.body, -.3)}"/></linearGradient>
       <linearGradient id="${u}w" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${shade(p.wing, .25)}"/><stop offset="1" stop-color="${shade(p.wing, -.3)}"/></linearGradient>
@@ -996,7 +1004,7 @@
       <g stroke="#f9a825" stroke-width="5" stroke-linecap="round" fill="none"><path d="M108 186 L90 190 M108 186 L108 194 M108 186 L124 191"/><path d="M152 186 L134 190 M152 186 L152 194 M152 186 L170 191"/></g>
       ${gold}
       <path d="M110 150 L100 156 L112 160Z" fill="${tier >= 1 ? '#ffd54a' : '#e0e0e0'}" stroke="#9e9e9e" stroke-width="1.5"/>
-      ${tail4}
+      ${tail5}${tail4}
       <path d="M72 112 C14 112 -6 56 22 14 C36 52 56 76 92 98Z" fill="${p.t1}" stroke="${shade(p.t1, -.4)}" stroke-width="2"/>
       <path d="M72 120 C20 132 -8 98 6 54 C34 78 56 98 94 112Z" fill="${p.t2}" stroke="${shade(p.t2, -.4)}" stroke-width="2"/>
       <path d="M74 128 C34 160 0 140 -2 104 C28 112 58 116 94 124Z" fill="${p.t3}" stroke="${shade(p.t3, -.4)}" stroke-width="2"/>
@@ -1009,7 +1017,7 @@
       <path d="M140 86 L146 106 M150 82 L156 108 M160 80 L164 104" stroke="${shade(p.hackle, -.35)}" stroke-width="2" fill="none" stroke-linecap="round"/>
       <circle cx="172" cy="56" r="23" fill="${shade(p.hackle, .1)}" stroke="${shade(p.hackle, -.45)}" stroke-width="3"/>
       <ellipse cx="176" cy="62" rx="12" ry="10" fill="${p.comb}" opacity=".9"/>
-      ${crown}
+      ${crown}${halo}
       <path d="M154 40 Q148 22 160 28 Q162 12 174 24 Q186 14 188 32 Q176 40 154 40Z" fill="${p.comb}" stroke="${shade(p.comb, -.4)}" stroke-width="2.5" stroke-linejoin="round" ${tier >= 3 ? 'opacity="0"' : ''}/>
       <circle cx="178" cy="53" r="7.5" fill="#fff" stroke="#222" stroke-width="2"/><circle cx="180" cy="54" r="4" fill="#111"/><circle cx="181.5" cy="52" r="1.4" fill="#fff"/>
       <path d="M170 44 L186 47" stroke="#222" stroke-width="3" stroke-linecap="round"/>
@@ -1030,7 +1038,7 @@
     if(flock.length !== chickenCount) makeFlock(chickenCount);
     const cards = flock.map((c, i) => `<div class="gm-chk ${selected.has(i) ? 'sel' : ''}" data-i="${i}">
         <div class="em" data-act="sel" title="Chạm để chọn">${chickSvg(c)}</div>
-        <div class="info"><input class="nm" maxlength="14" value="${esc(c.name)}" data-i="${i}"><div class="gm-tier t${c.tier}">${stars(c)}</div><div class="gm-secret">❓ Chỉ số và tuyệt chiêu bí mật</div></div>
+        <div class="info"><input class="nm" maxlength="14" value="${esc(c.name)}" data-i="${i}"><div class="gm-secret">❓ Chỉ số và tuyệt chiêu bí mật</div></div>
         <button class="re" data-act="re" data-i="${i}" title="Tạo lại con gà này">🎲</button></div>`).join('');
     render(`${topBar('🐓 Đá gà mini')}
       <div class="gm-panel">
@@ -1099,7 +1107,7 @@
     const sim = simulate(A, B);
     const head = tour.single ? 'Trận đấu cặp' : `Vòng ${tour.round} · trận ${tour.idx}/${tour.total}` + (tour.bye !== null ? ` · ${esc(flock[tour.bye].name)} được đặc cách` : '');
     const side = (c, k, cls) => `<div class="gm-cside ${cls}" id="gm-c${k}">
-        <div class="nm">${stars(c)} ${esc(c.name)}</div>
+        <div class="nm">${esc(c.name)}</div>
         <div class="bar hp"><i id="hp${k}"></i></div><div class="hpnum" id="hpn${k}"></div>
         <div class="bar en"><i id="en${k}"></i></div>
         <div class="chick" id="ch${k}">${chickSvg(c)}</div><div class="stars" id="stars${k}">⭐ ⭐ ⭐</div></div>`;
@@ -1183,7 +1191,7 @@
       setBars(sim.ev[sim.ev.length - 1]);
       const st2 = (c) => `Sức mạnh ${c.str} · Tốc độ ${c.spd} · Máu ${c.hp} · Năng lượng ${c.en}`;
       const revealed = sim.used.map((u, k) => u ? `${names[k]} đã dùng tuyệt chiêu ${SPECIALS[u].name} (${SPECIALS[u].desc}).` : `${names[k]} chưa kịp dùng tuyệt chiêu bí mật.`);
-      const l2 = $('gm-log'); if(l2){ l2.innerHTML = ''; log(`🏆 ${names[w]} thắng! Gây ${sim.dealt[w]} sát thương, đối thủ gây ${sim.dealt[l]}.`); log(`📊 ${names[0]}: ${st2(A)}`); log(`📊 ${names[1]}: ${st2(B)}`); revealed.forEach(log); }
+      const l2 = $('gm-log'); if(l2){ l2.innerHTML = ''; log(`🏆 ${names[w]} thắng! Gây ${sim.dealt[w]} sát thương, đối thủ gây ${sim.dealt[l]}.`); log(`📊 ${names[0]} (${stars(A)}): ${st2(A)}`); log(`📊 ${names[1]} (${stars(B)}): ${st2(B)}`); revealed.forEach(log); }
       sfx('win'); later(() => sfx('crow'), 500); buzz([60, 40, 100]);
       const last = !tour.pending.length && (tour.winners.length + (tour.bye !== null ? 1 : 0)) === 1;
       $('gm-fctl').innerHTML = `<button class="pri" id="gm-next">${tour.single ? 'Về danh sách gà' : last ? '🏆 Xem nhà vô địch' : 'Trận kế tiếp →'}</button>`;
@@ -1221,7 +1229,7 @@
   function showChampion(idx){
     clearTimers(); screen = 'chicken-end';
     const c = flock[idx];
-    const reveal = flock.map((x) => `<div class="gm-chk"><div class="em" style="cursor:default">${chickSvg(x)}</div><div class="info"><b>${esc(x.name)}</b>${statBars(x).replace('❓ Tuyệt chiêu bí mật', '✨ ' + SPECIALS[x.sp].name + ': ' + SPECIALS[x.sp].desc)}</div></div>`).join('');
+    const reveal = flock.map((x) => `<div class="gm-chk"><div class="em" style="cursor:default">${chickSvg(x)}</div><div class="info"><b>${esc(x.name)} <span class="gm-tier t${x.tier}">${stars(x)}</span></b>${statBars(x).replace('❓ Tuyệt chiêu bí mật', '✨ ' + SPECIALS[x.sp].name + ': ' + SPECIALS[x.sp].desc)}</div></div>`).join('');
     render(`${topBar('🏆 Nhà vô địch')}
       <div class="gm-panel" style="text-align:center">
         <div style="width:150px;height:130px;margin:0 auto">${chickSvg(c)}</div>

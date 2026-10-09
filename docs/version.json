@@ -1,7 +1,7 @@
 {
-  "version": "cf3f8525b3",
-  "date": "2026-10-09T22:44:57Z",
-  "notes": "Đá gà: vẽ gà đẹp 13 skin theo hạng, tên đổi theo skin, âm thanh khi đá, hoạt ảnh riêng cho từng tuyệt chiêu, trận 20-30 giây",
+  "version": "ee1e20b7ae",
+  "date": "2026-10-09T22:49:50Z",
+  "notes": "Đá gà: ẩn số sao, tỉ lệ xuất hiện giảm dần theo sao, thêm gà 5 sao Thần Đế (2%)",
   "apk": {
     "version": "",
     "url": "",

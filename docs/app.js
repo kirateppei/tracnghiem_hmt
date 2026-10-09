@@ -103,11 +103,19 @@ function getAllCategoriesInUse(){
 function countByCat(c){ return questions.filter(q => (q.category||'Khác') === c).length; }
 
 /* ---------- Tabs ---------- */
+const ADMIN_VIEWS = ['add', 'manage', 'accounts'];
+let lastAdminView = 'manage';
 function switchTab(name){
   if((name === 'add' || name === 'manage' || name === 'accounts') && (!session || session.role !== 'admin')) return;
   stopTimer();
+  const isAdminView = ADMIN_VIEWS.indexOf(name) >= 0;
+  if(isAdminView) lastAdminView = name;
+  const navName = isAdminView ? 'admin' : name;
   document.querySelectorAll('nav.tabs button').forEach(b=>{
-    b.classList.toggle('active', b.dataset.tab === name);
+    b.classList.toggle('active', b.dataset.tab === navName);
+  });
+  document.querySelectorAll('.subtabs button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.sub === name);
   });
   const tabBtnNow = document.querySelector('nav.tabs button.active');
   if(tabBtnNow && tabBtnNow.scrollIntoView) tabBtnNow.scrollIntoView({ block: 'nearest', inline: 'center' });
@@ -120,7 +128,7 @@ function switchTab(name){
   if(name === 'accounts') renderAccounts();
 }
 document.querySelectorAll('nav.tabs button').forEach(b=>{
-  b.addEventListener('click', ()=> switchTab(b.dataset.tab));
+  b.addEventListener('click', ()=> switchTab(b.dataset.tab === 'admin' ? lastAdminView : b.dataset.tab));
 });
 
 /* ---------- Quiz flow ---------- */
@@ -146,7 +154,10 @@ function updateSetupHint(){
   let pool = questions;
   if(diff !== '__ALL__') pool = pool.filter(q => (q.difficulty||'tb') === diff);
   if(mediaOnly) pool = pool.filter(q => q.mediaType);
-  document.getElementById('setup-total-hint').textContent = `Có ${pool.length} câu hỏi phù hợp với lựa chọn này.`;
+  const want = parseInt(document.getElementById('setup-count').value, 10) || 20;
+  document.getElementById('setup-total-hint').textContent = pool.length === 0
+    ? 'Không có câu hỏi nào phù hợp với lựa chọn này.'
+    : (pool.length < want ? `Có ${pool.length} câu phù hợp — sẽ làm hết ${pool.length} câu.` : `Có ${pool.length} câu phù hợp · mỗi lượt ${want} câu.`);
 }
 
 function shuffle(arr){
@@ -230,6 +241,7 @@ function startQuiz(){
   const diff = document.getElementById('setup-difficulty').value;
   const mediaOnly = document.getElementById('setup-media-only').checked;
   const count = parseInt(document.getElementById('setup-count').value, 10);
+  quizAnon = !!document.getElementById('setup-anon').checked;
   let basePool = questions;
   if(mediaOnly) basePool = basePool.filter(q => q.mediaType);
   if(basePool.length === 0){ showToast('Không có câu hỏi phù hợp với lựa chọn này.'); return; }
@@ -455,6 +467,7 @@ function showResult(){
 
   submitLeaderboardEntry({
     name: session.name,
+    anon: quizAnon,
     role: session.role,
     score: score,
     total: total,
@@ -1364,3 +1377,52 @@ function setupAndroidBackButton(){
     });
   }catch(e){ /* không chạy trong app Android đóng gói thì bỏ qua, không lỗi gì cả */ }
 }
+
+/* ---------- Màn hình bắt đầu làm bài: nút chọn nhanh, nhớ lựa chọn, ẩn danh ---------- */
+const SETUP_PREFS_KEY = 'quiz-app-setup-v1';
+let quizAnon = false;
+function saveSetupPrefs(){
+  try{
+    localStorage.setItem(SETUP_PREFS_KEY, JSON.stringify({
+      diff: document.getElementById('setup-difficulty').value,
+      count: document.getElementById('setup-count').value,
+      media: document.getElementById('setup-media-only').checked,
+      anon: document.getElementById('setup-anon').checked,
+    }));
+  }catch(e){}
+}
+function syncSegmented(){
+  [['seg-difficulty', 'setup-difficulty'], ['seg-count', 'setup-count']].forEach(([segId, selId]) => {
+    const v = document.getElementById(selId).value;
+    document.querySelectorAll('#' + segId + ' button').forEach((b) => b.classList.toggle('active', b.dataset.v === v));
+  });
+}
+function initSetupControls(){
+  try{
+    const p = JSON.parse(localStorage.getItem(SETUP_PREFS_KEY) || 'null');
+    if(p){
+      const setSel = (id, v) => {
+        const el = document.getElementById(id);
+        if(Array.from(el.options).some((o) => o.value === String(v))) el.value = String(v);
+      };
+      setSel('setup-difficulty', p.diff);
+      setSel('setup-count', p.count);
+      document.getElementById('setup-media-only').checked = !!p.media;
+      document.getElementById('setup-anon').checked = !!p.anon;
+    }
+  }catch(e){}
+  [['seg-difficulty', 'setup-difficulty'], ['seg-count', 'setup-count']].forEach(([segId, selId]) => {
+    document.getElementById(segId).addEventListener('click', (ev) => {
+      const b = ev.target.closest('button[data-v]');
+      if(!b) return;
+      document.getElementById(selId).value = b.dataset.v;
+      syncSegmented(); updateSetupHint(); saveSetupPrefs();
+    });
+  });
+  ['setup-media-only', 'setup-anon'].forEach((id) => {
+    document.getElementById(id).addEventListener('change', () => { updateSetupHint(); saveSetupPrefs(); });
+  });
+  syncSegmented();
+  updateSetupHint();
+}
+initSetupControls();

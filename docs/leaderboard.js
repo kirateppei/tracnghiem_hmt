@@ -14,6 +14,9 @@ const lbCache = {};
 const LB_CACHE_MS = 5 * 60 * 1000;
 const PENDING_KEY = 'quiz-app-pending-results-v1';
 const SEND_TIMEOUT_MS = 8000;
+const ANON_NAME = 'Ẩn danh';
+// Lượt làm bài ẩn danh gom riêng, không nhập chung với các lượt có tên của cùng một người
+function rowKey(r){ return (r.name === ANON_NAME ? 'anon:' : '') + (r.uid || r.name || '?'); }
 
 /* ---------- Tính kỳ (giờ máy người xem, tuần bắt đầu từ thứ Hai) ---------- */
 function periodRange(range, anchorMs){
@@ -93,10 +96,10 @@ function lbFiltered(){
 function aggregateResults(rows, sortKey){
   const by = new Map();
   rows.forEach((r) => {
-    const key = r.uid || r.name || '?';
+    const key = rowKey(r);
     let a = by.get(key);
     if(!a){
-      a = { uid: key, name: r.name || 'Ẩn danh', n: 0, sumPct: 0, best: 0, last: 0, items: [] };
+      a = { key, uid: r.uid || key, name: r.name || ANON_NAME, n: 0, sumPct: 0, best: 0, last: 0, items: [] };
       by.set(key, a);
     }
     a.n++;
@@ -118,8 +121,8 @@ function aggregateResults(rows, sortKey){
 /* ---------- Giao diện ---------- */
 function lbSyncControls(){
   document.querySelectorAll('#lb-range-tabs button').forEach((b) => b.classList.toggle('active', b.dataset.range === lbRange));
-  document.querySelectorAll('#lb-sort button').forEach((b) => b.classList.toggle('active', b.dataset.sort === lbSort));
-  document.querySelectorAll('#lb-level button').forEach((b) => b.classList.toggle('active', b.dataset.level === lbLevel));
+  const sortSel = document.getElementById('lb-sort-sel'); if(sortSel) sortSel.value = lbSort;
+  const levelSel = document.getElementById('lb-level-sel'); if(levelSel) levelSel.value = lbLevel;
   const { start, end } = periodRange(lbRange, lbAnchor);
   document.getElementById('lb-period-label').textContent = periodLabel(lbRange, start, end);
   document.getElementById('lb-next').disabled = end > Date.now();
@@ -219,7 +222,7 @@ function drawLeaderboard(){
     const row = document.createElement('div');
     row.className = 'lb-row' + (idx === 0 ? ' top1' : idx === 1 ? ' top2' : idx === 2 ? ' top3' : '') +
       (isMe ? ' me' : '') + (canOpen ? ' clickable' : '');
-    row.dataset.uid = a.uid;
+    row.dataset.key = a.key;
     row.innerHTML = `
       <div class="lb-rank">${idx + 1}</div>
       <div class="lb-info">
@@ -235,8 +238,8 @@ function drawLeaderboard(){
 }
 
 /* ---------- Chi tiết từng lượt làm bài (quản trị viên xem mọi người, nhân viên xem của mình) ---------- */
-function openLbDetail(uid){
-  const items = lbFiltered().filter((r) => r.uid === uid).sort((a, b) => b.ts - a.ts);
+function openLbDetail(key){
+  const items = lbFiltered().filter((r) => rowKey(r) === key).sort((a, b) => b.ts - a.ts);
   if(!items.length) return;
   const isAdmin = !!session && session.role === 'admin';
   document.getElementById('lb-detail-title').textContent = items[0].name || 'Chi tiết';
@@ -265,7 +268,7 @@ async function deleteResult(id){
 
 document.getElementById('lb-list').addEventListener('click', (ev) => {
   const row = ev.target.closest('.lb-row.clickable');
-  if(row) openLbDetail(row.dataset.uid);
+  if(row) openLbDetail(row.dataset.key);
 });
 document.getElementById('lb-detail-body').addEventListener('click', (ev) => {
   const btn = ev.target.closest('button[data-del]');
@@ -305,7 +308,7 @@ async function submitLeaderboardEntry(entry){
   const rec = {
     id: `${session.uid}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
     uid: session.uid,
-    name: session.name,
+    name: entry.anon ? ANON_NAME : session.name,
     score: entry.score,
     total: entry.total,
     pct: entry.pct,
@@ -314,7 +317,7 @@ async function submitLeaderboardEntry(entry){
   try{
     await sendResult(rec);
     lbInvalidate();
-    showToast('Đã ghi kết quả vào bảng xếp hạng.');
+    showToast(entry.anon ? 'Đã ghi kết quả ẩn danh vào bảng xếp hạng.' : 'Đã ghi kết quả vào bảng xếp hạng.');
   }catch(e){
     if(e && e.code === 'permission-denied'){
       showToast('Không ghi được điểm: tài khoản không còn quyền.');

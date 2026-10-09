@@ -1,7 +1,7 @@
 # Trắc nghiệm ĐMT — hướng dẫn đưa lên mạng
 
 - Thư mục `docs/` là trang web. File `firestore.rules` là luật bảo vệ dữ liệu.
-- Đăng nhập bằng **Google**. Mặc định **mọi tài khoản Google đều vào được**; quản trị viên có thể chuyển sang "chỉ email trong danh sách" bất cứ lúc nào (tab **👥 Tài khoản**).
+- Đăng nhập bằng **Google**. Mặc định **mọi tài khoản Google đều vào được**; quản trị viên có thể chuyển sang "chỉ email trong danh sách" bất cứ lúc nào (**Quản trị → 👥 Tài khoản**).
 - Kết quả làm bài lưu trực tuyến nên bảng xếp hạng dùng chung (Ngày / Tuần / Tháng / Năm).
 - Địa chỉ trang sau khi bật GitHub Pages: `https://kirateppei.github.io/tracnghiem_hmt/`
 
@@ -35,7 +35,7 @@ Quyền quản trị lưu trong dữ liệu, nên hồ sơ đầu tiên phải t
 | `active` | boolean | `true` |
 | `name` | string | tên hiển thị (để trống cũng được) |
 
-→ **Save**. Các quản trị viên khác sau này đặt trong tab Tài khoản của phần mềm.
+→ **Save**. Các quản trị viên khác sau này đặt trong phần mềm ở **Quản trị → Tài khoản**.
 
 ## 5. Đăng ký ứng dụng web và điền cấu hình
 **Project settings (⚙) → Your apps → biểu tượng `</>` (Web)** → đặt tên → **Register app** (không cần bật Hosting) → sao chép khối `firebaseConfig`.
@@ -46,12 +46,17 @@ Trên GitHub mở `docs/firebase-config.js` → biểu tượng bút chì → th
 **Firebase → Authentication → Settings → Authorized domains → Add domain** → `kirateppei.github.io` (chỉ tên miền, không kèm đường dẫn).
 
 ## 7. Dùng thử rồi mời mọi người
-1. Mở trang bằng **Chrome hoặc Safari** (đừng mở trong Zalo hoặc Messenger, Google chặn đăng nhập ở đó) → **Đăng nhập bằng Google** bằng email quản trị. Bạn sẽ thấy tab **👥 Tài khoản** và **Thêm câu**.
+1. Mở trang bằng **Chrome hoặc Safari** (đừng mở trong Zalo hoặc Messenger, Google chặn đăng nhập ở đó) → **Đăng nhập bằng Google** bằng email quản trị. Bạn sẽ thấy **Quản trị → 👥 Tài khoản** và **Thêm câu**.
 2. Thử bằng một tài khoản Google khác để chắc nhân viên vào được.
 3. Gửi link cho nhân viên. Ai có tài khoản Google đều vào được; tên trên bảng xếp hạng là tên Google (hoặc tên bạn đặt trong tab Tài khoản).
 
+## Làm bài và giao diện
+- Màn hình làm bài chọn bằng **nút bấm**: độ khó (Hỗn hợp, Dễ, Trung bình, Khó, Cực khó, Xuất sắc), số câu (10 đến 100), hai công tắc **Chỉ câu có hình/video** và **Làm bài ẩn danh**. Phần mềm **nhớ lựa chọn lần trước** trên từng máy.
+- **Làm bài ẩn danh:** tên không hiện trên bảng xếp hạng, kết quả vẫn được tính và hiện là "Ẩn danh" (riêng bạn vẫn thấy dòng của mình có chữ "bạn"). Các lượt ẩn danh của một người không bị gộp với các lượt có tên. Về kỹ thuật, quản trị viên có quyền vào Firebase vẫn tra được mã tài khoản phía sau.
+- Thanh tab gồm **Làm bài, Xếp hạng, Tài liệu** và, với quản trị viên, **Quản trị** (Thêm câu, Quản lý, Tài khoản).
+
 ## Quản lý quyền truy cập
-Tab **👥 Tài khoản → Ai được vào làm bài?**
+**Quản trị → 👥 Tài khoản → Ai được vào làm bài?**
 - **Mọi tài khoản Google** (mặc định): ai cũng vào được, trừ email bị **Khoá**.
 - **Chỉ email trong danh sách**: dán email nhân viên (mỗi dòng một email) rồi **Thêm vào danh sách**; người ngoài đăng nhập Google được nhưng không vào được phần mềm.
 - Mỗi dòng có: sửa tên hiển thị, đổi vai trò (Nhân viên / Quản trị viên), **Khoá**, **Xoá**.

@@ -237,7 +237,7 @@ function enterApp(){
   gid('session-info').textContent = `Xin chào, ${session.name}`;
   gid('role-badge').textContent = session.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
   const isAdmin = session.role === 'admin';
-  ['tab-add', 'tab-manage', 'tab-accounts'].forEach((id) => gid(id).classList.toggle('hidden', !isAdmin));
+  gid('tab-admin').classList.toggle('hidden', !isAdmin);
   switchTab('quiz');
   autoStartMusic();
 }

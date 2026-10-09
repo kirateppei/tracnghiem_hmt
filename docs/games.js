@@ -349,6 +349,11 @@
       turnPick(g, i, () => {
         t.classList.add('down'); beep(520 + g.safe * 30, 0.12, 'triangle'); buzz(15);
         st.innerHTML = crocStatus(g);
+        if(N - g.used.size === P){
+          // hết răng an toàn: lượt kế tiếp chắc chắn trúng răng phạt
+          st.innerHTML = players.count < 2 ? 'Chỉ còn răng phạt!' : `Chỉ còn răng phạt, <span style="color:var(--accent,#f2b705)">${esc(nameOf(g.turn))}</span> bị cạp!`;
+          later(() => { if(!g.over && screen === 'croc'){ const rest = [...g.traps].filter((x) => !g.used.has(x)); if(rest.length){ const x = root.querySelector(`.gm-tooth[data-i="${rest[0]}"]`); if(x) x.click(); } } }, 1100);
+        }
       }, () => {
         mouth.classList.add('snap');
         root.querySelectorAll('.gm-tooth').forEach((x) => { if(g.traps.has(+x.dataset.i)) x.classList.add('bad'); });
@@ -440,7 +445,16 @@
     function pick(i){
       turnPick(g, i, () => {
         pos[i].b.classList.add('used'); layout(); beep(300, 0.08, 'square', 0.1); buzz(15);
-        st.innerHTML = players.count < 2 ? `Còn ${N - 1 - g.safe} khe an toàn · đã qua ${g.safe} lượt` : `Lượt của <span style="color:var(--accent,#f2b705)">${esc(nameOf(g.turn))}</span>`;
+        const left = N - g.used.size;   // số khe còn trống (gồm cả khe bí mật)
+        st.innerHTML = players.count < 2 ? `Còn ${left - 1} khe an toàn · đã qua ${g.safe} lượt` : `Lượt của <span style="color:var(--accent,#f2b705)">${esc(nameOf(g.turn))}</span> · còn ${left} khe trống`;
+        if(left === 1){
+          // mọi khe khác đã cắm dao: khe cuối chắc chắn là khe bí mật
+          st.innerHTML = players.count < 2 ? 'Chỉ còn đúng 1 khe: khe bí mật!' : `Chỉ còn 1 khe, <span style="color:var(--accent,#f2b705)">${esc(nameOf(g.turn))}</span> phải nhét vào khe bí mật!`;
+          later(() => { if(!g.over && screen === 'pirate') pick(g.trap); }, 1100);
+        }else{
+          const anyFront = pos.some((p, k) => !g.used.has(k) && p.b.style.display !== 'none');
+          if(!anyFront) bringFront();
+        }
       }, () => {
         pos[i].b.classList.add('used'); layout();
         barrel.classList.add('boom'); noise(0.3, 0.2); beep(660, 0.12, 'square', 0.15); beep(220, 0.5, 'sawtooth', 0.15, 0.1); buzz([40, 30, 40, 30, 150]);
@@ -460,6 +474,16 @@
       const from = rot, to = rot + delta, t0 = performance.now(), dur = FAST ? 20 : 260;
       (function f(now){ const p = Math.min(1, (now - t0) / dur); rot = from + (to - from) * (1 - Math.pow(1 - p, 3)); layout(); if(p < 1) spinRaf = requestAnimationFrame(f); })(t0);
       beep(200, 0.04, 'triangle', 0.05);
+    }
+    function bringFront(){
+      // xoay thùng tới khe trống gần nhất để người chơi thấy
+      let best = null;
+      for(let i = 0; i < N; i++){
+        if(g.used.has(i)) continue;
+        const th = rot + (i / N) * Math.PI * 2, d = -(((th + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI);
+        if(best === null || Math.abs(d) < Math.abs(best)) best = d;
+      }
+      if(best !== null) later(() => turnBy(best), 250);
     }
     $('gm-rl').addEventListener('click', () => turnBy((Math.PI * 2) / N * 1.5));
     $('gm-rr').addEventListener('click', () => turnBy(-(Math.PI * 2) / N * 1.5));

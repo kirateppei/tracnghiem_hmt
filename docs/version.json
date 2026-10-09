@@ -1,7 +1,7 @@
 {
-  "version": "64a41edf80",
-  "date": "2026-10-09T22:20:18Z",
-  "notes": "Xúc xắc 3D có số và 4 kiểu; vòng quay sinh động hơn (đèn LED, kim gạt, pháo giấy)",
+  "version": "fc5cafccf6",
+  "date": "2026-10-09T22:21:48Z",
+  "notes": "Hải tặc: tự xoay tới khe trống, hiện số khe còn lại; khe/răng cuối tự bật",
   "apk": {
     "version": "",
     "url": "",

@@ -3,12 +3,12 @@
 - Thư mục `docs/` là trang web. File `firestore.rules` là luật bảo vệ dữ liệu.
 - Đăng nhập bằng **Google**. Mặc định **mọi tài khoản Google đều vào được**; quản trị viên có thể chuyển sang "chỉ email trong danh sách" bất cứ lúc nào (tab **👥 Tài khoản**).
 - Kết quả làm bài lưu trực tuyến nên bảng xếp hạng dùng chung (Ngày / Tuần / Tháng / Năm).
-- Địa chỉ trang sau khi bật GitHub Pages: `https://kirateppei.github.io/kira_chua_biet/`
+- Địa chỉ trang sau khi bật GitHub Pages: `https://kirateppei.github.io/tracnghiem_hmt/`
 
 Làm một lần, khoảng 30 phút, theo thứ tự 0 → 7.
 
 ## 0. Chuyển repo sang công khai và bật GitHub Pages
-1. GitHub → repo `kira_chua_biet` → **Settings → General** → kéo xuống **Danger Zone → Change repository visibility → Make public** → gõ tên repo để xác nhận.
+1. GitHub → repo `tracnghiem_hmt` → **Settings → General** → kéo xuống **Danger Zone → Change repository visibility → Make public** → gõ tên repo để xác nhận.
 2. **Settings → Pages → Build and deployment → Source: Deploy from a branch** → Branch: `trang-web`, thư mục `/docs` → **Save**.
 3. Sau 1–2 phút trang chạy tại địa chỉ ở trên. Sửa file trên GitHub xong thì chờ 1–10 phút mới thấy bản mới.
 
@@ -78,10 +78,10 @@ Dán đoạn sau cho phiên Claude chạy trên máy tính của bạn (nơi có
 
 ```
 Dự án Android Capacitor "Trắc Nghiệm ĐMT" (appId com.hiepminhthinh.tracnghiem). Hãy làm lại APK để:
-1. Mở thẳng trang web https://kirateppei.github.io/kira_chua_biet/ : thêm "server": {"url": "https://kirateppei.github.io/kira_chua_biet/"} vào capacitor.config.json, giữ nguyên appId và appName.
+1. Mở thẳng trang web https://kirateppei.github.io/tracnghiem_hmt/ : thêm "server": {"url": "https://kirateppei.github.io/tracnghiem_hmt/"} vào capacitor.config.json, giữ nguyên appId và appName.
 2. Có đăng nhập Google gốc: kiểm tra phiên bản @capacitor/core đang dùng, cài @capacitor-firebase/authentication cùng bản chính (major) với nó (gói "firebase" không bắt buộc). Trong capacitor.config.json thêm "plugins": {"FirebaseAuthentication": {"skipNativeAuth": true, "providers": ["google.com"]}}.
 3. Đặt google-services.json (tôi cung cấp, tải từ Firebase cho app Android com.hiepminhthinh.tracnghiem) vào android/app/. Không đưa file này lên GitHub.
-4. Dùng ảnh docs/icons/icon-1024.png của repo kira_chua_biet làm icon app (dùng @capacitor/assets hoặc cách tương đương).
+4. Dùng ảnh docs/icons/icon-1024.png của repo tracnghiem_hmt làm icon app (dùng @capacitor/assets hoặc cách tương đương).
 5. Chạy npx cap sync android rồi build APK bằng ĐÚNG khoá debug đang dùng (SHA-1 28:75:27:53:DB:04:98:BA:03:2C:81:C8:30:A5:E5:40:36:C9:40:6E), không tạo khoá mới. Khác khoá thì Android không cho cài đè và nhân viên phải gỡ bản cũ trước.
 Mã web đã sẵn sàng: trang gọi plugin qua Capacitor.nativePromise('FirebaseAuthentication', 'signInWithGoogle', {skipNativeAuth: true}), không cần sửa mã web.
 ```

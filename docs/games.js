@@ -64,21 +64,34 @@
   #view-games .gm-status{ text-align:center; font-weight:700; margin:8px 0 12px; min-height:2.6em; }
   #view-games .gm-status.lose{ color:#ff8a80; font-size:1.1rem; }
   #view-games .gm-hint{ text-align:center; font-size:.78rem; opacity:.8; margin-top:6px; }
-  /* cá sấu */
-  .gm-croc{ position:relative; margin:0 auto; max-width:340px; }
-  .gm-croc .eyes{ text-align:center; font-size:2.6rem; line-height:1; margin-bottom:-8px; position:relative; z-index:2; }
-  .gm-jaw{ background:linear-gradient(#3f9a52,#2d7a40); border:3px solid #1d5a2c; border-radius:26px; padding:10px 10px 12px; }
-  .gm-gums{ background:#e8728a; border-radius:14px; padding:10px 8px; display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
-  .gm-gums + .gm-gums{ margin-top:12px; }
-  .gm-tooth{ height:46px; border:2px solid #cfd8dc; background:#fff; border-radius:8px 8px 18px 18px; cursor:pointer; padding:0; transition:transform .15s, background .15s; }
-  .gm-gums.low .gm-tooth{ border-radius:18px 18px 8px 8px; }
-  .gm-tooth.down{ transform:translateY(8px) scale(.9); background:#b7c3c9; cursor:default; }
-  .gm-gums.low .gm-tooth.down{ transform:translateY(-8px) scale(.9); }
-  .gm-tooth.bad{ background:#ff5a5f; border-color:#a4161a; }
-  .gm-croc.snap .eyes{ animation:gm-shake .5s 2; }
-  .gm-croc.snap .gm-jaw{ animation:gm-snap .45s; }
-  @keyframes gm-shake{ 0%,100%{ transform:translateX(0) rotate(0); } 25%{ transform:translateX(-8px) rotate(-6deg); } 75%{ transform:translateX(8px) rotate(6deg); } }
-  @keyframes gm-snap{ 0%{ transform:scale(1); } 40%{ transform:scale(.92,.8); } 100%{ transform:scale(1); } }
+  /* cá sấu (giao diện nền nước, miệng há to) */
+  #view-games .gm-water{ position:relative; border-radius:18px; padding:14px 10px 16px; background:linear-gradient(#1aa3c9 0%,#0d6e9c 35%,#0a3d66 100%); box-shadow:inset 0 0 40px rgba(0,0,0,.25); overflow:hidden; }
+  #view-games .gm-gear{ position:absolute; right:10px; top:10px; width:42px; height:42px; border-radius:50%; border:0; background:linear-gradient(#ffb347,#e67e22); color:#fff; font-size:1.4rem; cursor:pointer; box-shadow:0 3px 8px rgba(0,0,0,.35); z-index:3; }
+  #view-games .gm-banner{ margin:44px -10px 8px; padding:10px 8px; text-align:center; background:rgba(5,25,45,.78); color:#e6ff4a; font-weight:900; font-size:.95rem; letter-spacing:.02em; text-transform:uppercase; min-height:2.4em; display:flex; align-items:center; justify-content:center; }
+  #view-games .gm-banner.lose{ color:#ff8a80; }
+  #view-games .gm-mouth{ position:relative; width:100%; max-width:320px; margin:0 auto; aspect-ratio:320/360; }
+  #view-games .gm-mouthsvg{ width:100%; height:100%; display:block; }
+  #view-games .gm-lowteeth{ position:absolute; left:10%; right:10%; bottom:17%; display:flex; gap:3%; align-items:flex-end; justify-content:center; }
+  #view-games .gm-tooth{ flex:1 1 0; max-width:54px; height:62px; border:0; padding:0; cursor:pointer; background:linear-gradient(90deg,#d5dde2,#fff 45%,#cfd8dc); border-radius:50% 50% 14% 14% / 78% 78% 10% 10%; box-shadow:0 3px 0 rgba(0,0,0,.3); transition:transform .12s, filter .12s; }
+  #view-games .gm-tooth:active{ transform:translateY(3px); }
+  #view-games .gm-tooth.down{ transform:translateY(18px) scale(.88); filter:brightness(.6); cursor:default; }
+  #view-games .gm-tooth.bad{ background:linear-gradient(90deg,#e57373,#ff8a80 45%,#e57373); }
+  #view-games .gm-bang{ position:absolute; left:50%; top:46%; transform:translate(-50%,-50%) scale(.2) rotate(-12deg); font-size:3.6rem; font-weight:900; color:#fff; -webkit-text-stroke:2px #b71c1c; text-shadow:0 4px 0 #b71c1c; opacity:0; pointer-events:none; white-space:nowrap; }
+  #view-games .gm-mouth.snap{ animation:gm-shake .5s 2; }
+  #view-games .gm-mouth.snap .gm-bang{ animation:gm-bang 1.2s forwards; }
+  @keyframes gm-bang{ 0%{ opacity:1; transform:translate(-50%,-50%) scale(.2) rotate(-12deg); } 25%{ opacity:1; transform:translate(-50%,-50%) scale(1.25) rotate(-6deg); } 100%{ opacity:1; transform:translate(-50%,-50%) scale(1) rotate(-6deg); } }
+  @keyframes gm-shake{ 0%,100%{ transform:translateX(0) rotate(0); } 25%{ transform:translateX(-8px) rotate(-4deg); } 75%{ transform:translateX(8px) rotate(4deg); } }
+  #view-games .gm-pill{ width:min(72%,260px); margin:12px auto 0; padding:10px; text-align:center; font-weight:900; font-size:1.05rem; color:#fff; border-radius:14px; background:linear-gradient(#7cb342,#558b2f); border:2px solid #33691e; text-shadow:0 2px 0 rgba(0,0,0,.35); }
+  #view-games .gm-carousel{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  #view-games .gm-carousel > button, #view-games .gm-step button{ width:40px; height:40px; border-radius:50%; border:0; font-size:1.4rem; font-weight:900; color:#fff; background:linear-gradient(#8bc34a,#558b2f); cursor:pointer; flex:none; }
+  #view-games .gm-charview{ flex:1; text-align:center; background:#eef3ef; border-radius:14px; padding:8px; }
+  #view-games .gm-charview .big{ font-size:3rem; line-height:1.1; display:block; }
+  #view-games .gm-charview small{ font-weight:700; }
+  #view-games .gm-steps{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #view-games .gm-step{ display:flex; align-items:center; justify-content:space-between; gap:6px; background:#eef3ef; border-radius:24px; padding:3px; }
+  #view-games .gm-step b{ flex:1; text-align:center; font-size:.95rem; }
+  #view-games .gm-modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:150; display:flex; align-items:center; justify-content:center; padding:16px; }
+  #view-games .gm-modal .gm-panel{ width:100%; max-width:380px; margin:0; max-height:90vh; overflow:auto; }
   /* thùng hải tặc */
   .gm-barrel{ position:relative; width:290px; height:290px; margin:6px auto 0; border-radius:50%; background:
     radial-gradient(circle at 50% 50%, #5b3a1c 0 38%, transparent 39%),
@@ -154,7 +167,7 @@
     screen = 'setup-' + kind;
     const title = kind === 'croc' ? '🐊 Khám răng cá sấu' : '🏴‍☠️ Nhét dao thùng hải tặc';
     const rule = kind === 'croc'
-      ? 'Có một chiếc răng "đau" được chọn ngẫu nhiên. Lần lượt mỗi người bấm một chiếc răng, ai bấm trúng răng đau thì cá sấu cạp và người đó thua.'
+      ? 'Một số chiếc răng "đau" (răng phạt) được chọn ngẫu nhiên. Lần lượt mỗi người chạm một chiếc răng, ai chạm trúng răng phạt thì bị cạp và thua. Bạn chọn nhân vật, số răng và số răng phạt (tối đa là toàn bộ răng) ở bên dưới.'
       : 'Có một khe bí mật được chọn ngẫu nhiên. Lần lượt mỗi người nhét một con dao vào một khe, ai nhét trúng khe bí mật thì hải tặc bật ra và người đó thua.';
     render(`${topBar(title)}
       <div class="gm-panel">
@@ -162,6 +175,7 @@
         <label>Số người chơi (chơi 1 người để thử vận may)</label>
         <div class="gm-seg" id="gm-count">${[1,2,3,4,5,6].map((n) => `<button data-n="${n}" class="${n === players.count ? 'on' : ''}">${n}</button>`).join('')}</div>
         <div class="gm-names" id="gm-names"></div>
+        ${kind === 'croc' ? '<div id="gm-crocset" style="margin-top:14px">' + crocSettingsHtml() + '</div>' : ''}
         <button class="gm-primary" id="gm-start">Bắt đầu chơi</button>
       </div>`);
     bindBack();
@@ -172,6 +186,7 @@
       names.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', () => { players.names[+inp.dataset.i] = inp.value; }));
     }
     drawNames();
+    if(kind === 'croc') bindCrocSettings($('gm-crocset'));
     $('gm-count').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       players.count = +b.dataset.n;
       $('gm-count').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
@@ -186,7 +201,7 @@
   }
   function statusText(g){
     if(g.over) return '';
-    if(players.count < 2) return `Còn ${g.total - g.used.size - 1} ô an toàn · đã qua ${g.safe} lượt`;
+    if(players.count < 2) return `Còn ${g.total - (g.traps ? g.traps.size : 1) - g.safe} ô an toàn · đã qua ${g.safe} lượt`;
     return `Lượt của <span style="color:var(--accent,#f2b705)">${esc(nameOf(g.turn))}</span>`;
   }
   function endText(g){
@@ -197,7 +212,7 @@
   function turnPick(g, i, onSafe, onBad){
     if(g.over || g.used.has(i)) return;
     g.used.add(i);
-    if(i === g.trap){
+    if(g.traps ? g.traps.has(i) : i === g.trap){
       g.over = true; g.loser = g.turn; onBad();
     }else{
       g.safe++;
@@ -207,33 +222,106 @@
   }
 
   /* ---------- Khám răng cá sấu ---------- */
+  const CHARS = {
+    croc:  { icon: '🐊', name: 'Cá sấu', skin: '#4caf50', skin2: '#388e3c', skin3: '#1b5e20', in1: '#5d1111', in2: '#b71c1c' },
+    hippo: { icon: '🦛', name: 'Hà mã', skin: '#9c7b6c', skin2: '#795548', skin3: '#3e2723', in1: '#5a0f35', in2: '#c2185b' },
+    shark: { icon: '🦈', name: 'Cá mập', skin: '#5b9bd5', skin2: '#3b7bb5', skin3: '#1a4a7a', in1: '#5d1111', in2: '#d32f2f' }
+  };
+  const CHAR_KEYS = Object.keys(CHARS);
+  let crocCfg = Object.assign({ char: 'croc', teeth: 6, penalty: 1 }, store('croc') || {});
+  function normCroc(){
+    if(!CHARS[crocCfg.char]) crocCfg.char = 'croc';
+    crocCfg.teeth = Math.min(10, Math.max(4, parseInt(crocCfg.teeth, 10) || 6));
+    crocCfg.penalty = Math.min(crocCfg.teeth, Math.max(1, parseInt(crocCfg.penalty, 10) || 1));
+  }
+  const penaltyLabel = () => (crocCfg.penalty >= crocCfg.teeth ? 'Toàn bộ răng' : String(crocCfg.penalty));
+  function crocSettingsHtml(){
+    return `<label>Nhân vật</label>
+      <div class="gm-carousel"><button type="button" data-act="c-">‹</button><div class="gm-charview" id="gm-charview"></div><button type="button" data-act="c+">›</button></div>
+      <div class="gm-steps">
+        <div><label>Răng</label><div class="gm-step"><button type="button" data-act="t-">‹</button><b id="gm-tv"></b><button type="button" data-act="t+">›</button></div></div>
+        <div><label>Răng phạt</label><div class="gm-step"><button type="button" data-act="p-">‹</button><b id="gm-pv"></b><button type="button" data-act="p+">›</button></div></div>
+      </div>`;
+  }
+  function bindCrocSettings(box){
+    const draw = () => {
+      normCroc();
+      const ch = CHARS[crocCfg.char];
+      box.querySelector('#gm-charview').innerHTML = `<span class="big">${ch.icon}</span><small>${ch.name}</small>`;
+      box.querySelector('#gm-tv').textContent = crocCfg.teeth;
+      box.querySelector('#gm-pv').textContent = penaltyLabel();
+      store('croc', crocCfg);
+    };
+    box.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => {
+      const a = b.dataset.act;
+      if(a === 'c-' || a === 'c+'){
+        const i = CHAR_KEYS.indexOf(crocCfg.char); crocCfg.char = CHAR_KEYS[(i + (a === 'c+' ? 1 : CHAR_KEYS.length - 1)) % CHAR_KEYS.length];
+      }else if(a === 't-' || a === 't+'){ crocCfg.teeth += a === 't+' ? 1 : -1; }
+      else{ crocCfg.penalty += a === 'p+' ? 1 : -1; }
+      draw(); beep(480, 0.05, 'triangle', 0.08);
+    }));
+    draw();
+  }
+  function mouthSvg(c, nUpper){
+    let up = '';
+    for(let k = 0; k < nUpper; k++){
+      const x = 56 + k * (208 / (nUpper - 1)), y = 64 - Math.sin((k / (nUpper - 1)) * Math.PI) * -6 - 4;
+      up += `<path d="M${(x - 15).toFixed(1)} ${y.toFixed(1)} Q${x.toFixed(1)} ${(y + 36).toFixed(1)} ${(x + 15).toFixed(1)} ${y.toFixed(1)} Z" fill="#f4f6f7" stroke="#b0bec5" stroke-width="1.5"/>`;
+    }
+    return `<svg class="gm-mouthsvg" viewBox="0 0 320 360" aria-hidden="true">
+      <defs><radialGradient id="gmIn" cx="50%" cy="58%" r="62%"><stop offset="0" stop-color="${c.in2}"/><stop offset="1" stop-color="${c.in1}"/></radialGradient></defs>
+      <circle cx="8" cy="250" r="17" fill="${c.skin2}"/><circle cx="312" cy="250" r="17" fill="${c.skin2}"/>
+      <path d="M10 92 Q10 8 160 6 Q310 8 310 92 L314 250 Q314 354 160 354 Q6 354 6 250 Z" fill="${c.skin}" stroke="${c.skin3}" stroke-width="5"/>
+      <path d="M36 74 Q160 34 284 74 L296 250 Q296 322 160 324 Q24 322 24 250 Z" fill="url(#gmIn)" stroke="${c.skin3}" stroke-width="4"/>
+      <ellipse cx="160" cy="210" rx="62" ry="46" fill="#c62828"/><ellipse cx="160" cy="196" rx="40" ry="22" fill="#e53935" opacity=".8"/>
+      <circle cx="78" cy="36" r="15" fill="#fff" stroke="${c.skin3}" stroke-width="3"/><circle cx="242" cy="36" r="15" fill="#fff" stroke="${c.skin3}" stroke-width="3"/>
+      <circle cx="82" cy="38" r="7" fill="#1b1b1b"/><circle cx="238" cy="38" r="7" fill="#1b1b1b"/>
+      ${up}</svg>`;
+  }
+  function crocStatus(g){
+    if(g.over) return '';
+    if(g.used.size === 0) return players.count > 1 ? `Lượt của ${esc(nameOf(0))} · chạm 1 răng bất kỳ` : 'Hãy chạm 1 răng bất kỳ để bắt đầu';
+    return statusText(g);
+  }
+  function openCrocModal(){
+    const m = document.createElement('div'); m.className = 'gm-modal';
+    m.innerHTML = `<div class="gm-panel"><h3 style="margin:0 0 10px">⚙ Thiết lập</h3><div id="gm-modalset">${crocSettingsHtml()}</div>
+      <label style="margin-top:12px"><input type="checkbox" id="gm-mutechk" ${muted ? 'checked' : ''}> Tắt âm thanh và rung</label>
+      <button class="gm-primary" id="gm-apply">Áp dụng và chơi lại</button>
+      <button class="gm-mini" id="gm-close" style="display:block;margin:10px auto 0;color:#1b3a2f;background:#eef3ef;border-color:#c5d3cb">Đóng</button></div>`;
+    root.appendChild(m);
+    bindCrocSettings(m.querySelector('#gm-modalset'));
+    m.querySelector('#gm-mutechk').addEventListener('change', (e) => { muted = e.target.checked; store('mute', muted); });
+    m.querySelector('#gm-close').addEventListener('click', () => m.remove());
+    m.querySelector('#gm-apply').addEventListener('click', () => { m.remove(); startCroc(); });
+  }
   function startCroc(){
-    clearTimers(); screen = 'croc';
-    const g = makeTurnGame(12); g.total = 12;
-    const teeth = (row) => Array.from({ length: 6 }, (_, k) => `<button class="gm-tooth" data-i="${row * 6 + k}" aria-label="Răng ${row * 6 + k + 1}"></button>`).join('');
-    render(`${topBar('🐊 Khám răng cá sấu')}
-      <div class="gm-status" id="gm-status">${statusText(g)}</div>
-      <div class="gm-croc" id="gm-croc">
-        <div class="eyes">🐊</div>
-        <div class="gm-jaw">
-          <div class="gm-gums">${teeth(0)}</div>
-          <div class="gm-gums low">${teeth(1)}</div>
-        </div>
+    clearTimers(); screen = 'croc'; normCroc();
+    const N = crocCfg.teeth, P = crocCfg.penalty, ch = CHARS[crocCfg.char];
+    const g = { total: N, traps: new Set(), used: new Set(), turn: 0, safe: 0, over: false, loser: -1 };
+    while(g.traps.size < P) g.traps.add(rand(N));
+    const teeth = Array.from({ length: N }, (_, i) => `<button class="gm-tooth" data-i="${i}" aria-label="Răng ${i + 1}"></button>`).join('');
+    render(`${topBar(ch.icon + ' Khám răng ' + ch.name.toLowerCase())}
+      <div class="gm-water">
+        <button class="gm-gear" id="gm-gear" aria-label="Thiết lập">⚙</button>
+        <div class="gm-banner" id="gm-status">${crocStatus(g)}</div>
+        <div class="gm-mouth" id="gm-croc">${mouthSvg(ch, 9)}<div class="gm-lowteeth">${teeth}</div><div class="gm-bang">CẠP!</div></div>
+        <div class="gm-pill">PHẠT: ${penaltyLabel()}</div>
       </div>
       <button class="gm-primary" id="gm-again" style="display:none">Chơi lại</button>`);
     bindBack();
-    const st = $('gm-status'), croc = $('gm-croc');
+    const st = $('gm-status'), mouth = $('gm-croc');
+    $('gm-gear').addEventListener('click', openCrocModal);
     root.querySelectorAll('.gm-tooth').forEach((t) => t.addEventListener('click', () => {
       const i = +t.dataset.i;
       turnPick(g, i, () => {
         t.classList.add('down'); beep(520 + g.safe * 30, 0.12, 'triangle'); buzz(15);
-        st.innerHTML = statusText(g);
-        if(g.used.size >= g.total - 1 && !g.over){ /* hết ô an toàn: ép răng đau */ }
+        st.innerHTML = crocStatus(g);
       }, () => {
-        t.classList.add('bad'); croc.classList.add('snap');
+        mouth.classList.add('snap');
+        root.querySelectorAll('.gm-tooth').forEach((x) => { if(g.traps.has(+x.dataset.i)) x.classList.add('bad'); });
         noise(0.25, 0.25); beep(110, 0.4, 'sawtooth', 0.2); buzz([60, 40, 120]);
         st.classList.add('lose'); st.innerHTML = endText(g);
-        const trapBtn = root.querySelector(`.gm-tooth[data-i="${g.trap}"]`); if(trapBtn) trapBtn.classList.add('bad');
         $('gm-again').style.display = 'block';
       });
     }));

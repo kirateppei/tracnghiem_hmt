@@ -1,0 +1,37 @@
+{
+  "name": "Trắc Nghiệm Điện Mặt Trời - Hiệp Minh Thịnh",
+  "short_name": "Trắc Nghiệm ĐMT",
+  "description": "Ứng dụng trắc nghiệm điện năng lượng mặt trời của Công ty TNHH Hiệp Minh Thịnh",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1B3A2F",
+  "theme_color": "#1B3A2F",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

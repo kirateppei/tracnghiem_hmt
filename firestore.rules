@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Hàm dùng chung ----------
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+    function hasAllowedDoc() {
+      return exists(/databases/$(database)/documents/allowed/$(myEmail()));
+    }
+    function allowedDoc() {
+      return get(/databases/$(database)/documents/allowed/$(myEmail())).data;
+    }
+    // Chế độ truy cập: mặc định MỞ cho mọi tài khoản Google.
+    // Quản trị viên có thể chuyển sang "chỉ danh sách" trong tab Tài khoản (ghi vào config/access).
+    function accessOpen() {
+      return !exists(/databases/$(database)/documents/config/access)
+        || get(/databases/$(database)/documents/config/access).data.get('open', true) == true;
+    }
+    // Người bị khoá (có hồ sơ với active = false) không vào được ở cả hai chế độ.
+    function notLocked() {
+      return !hasAllowedDoc() || allowedDoc().get('active', true) == true;
+    }
+    function isMember() {
+      return signedIn() && notLocked() && (accessOpen() || hasAllowedDoc());
+    }
+    // Quản trị viên: có hồ sơ trong `allowed` với role = admin và chưa bị khoá.
+    // Hồ sơ quản trị ĐẦU TIÊN tạo bằng tay trong Firebase Console (xem HUONG_DAN.md).
+    function isAdmin() {
+      return signedIn() && hasAllowedDoc()
+        && allowedDoc().get('active', true) == true
+        && allowedDoc().get('role', 'member') == 'admin';
+    }
+    function validAllowed() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['role', 'active', 'name', 'addedAt'])
+        && d.role in ['admin', 'member']
+        && d.active is bool
+        && d.name is string && d.name.size() <= 60;
+    }
+    function validResult() {
+      let d = request.resource.data;
+      return d.keys().hasAll(['uid', 'name', 'score', 'total', 'pct', 'level', 'ts'])
+        && d.keys().hasOnly(['uid', 'name', 'score', 'total', 'pct', 'level', 'ts'])
+        && d.uid == request.auth.uid
+        && d.ts == request.time
+        && d.name is string && d.name.size() <= 80
+        && d.level is string && d.level.size() <= 60
+        && d.score is int && d.total is int
+        && d.score >= 0 && d.total >= 1 && d.total <= 200 && d.score <= d.total
+        && d.pct is number && d.pct >= 0 && d.pct <= 100;
+    }
+
+    // ---------- Hồ sơ đặc biệt: quản trị viên, người bị khoá, tên hiển thị, danh sách cho phép ----------
+    match /allowed/{email} {
+      allow get: if signedIn() && (email == myEmail() || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isAdmin() && validAllowed();
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Chế độ truy cập ----------
+    match /config/access {
+      allow get: if signedIn();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['open', 'updatedAt'])
+        && request.resource.data.open is bool;
+      allow delete: if false;
+    }
+
+    // ---------- Kết quả làm bài (bảng xếp hạng) ----------
+    match /results/{id} {
+      allow read: if isMember();
+      allow create: if isMember() && validResult();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Câu hỏi do quản trị viên thêm, sửa, xoá ----------
+    match /custom_questions/{id} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+    match /question_edits/{id} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+    match /question_deletes/{id} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+  }
+}

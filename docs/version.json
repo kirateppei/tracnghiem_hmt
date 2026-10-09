@@ -1,7 +1,7 @@
 {
-  "version": "b7426de729",
-  "date": "2026-10-09T20:41:39Z",
-  "notes": "Thêm mục Bản vẽ NLMT vào Tài liệu (4 bản vẽ, xem và phóng to)",
+  "version": "00436bb97c",
+  "date": "2026-10-09T20:44:26Z",
+  "notes": "Sửa cách ghi giờ ở các câu đỉnh sản lượng (ví dụ 11 giờ 30)",
   "apk": {
     "version": "",
     "url": "",

@@ -41,6 +41,35 @@
       g.gain.value = vol || 0.15; s.buffer = buf; s.connect(g); g.connect(c.destination); s.start();
     }catch(e){}
   }
+
+  function slide(f0, f1, dur, type, vol, delay){
+    if(muted) return;
+    const c = ctx(); if(!c) return;
+    try{
+      const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + (delay || 0);
+      o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+      g.gain.setValueAtTime(vol || 0.15, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
+    }catch(e){}
+  }
+  const nz = (ms, dur, vol) => setTimeout(() => noise(dur, vol), ms);
+  function sfx(n){
+    switch(n){
+      case 'peck': slide(280, 90, 0.1, 'triangle', 0.24); noise(0.05, 0.14); break;
+      case 'kick': slide(190, 50, 0.2, 'sine', 0.32); noise(0.1, 0.22); slide(900, 300, 0.05, 'square', 0.06, 0.01); break;
+      case 'crit': slide(230, 40, 0.32, 'sawtooth', 0.3); noise(0.2, 0.32); slide(1300, 200, 0.12, 'square', 0.1); slide(160, 50, 0.3, 'sine', 0.3, 0.08); break;
+      case 'miss': noise(0.15, 0.07); slide(450, 1300, 0.15, 'sine', 0.06); break;
+      case 'flap': nz(0, 0.05, 0.12); nz(70, 0.05, 0.1); nz(140, 0.05, 0.08); break;
+      case 'squawk': slide(950, 430, 0.16, 'sawtooth', 0.11); slide(880, 380, 0.2, 'sawtooth', 0.11, 0.19); break;
+      case 'crow': slide(480, 800, 0.2, 'sawtooth', 0.13); slide(800, 780, 0.25, 'sawtooth', 0.13, 0.2); slide(780, 340, 0.5, 'sawtooth', 0.13, 0.46); break;
+      case 'heal': [523, 659, 784, 1047, 1319].forEach((f, k) => slide(f, f * 1.01, 0.22, 'sine', 0.12, k * 0.09)); break;
+      case 'thunder': noise(0.55, 0.38); slide(130, 40, 0.55, 'sawtooth', 0.32); slide(2200, 120, 0.3, 'square', 0.08); break;
+      case 'steel': slide(1500, 950, 0.3, 'square', 0.06); slide(2300, 1600, 0.25, 'triangle', 0.1, 0.05); slide(700, 650, 0.35, 'triangle', 0.08, 0.1); break;
+      case 'phantom': slide(300, 950, 0.5, 'sine', 0.11); slide(950, 280, 0.55, 'sine', 0.08, 0.15); break;
+      case 'flurry': for(let k = 0; k < 7; k++){ slide(320, 110, 0.05, 'triangle', 0.2, k * 0.1); } break;
+      case 'win': [660, 880, 1100].forEach((f, k) => slide(f, f * 1.02, 0.2, 'triangle', 0.1, k * 0.12)); break;
+    }
+  }
   const buzz = (p) => { try{ if(!muted && navigator.vibrate) navigator.vibrate(p); }catch(e){} };
 
   /* ---------- CSS (nhúng một lần) ---------- */
@@ -154,7 +183,7 @@
   /* đá gà mini */
   #view-games .gm-chk{ display:flex; gap:10px; align-items:center; background:#fff; border-radius:14px; padding:10px; margin-bottom:8px; border:3px solid transparent; }
   #view-games .gm-chk.sel{ border-color:var(--accent,#f2b705); }
-  #view-games .gm-chk .em{ font-size:2.6rem; line-height:1; filter:hue-rotate(var(--hue)); flex:none; width:54px; text-align:center; cursor:pointer; }
+  #view-games .gm-chk .em{ font-size:2.6rem; line-height:1; flex:none; width:54px; text-align:center; cursor:pointer; }
   #view-games .gm-chk .info{ flex:1; min-width:0; }
   #view-games .gm-chk input.nm{ width:100%; box-sizing:border-box; border:1px solid #c5d3cb; border-radius:8px; padding:5px 8px; font:inherit; font-weight:800; font-size:.92rem; margin-bottom:5px; color:#1b3a2f; background:#fff; }
   #view-games .gm-stat{ display:flex; align-items:center; gap:6px; font-size:.7rem; font-weight:700; color:#33493d; margin:2px 0; }
@@ -173,18 +202,58 @@
   #view-games .gm-cside .bar.hp i{ background:linear-gradient(#ff6b6b,#d62828); }
   #view-games .gm-cside .bar.en i{ background:linear-gradient(#6ec6ff,#1e88e5); }
   #view-games .gm-cside .hpnum{ color:#fff; font-size:.68rem; font-weight:700; text-shadow:0 1px 2px #000; }
-  #view-games .gm-cside .chick{ font-size:4.4rem; line-height:1.1; margin-top:6px; filter:hue-rotate(var(--hue)); display:inline-block; transition:transform .12s; }
-  #view-games .gm-cside.left .chick{ transform:scaleX(-1); }
-  #view-games .gm-cside.left .chick.atk{ animation:gm-atkL .45s; }
-  #view-games .gm-cside.right .chick.atk{ animation:gm-atkR .45s; }
-  @keyframes gm-atkL{ 0%{ transform:scaleX(-1) translateX(0); } 40%{ transform:scaleX(-1) translateX(-70px) rotate(-8deg); } 100%{ transform:scaleX(-1) translateX(0); } }
-  @keyframes gm-atkR{ 0%{ transform:translateX(0); } 40%{ transform:translateX(-70px) rotate(-8deg); } 100%{ transform:translateX(0); } }
+  #view-games .gm-cside .chick{ width:130px; height:118px; margin:6px auto 0; transition:transform .12s; transform:scaleX(var(--flip,1)); transform-origin:50% 90%; }
+  #view-games .gm-cside.left{ --flip:1; } #view-games .gm-cside.right{ --flip:-1; }
+  #view-games .gm-cside .chick svg{ width:100%; height:100%; overflow:visible; display:block; animation:gm-bob 1.1s ease-in-out infinite; }
+  @keyframes gm-bob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
+  #view-games .gm-cside .chick.atk{ animation:gm-atk .45s; }
+  @keyframes gm-atk{ 0%{ transform:scaleX(var(--flip)) translateX(0); } 40%{ transform:scaleX(var(--flip)) translateX(75px) rotate(8deg); } 100%{ transform:scaleX(var(--flip)) translateX(0); } }
+  #view-games .gm-cside .chick.atk .wing{ animation:gm-flap .2s 2; }
+  @keyframes gm-flap{ 0%,100%{ transform:rotate(0); } 50%{ transform:rotate(-28deg); } }
+  #view-games .gm-cside .chick .wing{ transform-box:fill-box; transform-origin:20% 25%; }
   #view-games .gm-cside .chick.hurt{ animation:gm-hurt .35s; }
-  @keyframes gm-hurt{ 0%,100%{ opacity:1; } 25%{ opacity:.35; margin-left:-8px; } 50%{ opacity:1; margin-left:8px; } 75%{ opacity:.5; margin-left:-4px; } }
-  #view-games .gm-cside .chick.dead{ transform:rotate(90deg) translateX(10px); opacity:.7; }
-  #view-games .gm-cside.left .chick.dead{ transform:scaleX(-1) rotate(90deg) translateX(10px); }
+  @keyframes gm-hurt{ 0%,100%{ opacity:1; transform:scaleX(var(--flip)) translateX(0); filter:none; } 25%{ opacity:.6; transform:scaleX(var(--flip)) translateX(-12px) rotate(-6deg); filter:brightness(2) saturate(.4); } 60%{ opacity:1; transform:scaleX(var(--flip)) translateX(6px); } }
+  #view-games .gm-cside .chick.dead{ transform:scaleX(var(--flip)) rotate(80deg) translateY(10px); opacity:.65; filter:grayscale(.6); }
+  #view-games .gm-cside .chick.dead svg{ animation:none; }
   #view-games .gm-cside .chick.win{ animation:gm-win .6s infinite alternate; }
-  @keyframes gm-win{ from{ margin-top:6px; } to{ margin-top:-8px; } }
+  @keyframes gm-win{ from{ transform:scaleX(var(--flip)) translateY(0); } to{ transform:scaleX(var(--flip)) translateY(-16px) rotate(-4deg); } }
+  /* hiệu ứng tuyệt chiêu riêng */
+  #view-games .gm-fx{ position:absolute; inset:0; pointer-events:none; z-index:6; overflow:hidden; }
+  #view-games .gm-fx .p{ position:absolute; font-size:1.6rem; line-height:1; }
+  #view-games .gm-arena.flash{ animation:gm-flash .5s; }
+  @keyframes gm-flash{ 0%,100%{ filter:none; } 15%{ filter:brightness(3.2); } 40%{ filter:brightness(1.4); } 55%{ filter:brightness(2.6); } }
+  #view-games .gm-arena.quake{ animation:gm-quake .5s; }
+  @keyframes gm-quake{ 0%,100%{ transform:translate(0,0); } 20%{ transform:translate(-7px,4px); } 40%{ transform:translate(6px,-5px); } 60%{ transform:translate(-5px,3px); } 80%{ transform:translate(4px,-2px); } }
+  #view-games .gm-cside .chick.heal{ filter:drop-shadow(0 0 10px #69f0ae) drop-shadow(0 0 22px #00e676); }
+  #view-games .gm-cside .chick.phantom{ opacity:.6; filter:drop-shadow(-26px 0 rgba(200,230,255,.55)) drop-shadow(26px 0 rgba(200,230,255,.55)); animation:gm-sway .5s ease-in-out infinite alternate; }
+  @keyframes gm-sway{ from{ transform:scaleX(var(--flip)) translateX(-12px); } to{ transform:scaleX(var(--flip)) translateX(12px); } }
+  #view-games .gm-cside .chick.steel{ filter:grayscale(.55) brightness(1.25) contrast(1.1) drop-shadow(0 0 8px #cfd8dc) drop-shadow(0 0 16px #90a4ae); }
+  #view-games .gm-cside .chick.flurry{ animation:gm-flurry .9s; }
+  @keyframes gm-flurry{ 0%,100%{ transform:scaleX(var(--flip)) translateX(0); } 12%{ transform:scaleX(var(--flip)) translateX(70px); } 24%{ transform:scaleX(var(--flip)) translateX(8px); } 36%{ transform:scaleX(var(--flip)) translateX(70px); } 48%{ transform:scaleX(var(--flip)) translateX(8px); } 60%{ transform:scaleX(var(--flip)) translateX(70px); } 72%{ transform:scaleX(var(--flip)) translateX(8px); } 84%{ transform:scaleX(var(--flip)) translateX(70px); } }
+  #view-games .gm-cside .chick.thunder{ animation:gm-thunder 1s; }
+  @keyframes gm-thunder{ 0%{ transform:scaleX(var(--flip)) translateY(0) rotate(0); filter:none; } 30%{ transform:scaleX(var(--flip)) translateY(-60px) rotate(-12deg); filter:drop-shadow(0 0 14px #fff176); } 55%{ transform:scaleX(var(--flip)) translate(90px,10px) rotate(14deg); filter:drop-shadow(0 0 20px #fff176); } 100%{ transform:scaleX(var(--flip)) translate(0,0); filter:none; } }
+  #view-games .gm-cside .chick.crow{ animation:gm-crow 1.2s; }
+  @keyframes gm-crow{ 0%{ transform:scaleX(var(--flip)) scale(1); } 25%{ transform:scaleX(var(--flip)) scale(1.35) translateY(-14px) rotate(-14deg); } 70%{ transform:scaleX(var(--flip)) scale(1.35) translateY(-14px) rotate(-14deg); } 100%{ transform:scaleX(var(--flip)) scale(1); } }
+  #view-games .gm-cside .chick.stunned{ filter:saturate(.5); }
+  #view-games .gm-cside .stars{ position:absolute; left:0; right:0; top:46px; font-size:1.3rem; letter-spacing:4px; animation:gm-spin 1s linear infinite; display:none; }
+  #view-games .gm-cside .stars.on{ display:block; }
+  @keyframes gm-spin{ 0%{ transform:translateX(-10px); } 50%{ transform:translateX(10px); } 100%{ transform:translateX(-10px); } }
+  #view-games .gm-ring{ position:absolute; border:4px solid rgba(255,235,120,.85); border-radius:50%; width:30px; height:30px; margin:-15px 0 0 -15px; animation:gm-wave 1s ease-out forwards; }
+  @keyframes gm-wave{ from{ transform:scale(.4); opacity:1; } to{ transform:scale(9); opacity:0; } }
+  #view-games .gm-bolt{ position:absolute; top:-10px; width:46px; height:230px; margin-left:-23px; animation:gm-boltz .55s forwards; filter:drop-shadow(0 0 10px #fff176) drop-shadow(0 0 22px #ffd600); }
+  @keyframes gm-boltz{ 0%{ opacity:0; transform:scaleY(.2); transform-origin:top; } 15%{ opacity:1; transform:scaleY(1); } 70%{ opacity:1; } 100%{ opacity:0; } }
+  #view-games .gm-rise{ animation:gm-rise 1.4s ease-out forwards; }
+  @keyframes gm-rise{ from{ transform:translateY(0) scale(.6); opacity:0; } 20%{ opacity:1; } to{ transform:translateY(-120px) scale(1.3); opacity:0; } }
+  #view-games .gm-streak{ position:absolute; height:5px; width:60px; border-radius:3px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.9)); animation:gm-streak .5s forwards; }
+  @keyframes gm-streak{ from{ transform:translateX(0); opacity:1; } to{ transform:translateX(70px); opacity:0; } }
+  #view-games svg[data-tier="1"]{ filter:drop-shadow(0 0 4px rgba(120,230,160,.8)); }
+  #view-games svg[data-tier="2"]{ filter:drop-shadow(0 0 6px rgba(190,140,255,.95)) drop-shadow(0 0 12px rgba(255,236,130,.7)); }
+  #view-games svg[data-tier="3"]{ filter:drop-shadow(0 0 7px #ffd54a) drop-shadow(0 0 18px #ff9800); }
+  #view-games .tw{ transform-box:fill-box; transform-origin:center; animation:gm-tw 1.4s ease-in-out infinite; }
+  @keyframes gm-tw{ 0%,100%{ opacity:.15; transform:scale(.4) rotate(0); } 50%{ opacity:1; transform:scale(1.2) rotate(45deg); } }
+  #view-games .gm-tier{ font-size:.78rem; font-weight:900; letter-spacing:1px; margin-top:3px; }
+  #view-games .gm-tier.t0{ color:#78909c; } #view-games .gm-tier.t1{ color:#2e9e5b; } #view-games .gm-tier.t2{ color:#8e44ff; } #view-games .gm-tier.t3{ color:#e29a00; text-shadow:0 0 6px rgba(255,200,0,.6); }
+  #view-games .gm-chk .em svg{ width:54px; height:48px; display:block; overflow:visible; }
   #view-games .gm-dmg{ position:absolute; left:50%; top:40px; font-weight:900; font-size:1.5rem; color:#fff176; text-shadow:0 2px 0 #b71c1c,0 0 8px #000; pointer-events:none; animation:gm-float 1s forwards; z-index:3; }
   #view-games .gm-dmg.crit{ color:#ff5252; font-size:2rem; }
   #view-games .gm-dmg.miss{ color:#b3e5fc; font-size:1.1rem; }
@@ -776,54 +845,91 @@
   /* ---------- Đá gà mini ---------- */
   const rf = () => rand(1000000) / 1000000;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  const CH_NAMES = ['Gà Lửa', 'Gà Sấm', 'Gà Bão', 'Gà Thép', 'Gà Băng', 'Gà Vàng', 'Gà Đen', 'Gà Ngọc'];
-  const CH_HUES = [0, 205, 120, 45, 255, 320, 80, 165];
+  // Skin gà: hạng 0 thường, 1 hiếm, 2 sử thi, 3 huyền thoại. Tên gà mặc định = tên skin (đổi màu thì đổi tên theo).
+  const SKINS_CH = [
+    { id: 'nau',    name: 'Gà Nâu',          tier: 0, body: '#8d5a2b', wing: '#5d3a1a', hackle: '#d9a441', t1: '#2e7d32', t2: '#455a64', t3: '#5d4037', comb: '#e53935', pat: 'none' },
+    { id: 'xam',    name: 'Gà Xám',          tier: 0, body: '#9e9e9e', wing: '#616161', hackle: '#e0e0e0', t1: '#424242', t2: '#757575', t3: '#bdbdbd', comb: '#e53935', pat: 'spots' },
+    { id: 'trang',  name: 'Gà Trắng',        tier: 0, body: '#f2f2ec', wing: '#cfd8dc', hackle: '#fff8e1', t1: '#e0e0e0', t2: '#cfd8dc', t3: '#eceff1', comb: '#e53935', pat: 'none' },
+    { id: 'vang',   name: 'Gà Vàng',         tier: 0, body: '#fbc02d', wing: '#f57f17', hackle: '#fff59d', t1: '#e65100', t2: '#ef6c00', t3: '#ff9800', comb: '#e53935', pat: 'stripes' },
+    { id: 'lua',    name: 'Gà Lửa',          tier: 1, body: '#d84315', wing: '#8d2a0b', hackle: '#ffb300', t1: '#ff6f00', t2: '#e53935', t3: '#ffca28', comb: '#b71c1c', pat: 'flames' },
+    { id: 'bang',   name: 'Gà Băng',         tier: 1, body: '#4fc3f7', wing: '#0277bd', hackle: '#e1f5fe', t1: '#b3e5fc', t2: '#81d4fa', t3: '#29b6f6', comb: '#ec407a', pat: 'spots' },
+    { id: 'rung',   name: 'Gà Rừng',         tier: 1, body: '#2e7d32', wing: '#1b5e20', hackle: '#c5e1a5', t1: '#00bfa5', t2: '#1de9b6', t3: '#64ffda', comb: '#e53935', pat: 'stripes' },
+    { id: 'sam',    name: 'Gà Sấm',          tier: 2, body: '#1e40af', wing: '#12286e', hackle: '#ffd54a', t1: '#0ea5e9', t2: '#22d3ee', t3: '#6366f1', comb: '#ef4444', pat: 'bolt' },
+    { id: 'dem',    name: 'Gà Bóng Đêm',     tier: 2, body: '#37474f', wing: '#151515', hackle: '#9575cd', t1: '#00e5ff', t2: '#651fff', t3: '#1de9b6', comb: '#aa00ff', pat: 'scales' },
+    { id: 'ngoc',   name: 'Gà Ngọc',         tier: 2, body: '#00897b', wing: '#004d40', hackle: '#b2dfdb', t1: '#00bfa5', t2: '#1de9b6', t3: '#64ffda', comb: '#e53935', pat: 'scales' },
+    { id: 'phuong', name: 'Gà Phượng Hoàng', tier: 3, body: '#e53935', wing: '#ff6f00', hackle: '#ffeb3b', t1: '#ff1744', t2: '#ff9100', t3: '#ffea00', comb: '#ffd600', pat: 'flames' },
+    { id: 'kim',    name: 'Gà Hoàng Kim',    tier: 3, body: '#ffc107', wing: '#ff8f00', hackle: '#fff8e1', t1: '#ffd54f', t2: '#ffb300', t3: '#fff176', comb: '#d50000', pat: 'scales' },
+    { id: 'rong',   name: 'Gà Rồng',         tier: 3, body: '#00c853', wing: '#00695c', hackle: '#ffd740', t1: '#00e5ff', t2: '#76ff03', t3: '#ffd600', comb: '#d50000', pat: 'scales' }
+  ];
+  const skinById = (id) => SKINS_CH.find((k) => k.id === id) || SKINS_CH[0];
+  const TIER_NAMES = ['Thường', 'Hiếm', 'Sử thi', 'Huyền thoại'];
+  const TIER_BUDGET = [[188, 214], [214, 240], [240, 266], [266, 292]];   // tổng 4 chỉ số theo hạng: hạng cao mạnh hơn
   const SPECIALS = {
-    revive:  { name: 'Hồi Sinh', desc: 'hồi 35% máu một lần khi gần gục' },
-    flurry:  { name: 'Mổ Liên Hoàn', desc: '4 cú mổ liên tiếp' },
-    phantom: { name: 'Ảo Ảnh', desc: 'né 3 đòn kế tiếp' },
-    steel:   { name: 'Gồng Thép', desc: 'giảm một nửa sát thương 4 đòn kế tiếp' },
-    thunder: { name: 'Cú Đá Sấm Sét', desc: 'cú đá cực mạnh làm đối thủ choáng' },
-    crow:    { name: 'Gáy Uy Lực', desc: 'rút 60% năng lượng và làm yếu đòn của đối thủ' }
+    revive:  { name: 'Hồi Sinh', desc: 'hồi một phần lớn máu một lần khi gần gục' },
+    flurry:  { name: 'Mổ Liên Hoàn', desc: 'chuỗi cú mổ liên tiếp rất khó né' },
+    phantom: { name: 'Ảo Ảnh', desc: 'né nhiều đòn kế tiếp' },
+    steel:   { name: 'Gồng Thép', desc: 'giảm mạnh sát thương nhiều đòn kế tiếp' },
+    thunder: { name: 'Cú Đá Sấm Sét', desc: 'cú đá cực mạnh không thể né, làm đối thủ choáng' },
+    crow:    { name: 'Gáy Uy Lực', desc: 'rút năng lượng và làm yếu hẳn đòn của đối thủ' }
   };
   const SP_KEYS = Object.keys(SPECIALS);
   const STAT_DEFS = [['str', 'Sức mạnh', '#e53935'], ['spd', 'Tốc độ', '#fb8c00'], ['hp', 'Máu', '#43a047'], ['en', 'Năng lượng', '#1e88e5']];
   let flock = [];
   let selected = new Set();
   let chickenCount = +store('chickCount') || 4;
-  function newChicken(idx, keepName){
-    const w = [rf() + .15, rf() + .15, rf() + .15, rf() + .15], sum = w.reduce((x, y) => x + y, 0);
-    const v = w.map((x) => clamp(Math.round(34 + (96 * x) / sum * 1.0), 30, 100));
-    return { name: keepName || CH_NAMES[idx % CH_NAMES.length], hue: CH_HUES[idx % CH_HUES.length], str: v[0], spd: v[1], hp: v[2], en: v[3], sp: SP_KEYS[rand(SP_KEYS.length)] };
+  function pickTier(){ const r = rf(); return r < 0.38 ? 0 : r < 0.68 ? 1 : r < 0.9 ? 2 : 3; }
+  function newChicken(idx, keepName, usedNames, forceTier){
+    const tier = forceTier === undefined ? pickTier() : forceTier;
+    const pool = SKINS_CH.filter((k) => k.tier === tier), sk = pool[rand(pool.length)];
+    const [lo, hi] = TIER_BUDGET[tier], budget = lo + rf() * (hi - lo);
+    let extra = budget - 120; const v = [30, 30, 30, 30];
+    for(let pass = 0; pass < 3 && extra > 0.5; pass++){
+      const open = v.map((x, i) => i).filter((i) => v[i] < 100), w = open.map(() => rf() + 0.2), sum = w.reduce((x, y) => x + y, 0);
+      let spent = 0; open.forEach((i, k) => { const add = Math.min(100 - v[i], extra * w[k] / sum); v[i] += add; spent += add; }); extra -= spent;
+    }
+    const st = v.map((x) => Math.round(x));
+    let name = keepName;
+    if(!name){
+      name = sk.name; const used = usedNames || [];
+      let n = 2; while(used.indexOf(name) >= 0) name = sk.name + ' ' + (n++);
+    }
+    return { name, skin: sk.id, tier, edited: !!keepName, str: st[0], spd: st[1], hp: st[2], en: st[3], sp: SP_KEYS[rand(SP_KEYS.length)] };
   }
   function makeFlock(n){
-    const old = flock.map((c) => c.name);
-    flock = Array.from({ length: n }, (_, i) => newChicken(i, old[i] && old[i] !== CH_NAMES[i % CH_NAMES.length] ? old[i] : null));
-    selected = new Set();
+    flock = []; selected = new Set();
+    for(let i = 0; i < n; i++) flock.push(newChicken(i, null, flock.map((c) => c.name)));
+  }
+  // đổi hết hoặc đổi một con: tên tự đổi theo skin mới, trừ khi người dùng đã tự gõ tên
+  function rerollChicken(i){
+    const old = flock[i], used = flock.filter((_, k) => k !== i).map((c) => c.name);
+    flock[i] = newChicken(i, old.edited ? old.name : null, used);
   }
 
   /* Mô phỏng một trận: trả về danh sách sự kiện để phát hoạt hình (hoặc bỏ qua) */
   function simulate(A, B){
-    const f = [A, B].map((c) => ({ c, maxHp: 120 + c.hp * 2, maxEn: 40 + c.en * 0.9, gauge: rf() * 40, used: false, phantom: 0, steel: 0, weak: 0, stun: false, dealt: 0, sp: '' }));
+    const f = [A, B].map((c) => ({ c, maxHp: 210 + c.hp * 1.9, maxEn: 60 + c.en * 0.6, gauge: rf() * 40, used: false, phantom: 0, steel: 0, weak: 0, stun: false, dealt: 0, sp: '' }));
     f.forEach((x) => { x.hp = x.maxHp; x.en = x.maxEn; });
     const ev = [];
     const snap = () => ({ hp: f.map((x) => Math.round(x.hp)), en: f.map((x) => Math.round(x.en)) });
-    function strike(i, mult, unavoidable){
+    function strike(i, mult, unavoidable, dodgeScale){
       const a = f[i], d = f[1 - i];
-      const dodge = clamp(0.08 + (d.c.spd - a.c.spd) / 300, 0.03, 0.35);
+      const dodge = clamp(0.08 + (d.c.spd - a.c.spd) / 300, 0.03, 0.35) * (dodgeScale === undefined ? 1 : dodgeScale);
       let miss = false, dmg = 0, crit = false;
       if(d.phantom > 0){ d.phantom--; miss = true; }
       else if(!unavoidable && rf() < dodge) miss = true;
       if(!miss){
-        crit = rf() < 0.1;
-        dmg = a.c.str * 0.5 * (0.7 + 0.6 * rf()) * mult * (crit ? 1.8 : 1);
-        if(a.weak > 0) dmg *= 0.7;
-        if(d.steel > 0){ dmg *= 0.5; d.steel--; }
+        crit = rf() < 0.14;
+        dmg = (14 + a.c.str * 0.32) * (0.55 + 0.9 * rf()) * mult * (crit ? 1.8 : 1);
+        if(a.weak > 0) dmg *= 0.55;
+        if(d.steel > 0){ dmg *= 0.4; d.steel--; }
         dmg = Math.max(1, Math.round(dmg)); d.hp = Math.max(0, d.hp - dmg); a.dealt += dmg;
       }
       if(a.weak > 0) a.weak--;
       return { miss, dmg, crit };
     }
+    // gà yếu hơn được tuyệt chiêu mạnh hơn và dễ tung hơn (để có cửa lật kèo)
+    const score = (c) => c.str + c.spd + c.hp + c.en;
+    f.forEach((x, k) => { x.u = clamp((score(f[1 - k].c) - score(x.c)) / 55, 0, 1); });
     let guard = 0, winner = -1;
     while(winner < 0 && guard++ < 600){
       const t = Math.min(...f.map((x) => (100 - x.gauge) / x.c.spd));
@@ -833,21 +939,23 @@
       f[i].gauge = Math.max(0, f[i].gauge - 100);
       const me = f[i], op = f[1 - i];
       if(me.stun){ me.stun = false; ev.push({ t: 'stun', who: i, ...snap() }); continue; }
-      const key = me.c.sp;
+      const key = me.c.sp, boost = 1 + 1.6 * me.u;
       // tuyệt chiêu ẩn
       let used = false;
       if(!me.used){
+        const behind = me.hp / me.maxHp < op.hp / op.maxHp;
         if(key === 'revive'){
-          if(me.hp < me.maxHp * 0.3){ me.used = used = true; me.hp = Math.min(me.maxHp, me.hp + me.maxHp * 0.35); me.sp = key; ev.push({ t: 'special', who: i, key, ...snap() }); }
-        }else if(me.en >= 20 && rf() < (me.hp < me.maxHp * 0.5 ? 0.34 : 0.16)){
+          if(me.hp < me.maxHp * (0.3 + 0.1 * me.u)){ me.used = used = true; me.hp = Math.min(me.maxHp, me.hp + me.maxHp * 0.5 * boost); me.sp = key; ev.push({ t: 'special', who: i, key, ...snap() }); }
+        }else if(me.en >= 20 && rf() < clamp((me.hp < me.maxHp * 0.5 ? 0.34 : 0.16) + 0.3 * me.u + (behind ? 0.12 : 0), 0, 0.9)){
           me.used = used = true; me.sp = key; me.en -= 20;
+          ev.push({ t: 'special', who: i, key, ...snap() });
           if(key === 'flurry'){
-            ev.push({ t: 'special', who: i, key, ...snap() });
-            for(let k = 0; k < 4 && op.hp > 0; k++){ const h = strike(i, 0.6); ev.push({ t: 'attack', who: i, ...h, ...snap() }); }
-          }else if(key === 'phantom'){ me.phantom = 3; ev.push({ t: 'special', who: i, key, ...snap() }); }
-          else if(key === 'steel'){ me.steel = 4; ev.push({ t: 'special', who: i, key, ...snap() }); }
-          else if(key === 'thunder'){ const h = strike(i, 2.4, true); op.stun = true; ev.push({ t: 'special', who: i, key, ...snap() }); ev.push({ t: 'attack', who: i, ...h, ...snap() }); }
-          else if(key === 'crow'){ op.en = Math.max(0, op.en * 0.4); op.weak = 3; ev.push({ t: 'special', who: i, key, ...snap() }); }
+            const n = 4 + Math.round(2 * me.u);
+            for(let k = 0; k < n && op.hp > 0; k++){ const h = strike(i, 0.75 * boost, false, 0.45); ev.push({ t: 'attack', who: i, ...h, ...snap() }); }
+          }else if(key === 'phantom'){ me.phantom = 3 + Math.round(2 * me.u); }
+          else if(key === 'steel'){ me.steel = 5 + Math.round(2 * me.u); }
+          else if(key === 'thunder'){ const h = strike(i, 3.0 * boost, true); op.stun = true; ev.push({ t: 'attack', who: i, ...h, ...snap() }); }
+          else if(key === 'crow'){ op.en = Math.max(0, op.en * (0.4 - 0.2 * me.u)); op.weak = 4 + Math.round(2 * me.u); }
         }
       }
       if(!used){
@@ -861,6 +969,57 @@
     return { ev, winner, maxHp: f.map((x) => x.maxHp), maxEn: f.map((x) => x.maxEn), dealt: f.map((x) => x.dealt), used: f.map((x) => x.sp) };
   }
 
+
+  let svgUid = 0;
+  function chickSvg(c){
+    const p = skinById(c.skin), u = 'ck' + (++svgUid), tier = p.tier;
+    const dk = shade(p.body, -.4);
+    const pat = {
+      none: '',
+      spots: `<g fill="${dk}" opacity=".4"><ellipse cx="118" cy="142" rx="6" ry="4.5"/><ellipse cx="140" cy="154" rx="5" ry="4"/><ellipse cx="100" cy="128" rx="4" ry="3.5"/><ellipse cx="160" cy="148" rx="4" ry="3.5"/><ellipse cx="128" cy="124" rx="3.5" ry="3"/></g>`,
+      stripes: `<path d="M84 122 Q100 150 96 164 M100 114 Q118 148 112 166 M118 112 Q136 146 128 168 M136 116 Q152 146 146 168" fill="none" stroke="${dk}" stroke-width="4.5" stroke-linecap="round" opacity=".4"/>`,
+      bolt: `<path d="M120 100 L102 132 L116 132 L106 160 L136 120 L121 120 L132 100Z" fill="#fff176" stroke="#f9a825" stroke-width="2" stroke-linejoin="round"/>`,
+      flames: `<path d="M84 166 Q82 146 94 136 Q94 150 104 152 Q102 138 114 128 Q114 148 124 154 Q126 140 138 134 Q136 150 148 156 Q154 148 162 142 Q160 164 150 168Z" fill="#ffb300" stroke="#e65100" stroke-width="1.5" opacity=".92"/><path d="M96 166 Q96 152 106 146 Q106 158 114 160 Q116 150 124 146 Q124 160 132 164Z" fill="#fff59d" opacity=".9"/>`,
+      scales: `<g fill="none" stroke="${dk}" stroke-width="2" opacity=".5" stroke-linecap="round"><path d="M82 126 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0"/><path d="M88 140 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0"/><path d="M82 154 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0 q6 9 12 0"/></g>`
+    }[p.pat] || '';
+    const gold = tier >= 1 ? `<rect x="104" y="170" width="10" height="5" rx="2" fill="#ffd54a" stroke="#b8860b"/><rect x="147" y="170" width="10" height="5" rx="2" fill="#ffd54a" stroke="#b8860b"/>` : '';
+    const tail4 = tier >= 2 ? `<path d="M70 104 C22 88 6 30 40 -6 C50 40 64 70 94 92Z" fill="${shade(p.t1, .15)}" stroke="${shade(p.t1, -.4)}" stroke-width="2"/>` : '';
+    const wingStroke = tier >= 2 ? '#ffd54f' : shade(p.wing, -.5);
+    const crown = tier >= 3 ? `<path d="M158 36 L160 12 L169 27 L178 8 L187 27 L196 12 L198 38Z" fill="#ffd54a" stroke="#b8860b" stroke-width="2.5" stroke-linejoin="round"/><circle cx="178" cy="26" r="3.5" fill="#e53935" stroke="#7f0000"/><circle cx="163" cy="30" r="2.4" fill="#29b6f6"/><circle cx="193" cy="30" r="2.4" fill="#29b6f6"/>` : '';
+    const spark = tier >= 3 ? [[26, 40], [200, 20], [14, 120], [214, 100]].map(([x, y], k) => `<path class="tw" style="animation-delay:${k * 0.35}s" d="M0 -9 L2.5 -2.5 L9 0 L2.5 2.5 L0 9 L-2.5 2.5 L-9 0 L-2.5 -2.5Z" transform="translate(${x} ${y})" fill="#fffde7" stroke="#ffd54f" stroke-width="1"/>`).join('') : '';
+    return `<svg viewBox="0 0 230 200" data-tier="${tier}" aria-hidden="true"><defs>
+      <linearGradient id="${u}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(p.body, .3)}"/><stop offset=".55" stop-color="${p.body}"/><stop offset="1" stop-color="${shade(p.body, -.3)}"/></linearGradient>
+      <linearGradient id="${u}w" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${shade(p.wing, .25)}"/><stop offset="1" stop-color="${shade(p.wing, -.3)}"/></linearGradient>
+      <linearGradient id="${u}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(p.hackle, .2)}"/><stop offset="1" stop-color="${shade(p.hackle, -.15)}"/></linearGradient></defs>
+      <ellipse cx="125" cy="192" rx="66" ry="7" fill="rgba(0,0,0,.3)"/>
+      <g stroke="#f9a825" stroke-width="7" stroke-linecap="round" fill="none"><path d="M112 160 L108 186"/><path d="M146 160 L152 186"/></g>
+      <g stroke="#f9a825" stroke-width="5" stroke-linecap="round" fill="none"><path d="M108 186 L90 190 M108 186 L108 194 M108 186 L124 191"/><path d="M152 186 L134 190 M152 186 L152 194 M152 186 L170 191"/></g>
+      ${gold}
+      <path d="M110 150 L100 156 L112 160Z" fill="${tier >= 1 ? '#ffd54a' : '#e0e0e0'}" stroke="#9e9e9e" stroke-width="1.5"/>
+      ${tail4}
+      <path d="M72 112 C14 112 -6 56 22 14 C36 52 56 76 92 98Z" fill="${p.t1}" stroke="${shade(p.t1, -.4)}" stroke-width="2"/>
+      <path d="M72 120 C20 132 -8 98 6 54 C34 78 56 98 94 112Z" fill="${p.t2}" stroke="${shade(p.t2, -.4)}" stroke-width="2"/>
+      <path d="M74 128 C34 160 0 140 -2 104 C28 112 58 116 94 124Z" fill="${p.t3}" stroke="${shade(p.t3, -.4)}" stroke-width="2"/>
+      <path d="M68 108 Q66 70 120 68 Q182 72 186 122 Q182 168 128 170 Q70 168 68 108Z" fill="url(#${u}b)" stroke="${shade(p.body, -.5)}" stroke-width="3"/>
+      <ellipse cx="156" cy="132" rx="22" ry="26" fill="${shade(p.body, .35)}" opacity=".5"/>
+      ${pat}
+      <g class="wing"><path d="M92 108 Q140 94 160 128 Q148 158 104 150 Q80 128 92 108Z" fill="url(#${u}w)" stroke="${wingStroke}" stroke-width="${tier >= 2 ? 3.5 : 2.5}"/>
+        <path d="M104 118 Q132 112 146 130 M100 130 Q124 126 138 142 M98 142 Q116 140 126 150" fill="none" stroke="${shade(p.wing, -.45)}" stroke-width="2.2" stroke-linecap="round"/></g>
+      <path d="M134 78 Q166 58 182 80 Q176 112 150 118 Q132 106 134 78Z" fill="url(#${u}h)" stroke="${shade(p.hackle, -.4)}" stroke-width="2.5"/>
+      <path d="M140 86 L146 106 M150 82 L156 108 M160 80 L164 104" stroke="${shade(p.hackle, -.35)}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="172" cy="56" r="23" fill="${shade(p.hackle, .1)}" stroke="${shade(p.hackle, -.45)}" stroke-width="3"/>
+      <ellipse cx="176" cy="62" rx="12" ry="10" fill="${p.comb}" opacity=".9"/>
+      ${crown}
+      <path d="M154 40 Q148 22 160 28 Q162 12 174 24 Q186 14 188 32 Q176 40 154 40Z" fill="${p.comb}" stroke="${shade(p.comb, -.4)}" stroke-width="2.5" stroke-linejoin="round" ${tier >= 3 ? 'opacity="0"' : ''}/>
+      <circle cx="178" cy="53" r="7.5" fill="#fff" stroke="#222" stroke-width="2"/><circle cx="180" cy="54" r="4" fill="#111"/><circle cx="181.5" cy="52" r="1.4" fill="#fff"/>
+      <path d="M170 44 L186 47" stroke="#222" stroke-width="3" stroke-linecap="round"/>
+      <path d="M192 52 L218 60 L192 64Z" fill="#ffc107" stroke="#c77800" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M192 64 L212 69 L192 71Z" fill="#f57c00" stroke="#c77800" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M188 72 Q194 92 183 90 Q180 80 186 72Z" fill="${p.comb}" stroke="${shade(p.comb, -.4)}" stroke-width="2"/>
+      ${spark}
+    </svg>`;
+  }
+  const stars = (c) => '★'.repeat((c.tier || 0) + 1);
   function statBars(c){
     return STAT_DEFS.map(([k, label, col]) => `<div class="gm-stat"><span>${label}</span><u><i style="width:${c[k]}%;background:${col}"></i></u><b>${c[k]}</b></div>`).join('') +
       '<div class="gm-secret">❓ Tuyệt chiêu bí mật</div>';
@@ -870,8 +1029,8 @@
     clearTimers(); screen = 'chicken';
     if(flock.length !== chickenCount) makeFlock(chickenCount);
     const cards = flock.map((c, i) => `<div class="gm-chk ${selected.has(i) ? 'sel' : ''}" data-i="${i}">
-        <div class="em" data-act="sel" style="--hue:${c.hue}deg" title="Chạm để chọn">🐓</div>
-        <div class="info"><input class="nm" maxlength="14" value="${esc(c.name)}" data-i="${i}"><div class="gm-secret">❓ Chỉ số và tuyệt chiêu bí mật</div></div>
+        <div class="em" data-act="sel" title="Chạm để chọn">${chickSvg(c)}</div>
+        <div class="info"><input class="nm" maxlength="14" value="${esc(c.name)}" data-i="${i}"><div class="gm-tier t${c.tier}">${stars(c)}</div><div class="gm-secret">❓ Chỉ số và tuyệt chiêu bí mật</div></div>
         <button class="re" data-act="re" data-i="${i}" title="Tạo lại con gà này">🎲</button></div>`).join('');
     render(`${topBar('🐓 Đá gà mini')}
       <div class="gm-panel">
@@ -894,15 +1053,15 @@
     }
     drawModes();
     $('gm-ccount').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { chickenCount = +b.dataset.n; store('chickCount', chickenCount); makeFlock(chickenCount); showChickens(); }));
-    $('gm-newall').addEventListener('click', () => { const names = flock.map((c) => c.name); flock = flock.map((c, i) => newChicken(i, names[i])); showChickens(); beep(520, 0.1, 'triangle'); });
+    $('gm-newall').addEventListener('click', () => { for(let i = 0; i < flock.length; i++) rerollChicken(i); selected = new Set(); showChickens(); beep(520, 0.1, 'triangle'); });
     root.querySelectorAll('.gm-chk').forEach((card) => {
       const i = +card.dataset.i;
       card.querySelector('.em').addEventListener('click', () => {
         if(selected.has(i)) selected.delete(i); else { if(selected.size >= 2) selected.delete([...selected][0]); selected.add(i); }
         root.querySelectorAll('.gm-chk').forEach((x) => x.classList.toggle('sel', selected.has(+x.dataset.i))); drawModes(); beep(600, 0.05, 'triangle', 0.08);
       });
-      card.querySelector('input.nm').addEventListener('input', (e) => { flock[i].name = e.target.value; });
-      card.querySelector('.re').addEventListener('click', () => { const nm = flock[i].name; flock[i] = newChicken(i, nm); selected = new Set(); showChickens(); });
+      card.querySelector('input.nm').addEventListener('input', (e) => { flock[i].name = e.target.value; flock[i].edited = true; });
+      card.querySelector('.re').addEventListener('click', () => { rerollChicken(i); selected = new Set(); showChickens(); });
     });
   }
 
@@ -940,10 +1099,10 @@
     const sim = simulate(A, B);
     const head = tour.single ? 'Trận đấu cặp' : `Vòng ${tour.round} · trận ${tour.idx}/${tour.total}` + (tour.bye !== null ? ` · ${esc(flock[tour.bye].name)} được đặc cách` : '');
     const side = (c, k, cls) => `<div class="gm-cside ${cls}" id="gm-c${k}">
-        <div class="nm">${esc(c.name)}</div>
+        <div class="nm">${stars(c)} ${esc(c.name)}</div>
         <div class="bar hp"><i id="hp${k}"></i></div><div class="hpnum" id="hpn${k}"></div>
         <div class="bar en"><i id="en${k}"></i></div>
-        <div class="chick" id="ch${k}" style="--hue:${c.hue}deg">🐓</div></div>`;
+        <div class="chick" id="ch${k}">${chickSvg(c)}</div><div class="stars" id="stars${k}">⭐ ⭐ ⭐</div></div>`;
     render(`${topBar('🐓 Đá gà mini')}
       <p style="text-align:center;margin:0 0 8px;font-weight:700">${head}</p>
       <div class="gm-arena">${side(A, 0, 'left')}<div class="gm-vs">VS</div>${side(B, 1, 'right')}<div class="gm-sp" id="gm-sp"></div></div>
@@ -960,10 +1119,59 @@
     setBars({ hp: sim.maxHp, en: sim.maxEn });
     const names = [A.name, B.name];
     const speed = { v: 1 };
+    // căn thời lượng trận 20-30 giây (ở tốc độ thường): mỗi sự kiện có trọng số, quy ra giây theo tổng trọng số
+    const EW = { attack: 1, special: 1.8, rest: 0.7, stun: 0.7, end: 0 };
+    const totalW = sim.ev.reduce((x, e) => x + (EW[e.t] || 1), 0) || 1;
+    const targetSec = 20 + rf() * 10;
+    const unit = clamp(targetSec / totalW, 0.5, 1.6) * 1000;
     let stepI = 0, finished = false;
     function pop(k, text, cls){
       const el = document.createElement('div'); el.className = 'gm-dmg ' + (cls || ''); el.textContent = text;
       $('gm-c' + k).appendChild(el); later(() => el.remove(), 1000);
+    }
+    const arenaEl = () => root.querySelector('.gm-arena');
+    const fxBox = () => { const a = arenaEl(); let f = a && a.querySelector('.gm-fx'); if(!f && a){ f = document.createElement('div'); f.className = 'gm-fx'; a.appendChild(f); } return f; };
+    function center(k){
+      const a = arenaEl().getBoundingClientRect(), r = $('ch' + k).getBoundingClientRect();
+      return { x: r.left - a.left + r.width / 2, y: r.top - a.top + r.height / 2, w: r.width, h: r.height };
+    }
+    function spawn(html, x, y, cls, ms, style){
+      const f = fxBox(); if(!f) return null;
+      const el = document.createElement('div'); el.className = 'p ' + (cls || ''); el.innerHTML = html;
+      el.style.left = x + 'px'; el.style.top = y + 'px'; if(style) el.style.cssText += style;
+      f.appendChild(el); later(() => el.remove(), ms || 1400); return el;
+    }
+    function holdClass(k, cls, ms){ const el = $('ch' + k); if(!el) return; el.classList.add(cls); later(() => { const e2 = $('ch' + k); if(e2) e2.classList.remove(cls); }, ms); }
+    function shakeArena(cls, ms){ const a = arenaEl(); if(!a) return; a.classList.remove(cls); void a.offsetWidth; a.classList.add(cls); later(() => a.classList.remove(cls), ms); }
+    function playSpecial(key, k, o){
+      const c = center(k), q = center(o), dir = k === 0 ? 1 : -1;
+      sfx(key === 'revive' ? 'heal' : key);
+      if(key === 'revive'){
+        holdClass(k, 'heal', 1800);
+        ['💚', '✨', '✚', '💚', '✨', '✚', '💖'].forEach((t, n) => spawn(t, c.x - 50 + n * 16 + (n % 2) * 6, c.y + 20 - (n % 3) * 8, 'gm-rise', 1500, `animation-delay:${n * 0.12}s;`));
+      }else if(key === 'flurry'){
+        holdClass(k, 'flurry', 950);
+        for(let n = 0; n < 8; n++) spawn('', c.x + dir * 30, c.y - 36 + n * 11, 'gm-streak', 600, `width:${50 + n * 4}px;${dir < 0 ? 'transform:scaleX(-1);' : ''}animation-delay:${n * 0.1}s;`);
+        for(let n = 0; n < 4; n++) spawn('💢', q.x - 25 + (n % 2) * 40, q.y - 40 + n * 12, 'gm-rise', 1000, `animation-delay:${0.2 + n * 0.2}s;`);
+      }else if(key === 'phantom'){
+        holdClass(k, 'phantom', 3200);
+        spawn('👻', c.x - 12, c.y - 70, 'gm-rise', 1500); spawn('💨', c.x + dir * 40, c.y, 'gm-rise', 1200);
+      }else if(key === 'steel'){
+        holdClass(k, 'steel', 3600);
+        spawn('🛡️', c.x - 18, c.y - 78, 'gm-rise', 1600, 'font-size:2.4rem;');
+        [0, 1, 2].forEach((n) => spawn('✨', c.x - 40 + n * 40, c.y - 30 + (n % 2) * 30, 'gm-rise', 1200, `animation-delay:${n * 0.2}s;`));
+      }else if(key === 'thunder'){
+        holdClass(k, 'thunder', 1000);
+        const a = arenaEl(); shakeArena('flash', 600); later(() => shakeArena('quake', 500), 450);
+        later(() => { spawn('<svg viewBox="0 0 46 230"><path d="M30 0 L8 96 L26 96 L6 230 L40 70 L22 70 L38 0Z" fill="#fffde7" stroke="#ffd600" stroke-width="3" stroke-linejoin="round"/></svg>', q.x, 0, 'gm-bolt', 700); spawn('⚡', q.x - 18, q.y - 10, 'gm-rise', 1000, 'font-size:2.4rem;'); }, 380);
+        const st = $('stars' + o); if(st) st.classList.add('on');
+        holdClass(o, 'stunned', 3000);
+      }else if(key === 'crow'){
+        holdClass(k, 'crow', 1250);
+        for(let n = 0; n < 4; n++) later(() => { const cc = center(k); spawn('', cc.x + dir * 50, cc.y - 24, 'gm-ring', 1000); }, 220 + n * 230);
+        spawn('Ò Ó O…!', c.x - 40 + dir * 20, c.y - 92, 'gm-rise', 1600, 'font-size:1.5rem;font-weight:900;color:#fff176;text-shadow:0 2px 0 #b71c1c;white-space:nowrap;');
+        later(() => { holdClass(o, 'hurt', 400); }, 700);
+      }
     }
     function anim(k, cls, ms){ const el = $('ch' + k); if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); later(() => el.classList.remove(cls), ms); }
     function finish(){
@@ -971,11 +1179,12 @@
       const w = sim.winner, l = 1 - w, ia2 = [ia, ib];
       tour.winners.push(ia2[w]);
       const dead = $('ch' + l), win = $('ch' + w); if(dead) dead.classList.add('dead'); if(win) win.classList.add('win');
+      [0, 1].forEach((q) => { const st = $('stars' + q); if(st) st.classList.remove('on'); });
       setBars(sim.ev[sim.ev.length - 1]);
       const st2 = (c) => `Sức mạnh ${c.str} · Tốc độ ${c.spd} · Máu ${c.hp} · Năng lượng ${c.en}`;
       const revealed = sim.used.map((u, k) => u ? `${names[k]} đã dùng tuyệt chiêu ${SPECIALS[u].name} (${SPECIALS[u].desc}).` : `${names[k]} chưa kịp dùng tuyệt chiêu bí mật.`);
       const l2 = $('gm-log'); if(l2){ l2.innerHTML = ''; log(`🏆 ${names[w]} thắng! Gây ${sim.dealt[w]} sát thương, đối thủ gây ${sim.dealt[l]}.`); log(`📊 ${names[0]}: ${st2(A)}`); log(`📊 ${names[1]}: ${st2(B)}`); revealed.forEach(log); }
-      beep(660, 0.15, 'triangle'); beep(880, 0.2, 'triangle', 0.1, 0.12); buzz([60, 40, 100]);
+      sfx('win'); later(() => sfx('crow'), 500); buzz([60, 40, 100]);
       const last = !tour.pending.length && (tour.winners.length + (tour.bye !== null ? 1 : 0)) === 1;
       $('gm-fctl').innerHTML = `<button class="pri" id="gm-next">${tour.single ? 'Về danh sách gà' : last ? '🏆 Xem nhà vô địch' : 'Trận kế tiếp →'}</button>`;
       $('gm-next').addEventListener('click', () => { if(tour.single) showChickens(); else nextMatch(); });
@@ -985,24 +1194,26 @@
       const e = sim.ev[stepI++]; if(!e){ finish(); return; }
       const k = e.who, o = 1 - k;
       if(e.t === 'attack'){
-        anim(k, 'atk', 450);
+        anim(k, 'atk', 450); sfx('flap');
         later(() => {
-          if(e.miss){ pop(o, 'Né!', 'miss'); log(`${names[o]} né được đòn của ${names[k]}.`); beep(700, 0.08, 'sine', 0.08); }
-          else{ anim(o, 'hurt', 350); pop(o, '-' + e.dmg, e.crit ? 'crit' : ''); log(`${names[k]} ${e.crit ? 'đá CHÍ MẠNG' : 'mổ'} ${names[o]} mất ${e.dmg} máu.`); noise(0.08, e.crit ? 0.22 : 0.12); buzz(e.crit ? 40 : 15); }
+          if(e.miss){ pop(o, 'Né!', 'miss'); log(`${names[o]} né được đòn của ${names[k]}.`); sfx('miss'); }
+          else{
+            anim(o, 'hurt', 350); pop(o, '-' + e.dmg, e.crit ? 'crit' : ''); log(`${names[k]} ${e.crit ? 'đá CHÍ MẠNG' : rand(2) ? 'mổ' : 'đá'} ${names[o]} mất ${e.dmg} máu.`);
+            sfx(e.crit ? 'crit' : (rand(2) ? 'peck' : 'kick')); if(rand(3) === 0 || e.crit) later(() => sfx('squawk'), 120); buzz(e.crit ? 40 : 15);
+          }
           setBars(e);
         }, 220 / speed.v);
       }else if(e.t === 'special'){
         const sp = SPECIALS[e.key], el = $('gm-sp'); el.textContent = `✨ ${names[k]}: ${sp.name}!`; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-        log(`✨ ${names[k]} tung tuyệt chiêu ${sp.name}: ${sp.desc}.`); beep(440, 0.1, 'sawtooth', 0.12); beep(880, 0.25, 'triangle', 0.12, 0.1); anim(k, 'atk', 450); setBars(e);
+        log(`✨ ${names[k]} tung tuyệt chiêu ${sp.name}: ${sp.desc}.`); playSpecial(e.key, k, o); setBars(e);
       }else if(e.t === 'rest'){ log(`${names[k]} thở dốc, lấy lại sức.`); setBars(e); }
-      else if(e.t === 'stun'){ log(`${names[k]} đang choáng, mất lượt!`); setBars(e); }
+      else if(e.t === 'stun'){ log(`${names[k]} đang choáng, mất lượt!`); const st = $('stars' + k); if(st) later(() => st.classList.remove('on'), 700); setBars(e); }
       else if(e.t === 'end'){ later(finish, 500 / speed.v); return; }
-      later(step, (e.t === 'special' ? 1500 : 800) / speed.v);
+      later(step, (EW[e.t] || 1) * unit / speed.v);
     }
     $('gm-play').addEventListener('click', () => {
-      $('gm-fctl').innerHTML = '<button id="gm-fast">⏩ Nhanh x2</button><button id="gm-skip">⏭ Bỏ qua</button>';
+      $('gm-fctl').innerHTML = '<button id="gm-fast">⏩ Nhanh x2</button>';
       $('gm-fast').addEventListener('click', () => { speed.v = speed.v === 1 ? 2.2 : 1; $('gm-fast').textContent = speed.v === 1 ? '⏩ Nhanh x2' : '⏩ Đang nhanh'; });
-      $('gm-skip').addEventListener('click', () => { clearTimers(); finish(); });
       log(`🔔 ${names[0]} gặp ${names[1]}!`); step();
     });
   }
@@ -1010,10 +1221,10 @@
   function showChampion(idx){
     clearTimers(); screen = 'chicken-end';
     const c = flock[idx];
-    const reveal = flock.map((x) => `<div class="gm-chk" style="--hue:${x.hue}deg"><div class="em" style="cursor:default">🐓</div><div class="info"><b>${esc(x.name)}</b>${statBars(x).replace('❓ Tuyệt chiêu bí mật', '✨ ' + SPECIALS[x.sp].name + ': ' + SPECIALS[x.sp].desc)}</div></div>`).join('');
+    const reveal = flock.map((x) => `<div class="gm-chk"><div class="em" style="cursor:default">${chickSvg(x)}</div><div class="info"><b>${esc(x.name)}</b>${statBars(x).replace('❓ Tuyệt chiêu bí mật', '✨ ' + SPECIALS[x.sp].name + ': ' + SPECIALS[x.sp].desc)}</div></div>`).join('');
     render(`${topBar('🏆 Nhà vô địch')}
       <div class="gm-panel" style="text-align:center">
-        <div style="font-size:4.5rem;line-height:1.1;filter:hue-rotate(${c.hue}deg)">🐓</div>
+        <div style="width:150px;height:130px;margin:0 auto">${chickSvg(c)}</div>
         <div style="font-size:1.5rem;font-weight:900;margin:4px 0">🏆 ${esc(c.name)}</div>
         <div style="font-size:.85rem">là nhà vô địch!</div>
       </div>
@@ -1023,7 +1234,7 @@
     beep(660, 0.15, 'triangle'); beep(880, 0.15, 'triangle', 0.1, 0.12); beep(1100, 0.3, 'triangle', 0.1, 0.24);
     try{ if(typeof launchConfetti === 'function') launchConfetti(); }catch(e){}
     $('gm-again3').addEventListener('click', startTournament);
-    $('gm-newflock').addEventListener('click', () => { const names = flock.map((x) => x.name); flock = flock.map((x, i) => newChicken(i, names[i])); showChickens(); });
+    $('gm-newflock').addEventListener('click', () => { for(let i = 0; i < flock.length; i++) rerollChicken(i); showChickens(); });
   }
 
   /* ---------- Cổng vào ---------- */
@@ -1033,5 +1244,5 @@
     if(!root.dataset.ready){ root.dataset.ready = '1'; showMenu(); }
   };
   window.leaveGames = function(){ clearTimers(); };
-  window.__games = { simulate, newChicken, SPECIALS, openGame, showMenu, get screen(){ return screen; }, winnerIndex, get wheelItems(){ return wheelItems; } };
+  window.__games = { chickSvg, SKINS_CH, get flock(){ return flock; }, simulate, newChicken, SPECIALS, openGame, showMenu, get screen(){ return screen; }, winnerIndex, get wheelItems(){ return wheelItems; } };
 })();

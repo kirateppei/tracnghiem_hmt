@@ -1,7 +1,7 @@
 {
-  "version": "bf13b8b727",
-  "date": "2026-10-09T22:32:43Z",
-  "notes": "Đá gà: ẩn hết chỉ số của gà, bỏ nút xem kết quả",
+  "version": "cf3f8525b3",
+  "date": "2026-10-09T22:44:57Z",
+  "notes": "Đá gà: vẽ gà đẹp 13 skin theo hạng, tên đổi theo skin, âm thanh khi đá, hoạt ảnh riêng cho từng tuyệt chiêu, trận 20-30 giây",
   "apk": {
     "version": "",
     "url": "",

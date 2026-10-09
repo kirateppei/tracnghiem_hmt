@@ -84,8 +84,20 @@ Dự án Android Capacitor "Trắc Nghiệm ĐMT" (appId com.hiepminhthinh.tracn
 3. Đặt google-services.json (tôi cung cấp, tải từ Firebase cho app Android com.hiepminhthinh.tracnghiem) vào android/app/. Không đưa file này lên GitHub.
 4. Dùng ảnh docs/icons/icon-1024.png của repo tracnghiem_hmt làm icon app (dùng @capacitor/assets hoặc cách tương đương).
 5. Chạy npx cap sync android rồi build APK bằng ĐÚNG khoá debug đang dùng (SHA-1 28:75:27:53:DB:04:98:BA:03:2C:81:C8:30:A5:E5:40:36:C9:40:6E), không tạo khoá mới. Khác khoá thì Android không cho cài đè và nhân viên phải gỡ bản cũ trước.
+6. Đặt versionName của app là 1.0.0 (mỗi lần làm lại app thì tăng số này) để tính năng báo bản app mới hoạt động.
 Mã web đã sẵn sàng: trang gọi plugin qua Capacitor.nativePromise('FirebaseAuthentication', 'signInWithGoogle', {skipNativeAuth: true}), không cần sửa mã web.
 ```
+
+## Cập nhật phần mềm cho mọi người (kể cả app Android)
+- **Cách hoạt động:** sau mỗi lần có bản mới trên GitHub (chờ Pages build xong), người đang mở trang hoặc app sẽ thấy **thanh vàng ở đầu màn hình**: "Có bản cập nhật mới — nội dung". Thanh hiện trong vòng 5 phút hoặc ngay khi mở lại app. Bấm **Cập nhật ngay** để tải bản mới, **Để sau** thì chưa nhắc lại cho tới khi có bản mới hơn.
+- Phần mềm **không tự tải lại** để khỏi mất bài đang làm; nếu đang làm bài dở sẽ hỏi xác nhận. Cuối trang có dòng "Phiên bản … · Kiểm tra cập nhật" để kiểm tra bằng tay.
+- **Áp dụng cho:** trang web, iPhone (thêm vào Màn hình chính) và app Android **sau khi làm lại APK** theo mục trên (app mở thẳng trang web). APK cũ chứa bản web cũ bên trong nên không có tính năng này.
+- **Người cập nhật (chủ phần mềm hoặc Claude):** trước mỗi lần commit có sửa trong `docs/`, chạy
+  `python3 tools/bump_version.py --notes "Nội dung bản mới"`
+  Script tự đóng dấu phiên bản theo nội dung (không phải tăng số tay) và cập nhật `docs/version.js`, `docs/version.json`, `docs/index.html`. Quên chạy thì điện thoại sẽ không biết có bản mới.
+- **Khi nào phải cài lại file APK:** chỉ khi đổi phần vỏ Android (ví dụ thêm plugin). Khi đó build APK mới (tăng versionName), đưa file lên GitHub **Releases** (Releases → Draft a new release → kéo file APK vào → Publish), rồi chạy
+  `python3 tools/bump_version.py --apk-version 1.1.0 --apk-url <liên kết tải file APK> --apk-notes "Nội dung"`
+  và đẩy lên: app cũ sẽ hiện nút **Tải về**. Android sẽ hỏi cho phép cài từ nguồn ngoài, và bản mới phải ký bằng cùng khoá mới cài đè được.
 
 ## Giới hạn cần biết
 - **Gói miễn phí (Spark)** cho 50.000 lượt đọc và 20.000 lượt ghi mỗi ngày, dư cho 20 người. Xem bảng xếp hạng cả **Năm** tải nhiều dữ liệu nhất nên chỉ tải khi mở và nhớ tạm 5 phút (bấm lại nút kỳ để làm mới).

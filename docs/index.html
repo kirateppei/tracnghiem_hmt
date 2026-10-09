@@ -674,6 +674,17 @@ nav.tabs button{ flex:1 0 auto; white-space:nowrap; padding-left:12px; padding-r
   width:46px; height:46px; object-fit:contain; box-sizing:border-box; padding:6px;
   background:#fff; border-radius:0; clip-path:circle(50% at 50% 50%); filter:none; box-shadow:none;
 }
+
+/* ---------- Thanh thông báo bản cập nhật ---------- */
+.update-banner{
+  position:fixed; z-index:300; left:10px; right:10px; top:calc(10px + env(safe-area-inset-top)); max-width:460px; margin:0 auto;
+  display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:14px;
+  background:#FFF6DB; color:#4a3700; box-shadow:0 8px 24px rgba(0,0,0,0.35); font-size:0.85rem; line-height:1.35;
+}
+.update-banner span{ flex:1; }
+.update-banner button{ border:none; border-radius:10px; padding:8px 12px; font-family: var(--font-body); font-weight:700; font-size:0.8rem; cursor:pointer; }
+.update-banner .update-primary{ background:#1E9E6B; color:#fff; }
+.update-banner .update-later{ background:transparent; color:#6b4e00; padding-left:6px; padding-right:6px; }
 </style>
 </head>
 <body>
@@ -970,7 +981,7 @@ nav.tabs button{ flex:1 0 auto; white-space:nowrap; padding-left:12px; padding-r
     <div id="toc-list"></div>
   </section>
 
-  <footer class="credit">© Hiệp Minh Thịnh — Kết quả làm bài được lưu trực tuyến để xếp hạng.</footer>
+  <footer class="credit">© Hiệp Minh Thịnh — Kết quả làm bài được lưu trực tuyến để xếp hạng.<br><span id="app-version-line"></span> · <a href="#" onclick="checkForUpdate(true); return false;" style="color:inherit; text-decoration:underline;">Kiểm tra cập nhật</a></footer>
 </div>
 
 <div class="modal-backdrop" id="lb-detail-backdrop">
@@ -1061,11 +1072,13 @@ nav.tabs button{ flex:1 0 auto; white-space:nowrap; padding-left:12px; padding-r
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js"></script>
-<script src="questions.js"></script>
-<script src="music.js"></script>
-<script src="app.js"></script>
-<script src="leaderboard.js"></script>
-<script src="auth.js"></script>
+<script src="version.js?v=e8835fdcfd"></script>
+<script src="firebase-config.js?v=e8835fdcfd"></script>
+<script src="questions.js?v=e8835fdcfd"></script>
+<script src="music.js?v=e8835fdcfd"></script>
+<script src="app.js?v=e8835fdcfd"></script>
+<script src="leaderboard.js?v=e8835fdcfd"></script>
+<script src="auth.js?v=e8835fdcfd"></script>
+<script src="update.js?v=e8835fdcfd"></script>
 </body>
 </html>

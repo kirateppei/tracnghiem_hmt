@@ -958,6 +958,7 @@ const GUIDE_BRANDS = [
       'Kết nối điện thoại vào mạng phát ra từ module, tên dạng <b>"Solar-WiFi########"</b> (8 số cuối là số serial), mật khẩu mặc định <b>12345678</b>.',
       'Mở app <b>SolarGo</b> (app cấu hình của GoodWe) và kết nối với biến tần/module; mã truy cập mặc định của SolarGo thường là <b>1234</b> (nên đổi riêng cho installer và chủ nhà). Nếu app báo cấu hình WiFi không có, vào mục cấu hình mạng/Wi-Fi tuỳ phiên bản.',
       'Chọn mạng wifi nhà bạn từ danh sách → nhập mật khẩu wifi → xác nhận (Connect). Router cần phát <b>2.4GHz</b> và sóng đủ mạnh.',
+      'Cách khác — dùng trình duyệt: khi đang nối vào mạng <b>Solar-WiFi########</b>, mở trình duyệt vào <b>10.10.100.253</b> (gõ vào thanh địa chỉ), chọn wifi nhà, nhập mật khẩu rồi lưu. Tuỳ đời module, trang cấu hình có thể yêu cầu đăng nhập; nếu không vào được thì dùng SolarGo.',
       'Đợi module khởi động lại và kết nối vào wifi nhà (đèn LED chuyển trạng thái ổn định).',
       'Đăng nhập app <b>SEMS Portal</b> để thêm nhà máy điện mới (Add Plant/Station) nếu là lần đầu cấu hình, nhập serial biến tần để gắn vào.',
       'Kiểm tra trạng thái "Online" trong danh sách thiết bị trên app.',

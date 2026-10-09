@@ -87,6 +87,15 @@ APK cũ chứa bản web cũ, kèm mật khẩu admin cũ: **gỡ bản cũ kh�
 4. GitHub tự chạy **Actions → Dựng APK Android** (khoảng 5–10 phút). Xong thì file nằm ở **Releases → "Ứng dụng Android (APK) mới nhất"** (tên `trac-nghiem-dmt.apk`), tải về điện thoại và cài. Android sẽ hỏi cho phép cài từ nguồn ngoài.
 Nếu quy trình đỏ chữ "Thiếu google-services.json" nghĩa là chưa làm bước 3.
 
+**Hoặc dựng ngay trên máy tính có Android Studio** (không cần chờ GitHub): tải repo về, đặt `google-services.json` vào `android-app/android/app/`, mở terminal trong `android-app` rồi chạy:
+```
+npm ci
+npx cap sync android
+cd android
+gradlew assembleRelease      # Mac/Linux: ./gradlew assembleRelease
+```
+File APK nằm ở `android-app/android/app/build/outputs/apk/release/app-release.apk`. Hoặc mở thư mục `android-app/android` bằng Android Studio → Build → Build APK(s) (chọn biến thể `release`). Cần JDK 17 (Android Studio có sẵn).
+
 **Lưu ý bảo mật:** để đăng nhập Google luôn dùng cùng một SHA-1, khoá ký (`android-app/tracnghiem.keystore`, mật khẩu `tracnghiem-dmt`) được đặt luôn trong repo. Khoá này chỉ dùng cho app nội bộ; nếu lo ngại có người giả mạo bản cập nhật app, hãy đổi sang lưu khoá trong GitHub Secrets (biến `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` trong `android-app/android/app/build.gradle`) và đăng ký lại SHA-1 mới.
 
 **Khi cập nhật app:** sửa số `versionCode`/`versionName` trong `android-app/android/app/build.gradle`, đẩy lên; sau khi có APK mới, chạy

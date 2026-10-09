@@ -108,6 +108,7 @@ let lastAdminView = 'manage';
 function switchTab(name){
   if((name === 'add' || name === 'manage' || name === 'accounts') && (!session || session.role !== 'admin')) return;
   stopTimer();
+  if(name !== 'games' && window.leaveGames) window.leaveGames();
   const isAdminView = ADMIN_VIEWS.indexOf(name) >= 0;
   if(isAdminView) lastAdminView = name;
   const navName = isAdminView ? 'admin' : name;
@@ -126,6 +127,7 @@ function switchTab(name){
   if(name === 'quiz') backToSetup();
   if(name === 'leaderboard') renderLeaderboard();
   if(name === 'accounts') renderAccounts();
+  if(name === 'games' && window.renderGames) window.renderGames();
 }
 document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.addEventListener('click', ()=> switchTab(b.dataset.tab === 'admin' ? lastAdminView : b.dataset.tab));

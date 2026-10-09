@@ -856,6 +856,16 @@ nav.tabs button{ flex:1 0 auto; white-space:nowrap; padding-left:12px; padding-r
       <button type="button" data-sort="best" onclick="setLbSort('best')">Cao nhất</button>
       <button type="button" data-sort="n" onclick="setLbSort('n')">Số bài</button>
     </div>
+    <div class="lb-sort" id="lb-level">
+      <span>Độ khó:</span>
+      <button type="button" data-level="all" onclick="setLbLevel('all')">Tất cả</button>
+      <button type="button" data-level="de" onclick="setLbLevel('de')">Dễ</button>
+      <button type="button" data-level="tb" onclick="setLbLevel('tb')">Trung bình</button>
+      <button type="button" data-level="kho" onclick="setLbLevel('kho')">Khó</button>
+      <button type="button" data-level="cuckho" onclick="setLbLevel('cuckho')">Cực khó</button>
+      <button type="button" data-level="xuatsac" onclick="setLbLevel('xuatsac')">Xuất sắc</button>
+      <button type="button" data-level="mix" onclick="setLbLevel('mix')" title="Lượt làm bài chọn &quot;Tất cả mức độ&quot;">Hỗn hợp</button>
+    </div>
     <p class="lb-note" id="lb-note">Đang tải bảng xếp hạng...</p>
     <div id="lb-list"></div>
     <div id="lb-empty" class="card empty" style="display:none;">

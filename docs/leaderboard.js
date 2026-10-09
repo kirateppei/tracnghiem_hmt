@@ -4,6 +4,7 @@
 
 let lbRange = 'week';          // 'day' | 'week' | 'month' | 'year'
 let lbAnchor = Date.now();     // một thời điểm nằm trong kỳ đang xem
+let lbLevel = 'all';          // 'all' | 'de' | 'tb' | 'kho' | 'cuckho' | 'xuatsac' | 'mix'
 let lbSort = 'avg';            // 'avg' | 'best' | 'n'
 let lbRows = [];               // các lượt làm bài của kỳ đang xem
 let lbUnsub = null;
@@ -71,6 +72,23 @@ function periodLabel(range, start, end){
   return `Năm ${s.getFullYear()}${cur}`;
 }
 
+/* ---------- Độ khó của lượt làm bài ---------- */
+const LEVEL_NAMES = { all: 'Tất cả', de: 'Dễ', tb: 'Trung bình', kho: 'Khó', cuckho: 'Cực khó', xuatsac: 'Xuất sắc', mix: 'Hỗn hợp', other: 'Khác' };
+// Kết quả lưu nhãn độ khó người làm bài đã chọn (ví dụ "Cực khó", "Tất cả mức độ"); quy về mã cố định để lọc.
+function levelKey(label){
+  const s = String(label || '').toLowerCase().trim();
+  if(!s || s.includes('tất cả') || s.includes('hỗn hợp')) return 'mix';
+  if(s.includes('xuất sắc')) return 'xuatsac';
+  if(s.includes('cực khó')) return 'cuckho';
+  if(s.includes('khó')) return 'kho';
+  if(s.includes('trung bình')) return 'tb';
+  if(s.includes('dễ')) return 'de';
+  return 'other';
+}
+function lbFiltered(){
+  return lbLevel === 'all' ? lbRows : lbRows.filter((r) => levelKey(r.level) === lbLevel);
+}
+
 /* ---------- Gom theo từng người ---------- */
 function aggregateResults(rows, sortKey){
   const by = new Map();
@@ -101,6 +119,7 @@ function aggregateResults(rows, sortKey){
 function lbSyncControls(){
   document.querySelectorAll('#lb-range-tabs button').forEach((b) => b.classList.toggle('active', b.dataset.range === lbRange));
   document.querySelectorAll('#lb-sort button').forEach((b) => b.classList.toggle('active', b.dataset.sort === lbSort));
+  document.querySelectorAll('#lb-level button').forEach((b) => b.classList.toggle('active', b.dataset.level === lbLevel));
   const { start, end } = periodRange(lbRange, lbAnchor);
   document.getElementById('lb-period-label').textContent = periodLabel(lbRange, start, end);
   document.getElementById('lb-next').disabled = end > Date.now();
@@ -113,6 +132,7 @@ function setLbRange(r){
   renderLeaderboard();
 }
 function setLbSort(k){ lbSort = k; lbSyncControls(); drawLeaderboard(); }
+function setLbLevel(k){ lbLevel = k; lbSyncControls(); drawLeaderboard(); }
 function lbShift(delta){
   const next = shiftAnchor(lbRange, lbAnchor, delta);
   if(delta > 0 && periodRange(lbRange, next).start > Date.now()) return;
@@ -182,10 +202,12 @@ function drawLeaderboard(){
   const note = document.getElementById('lb-note');
   const wrap = document.getElementById('lb-list');
   const emptyEl = document.getElementById('lb-empty');
-  const list = aggregateResults(lbRows, lbSort);
+  const rows = lbFiltered();
+  const list = aggregateResults(rows, lbSort);
   const { start, end } = periodRange(lbRange, lbAnchor);
   const isCurrent = Date.now() >= start && Date.now() < end;
-  note.textContent = `${lbRows.length} lượt làm bài · ${list.length} người` +
+  note.textContent = `${rows.length} lượt làm bài · ${list.length} người` +
+    (lbLevel !== 'all' ? ` · độ khó: ${LEVEL_NAMES[lbLevel]}` : '') +
     (lbLive ? ' · cập nhật trực tiếp' : (isCurrent ? ' · bấm lại nút kỳ để làm mới' : ''));
   wrap.innerHTML = '';
   if(list.length === 0){ emptyEl.style.display = 'block'; return; }
@@ -214,7 +236,7 @@ function drawLeaderboard(){
 
 /* ---------- Chi tiết từng lượt làm bài (quản trị viên xem mọi người, nhân viên xem của mình) ---------- */
 function openLbDetail(uid){
-  const items = lbRows.filter((r) => r.uid === uid).sort((a, b) => b.ts - a.ts);
+  const items = lbFiltered().filter((r) => r.uid === uid).sort((a, b) => b.ts - a.ts);
   if(!items.length) return;
   const isAdmin = !!session && session.role === 'admin';
   document.getElementById('lb-detail-title').textContent = items[0].name || 'Chi tiết';

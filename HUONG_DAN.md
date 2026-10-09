@@ -61,6 +61,7 @@ Nếu thấy người lạ làm bài: chuyển sang "Chỉ email trong danh sác
 ## Bảng xếp hạng
 - Chọn **Ngày / Tuần / Tháng / Năm**; nút ‹ › xem kỳ trước hoặc kỳ sau; tuần tính từ thứ Hai đến Chủ nhật.
 - Mỗi người hiện **số bài, điểm trung bình (%), điểm cao nhất (%)**. Xếp theo Trung bình, Cao nhất hoặc Số bài.
+- **Độ khó:** chọn Tất cả / Dễ / Trung bình / Khó / Cực khó / Xuất sắc / Hỗn hợp để xếp hạng riêng từng mức. "Hỗn hợp" là các lượt làm bài chọn "Tất cả mức độ". Các lượt làm trước đó cũng lọc được.
 - Quản trị viên bấm vào tên để xem từng lượt làm bài và xoá lượt thử. Nhân viên chỉ mở được lượt của chính mình.
 - Ngày giờ do máy chủ ghi nên không sửa được từ máy nhân viên.
 - Ở chế độ mở, **mọi người đăng nhập đều xem được bảng xếp hạng** (tên Google và điểm của người đã làm bài). Muốn kín hơn thì chuyển sang "Chỉ email trong danh sách".

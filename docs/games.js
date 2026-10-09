@@ -871,14 +871,14 @@
     if(flock.length !== chickenCount) makeFlock(chickenCount);
     const cards = flock.map((c, i) => `<div class="gm-chk ${selected.has(i) ? 'sel' : ''}" data-i="${i}">
         <div class="em" data-act="sel" style="--hue:${c.hue}deg" title="Chạm để chọn">🐓</div>
-        <div class="info"><input class="nm" maxlength="14" value="${esc(c.name)}" data-i="${i}">${statBars(c)}</div>
-        <button class="re" data-act="re" data-i="${i}" title="Tạo lại chỉ số">🎲</button></div>`).join('');
+        <div class="info"><input class="nm" maxlength="14" value="${esc(c.name)}" data-i="${i}"><div class="gm-secret">❓ Chỉ số và tuyệt chiêu bí mật</div></div>
+        <button class="re" data-act="re" data-i="${i}" title="Tạo lại con gà này">🎲</button></div>`).join('');
     render(`${topBar('🐓 Đá gà mini')}
       <div class="gm-panel">
-        <p style="margin:0 0 10px;font-size:.85rem;line-height:1.5">Mỗi chú gà có 4 chỉ số hiện ra và một <b>tuyệt chiêu bí mật</b> chỉ lộ ra khi ra đòn. Cho các chú gà đấu hoạt hình với nhau xem ai thắng. Game vui, không cá cược.</p>
+        <p style="margin:0 0 10px;font-size:.85rem;line-height:1.5">Mỗi chú gà có các chỉ số (sức mạnh, tốc độ, máu, năng lượng) và một tuyệt chiêu, tất cả đều <b>ẩn</b>, chỉ lộ dần khi gà ra đòn và sau trận. Hãy đoán xem con nào thắng. Game vui, không cá cược.</p>
         <label>Số gà</label>
         <div class="gm-seg" id="gm-ccount">${[2, 3, 4, 5, 6, 7, 8].map((n) => `<button data-n="${n}" class="${n === chickenCount ? 'on' : ''}">${n}</button>`).join('')}</div>
-        <button class="gm-mini" id="gm-newall" style="margin-top:10px;color:#1b3a2f;background:#eef3ef;border-color:#c5d3cb">🎲 Tạo gà mới (đổi hết chỉ số)</button>
+        <button class="gm-mini" id="gm-newall" style="margin-top:10px;color:#1b3a2f;background:#eef3ef;border-color:#c5d3cb">🎲 Tạo gà mới (đổi hết)</button>
       </div>
       ${cards}
       <div class="gm-ctl" id="gm-cmodes"></div>
@@ -948,7 +948,7 @@
       <p style="text-align:center;margin:0 0 8px;font-weight:700">${head}</p>
       <div class="gm-arena">${side(A, 0, 'left')}<div class="gm-vs">VS</div>${side(B, 1, 'right')}<div class="gm-sp" id="gm-sp"></div></div>
       <div class="gm-log" id="gm-log"></div>
-      <div class="gm-ctl" id="gm-fctl"><button class="pri" id="gm-play">▶ Bắt đầu</button><button id="gm-quick">⏭ Xem kết quả</button></div>`);
+      <div class="gm-ctl" id="gm-fctl"><button class="pri" id="gm-play">▶ Bắt đầu</button></div>`);
     bindBack();
     const log = (txt) => { const l = $('gm-log'); if(!l) return; const d = document.createElement('div'); d.textContent = txt; l.appendChild(d); l.scrollTop = l.scrollHeight; };
     const setBars = (e) => {
@@ -972,8 +972,9 @@
       tour.winners.push(ia2[w]);
       const dead = $('ch' + l), win = $('ch' + w); if(dead) dead.classList.add('dead'); if(win) win.classList.add('win');
       setBars(sim.ev[sim.ev.length - 1]);
+      const st2 = (c) => `Sức mạnh ${c.str} · Tốc độ ${c.spd} · Máu ${c.hp} · Năng lượng ${c.en}`;
       const revealed = sim.used.map((u, k) => u ? `${names[k]} đã dùng tuyệt chiêu ${SPECIALS[u].name} (${SPECIALS[u].desc}).` : `${names[k]} chưa kịp dùng tuyệt chiêu bí mật.`);
-      const l2 = $('gm-log'); if(l2){ l2.innerHTML = ''; log(`🏆 ${names[w]} thắng! Gây ${sim.dealt[w]} sát thương, đối thủ gây ${sim.dealt[l]}.`); revealed.forEach(log); }
+      const l2 = $('gm-log'); if(l2){ l2.innerHTML = ''; log(`🏆 ${names[w]} thắng! Gây ${sim.dealt[w]} sát thương, đối thủ gây ${sim.dealt[l]}.`); log(`📊 ${names[0]}: ${st2(A)}`); log(`📊 ${names[1]}: ${st2(B)}`); revealed.forEach(log); }
       beep(660, 0.15, 'triangle'); beep(880, 0.2, 'triangle', 0.1, 0.12); buzz([60, 40, 100]);
       const last = !tour.pending.length && (tour.winners.length + (tour.bye !== null ? 1 : 0)) === 1;
       $('gm-fctl').innerHTML = `<button class="pri" id="gm-next">${tour.single ? 'Về danh sách gà' : last ? '🏆 Xem nhà vô địch' : 'Trận kế tiếp →'}</button>`;
@@ -1004,7 +1005,6 @@
       $('gm-skip').addEventListener('click', () => { clearTimers(); finish(); });
       log(`🔔 ${names[0]} gặp ${names[1]}!`); step();
     });
-    $('gm-quick').addEventListener('click', () => { clearTimers(); finish(); });
   }
 
   function showChampion(idx){
@@ -1017,7 +1017,7 @@
         <div style="font-size:1.5rem;font-weight:900;margin:4px 0">🏆 ${esc(c.name)}</div>
         <div style="font-size:.85rem">là nhà vô địch!</div>
       </div>
-      <div class="gm-panel"><label>Tuyệt chiêu bí mật của các chú gà</label>${reveal}</div>
+      <div class="gm-panel"><label>Chỉ số và tuyệt chiêu của các chú gà</label>${reveal}</div>
       <div class="gm-ctl"><button class="pri" id="gm-again3">Đấu lại với đội hình này</button><button id="gm-newflock">🎲 Tạo gà mới</button></div>`);
     bindBack();
     beep(660, 0.15, 'triangle'); beep(880, 0.15, 'triangle', 0.1, 0.12); beep(1100, 0.3, 'triangle', 0.1, 0.24);

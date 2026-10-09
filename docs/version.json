@@ -1,7 +1,7 @@
 {
-  "version": "aa610d7b0e",
-  "date": "2026-10-09T22:28:05Z",
-  "notes": "Thêm mini game Đá gà (gà có chỉ số và tuyệt chiêu bí mật, đấu cặp hoặc giải đấu)",
+  "version": "bf13b8b727",
+  "date": "2026-10-09T22:32:43Z",
+  "notes": "Đá gà: ẩn hết chỉ số của gà, bỏ nút xem kết quả",
   "apk": {
     "version": "",
     "url": "",

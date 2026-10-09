@@ -1150,12 +1150,20 @@ function glossaryHtml(items, groupByCat){
   `).join('');
 }
 
-const GUIDE_DRAWINGS = [
-  { file: 'an-hung', title: 'An Hưng — phân vùng INV, lắp pin NLMT', note: 'Bản vẽ hoàn công (KC-00, 25/12/2020): mặt bằng mái, các dãy pin và phân vùng inverter.' },
-  { file: 'dong-tam', landscape: true, title: 'Đồng Tâm (HDV) — sơ đồ mái pin', note: 'Sơ đồ mái pin theo từng inverter, kèm bảng string và số tấm.' },
-  { file: 'loc-thai', landscape: true, title: 'Lộc Thái (HDV) — sơ đồ mái pin', note: 'Sơ đồ mái pin theo từng inverter, kèm bảng công suất, string và số tấm.' },
-  { file: 'loc-hiep-le-minh', landscape: true, title: 'Lộc Hiệp – Lê Minh — sơ đồ mái pin', note: 'Sơ đồ mái pin theo từng inverter, kèm bảng công suất, string và số tấm.' },
-];
+function drawingKey(d){
+  return (d.title + ' ' + d.file).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+}
+function filterDrawings(q){
+  const key = (q || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').trim();
+  let n = 0;
+  document.querySelectorAll('#drawing-grid .drawing-item').forEach((el) => {
+    const show = !key || el.dataset.q.includes(key);
+    el.style.display = show ? '' : 'none';
+    if(show) n++;
+  });
+  const c = document.getElementById('drawing-count');
+  if(c) c.textContent = key ? `Tìm thấy ${n} / ${GUIDE_DRAWINGS.length} bản vẽ` : `${GUIDE_DRAWINGS.length} bản vẽ · bấm vào hình để xem toàn màn hình và phóng to`;
+}
 let drawingZoom = 1;
 function openDrawing(i){
   const d = GUIDE_DRAWINGS[i]; if(!d) return;
@@ -1210,14 +1218,15 @@ const TOC_SECTIONS = [
   {
     id: 'drawings', title: 'Bản vẽ NLMT', sub: `${GUIDE_DRAWINGS.length} bản vẽ · phân vùng inverter, sơ đồ mái pin`,
     body: () => `
-      <p style="margin:0 0 12px; font-size:0.85rem; color:#5c6a63; line-height:1.55;">Bấm vào hình để xem toàn màn hình và phóng to. Có nút tải file PDF gốc.</p>
-      ${GUIDE_DRAWINGS.map((d, i) => `
-        <div class="card drawing-card">
-          <div class="drawing-title">${escapeHtml(d.title)}</div>
-          <div class="drawing-note">${escapeHtml(d.note)}</div>
+      <input type="search" id="drawing-search" class="drawing-search" placeholder="Tìm bản vẽ theo tên (ví dụ: Hoàng Viên, 999)" oninput="filterDrawings(this.value)" autocomplete="off">
+      <p class="drawing-count" id="drawing-count"></p>
+      <div class="drawing-grid" id="drawing-grid">${GUIDE_DRAWINGS.map((d, i) => `
+        <div class="drawing-item" data-q="${escapeHtml(drawingKey(d))}">
           <img class="drawing-thumb" src="banve/${d.file}.png" alt="${escapeHtml(d.title)}" loading="lazy" onclick="openDrawing(${i})">
-          <div class="drawing-actions"><button class="secondary" type="button" onclick="openDrawing(${i})">🔍 Xem &amp; phóng to</button><a class="btn-link" href="banve/${d.file}.pdf" target="_blank" rel="noopener" download>⬇ Tải PDF</a></div>
-        </div>`).join('')}`,
+          <div class="drawing-title">${escapeHtml(d.title)}</div>
+          ${d.note ? `<div class="drawing-note">${escapeHtml(d.note)}</div>` : ''}
+          <div class="drawing-actions"><button class="secondary" type="button" onclick="openDrawing(${i})">🔍 Xem</button><a class="btn-link" href="banve/${d.file}.pdf" target="_blank" rel="noopener" download>⬇ PDF</a></div>
+        </div>`).join('')}</div>`,
   },
   {
     id: 'safety', title: 'An toàn điện mặt trời', sub: `${GUIDE_SAFETY.length} nguyên tắc an toàn`,
@@ -1256,6 +1265,7 @@ function toggleTocSection(id){
       const section = TOC_SECTIONS.find(s => s.id === id);
       inner.innerHTML = section.body();
       inner.dataset.rendered = '1';
+      if(id === 'drawings') filterDrawings('');
     }
     const body = document.getElementById('toc-body-' + id);
     body.style.maxHeight = 'none';

@@ -549,11 +549,15 @@
   .toc-item.open .toc-body{ max-height:30000px; }
   .toc-inner{ padding:0 16px 18px; }
   #drawing-backdrop{ z-index:200; }
-  .drawing-card{ margin-bottom:14px; }
-  .drawing-title{ font-weight:700; color:var(--card-ink); margin-bottom:2px; }
-  .drawing-note{ font-size:0.8rem; color:#5c6a63; margin-bottom:10px; line-height:1.5; }
-  .drawing-thumb{ display:block; width:100%; max-height:320px; object-fit:contain; background:#fff; border:1px solid #d9e2dc; border-radius:10px; cursor:zoom-in; }
-  .drawing-actions{ display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+  .drawing-search{ width:100%; box-sizing:border-box; padding:11px 14px; border:1px solid #c5d3cb; border-radius:12px; font-size:0.95rem; margin-bottom:6px; background:#fff; color:#1b3a2f; }
+  .drawing-count{ margin:4px 2px 12px; font-size:0.8rem; color:#5c6a63; }
+  .drawing-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; }
+  .drawing-item{ background:#fff; border:1px solid #d9e2dc; border-radius:12px; padding:8px; display:flex; flex-direction:column; }
+  .drawing-title{ font-weight:700; font-size:0.82rem; line-height:1.35; color:var(--card-ink); margin:8px 2px 2px; }
+  .drawing-note{ font-size:0.74rem; color:#5c6a63; margin:0 2px 4px; line-height:1.4; }
+  .drawing-thumb{ display:block; width:100%; height:110px; object-fit:contain; background:#fff; border:1px solid #e3eae5; border-radius:8px; cursor:zoom-in; }
+  .drawing-actions{ display:flex; gap:6px; align-items:center; margin-top:auto; padding-top:6px; flex-wrap:wrap; }
+  .drawing-actions button{ padding:6px 10px; font-size:0.8rem; }
   .drawing-actions .btn-link, .drawing-ctrl a{ font-weight:700; font-size:0.85rem; color:var(--accent,#1b6b4a); text-decoration:none; padding:8px 10px; }
   .drawing-modal{ position:fixed; inset:0; background:#fff; display:flex; flex-direction:column; }
   .drawing-bar{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid #d9e2dc; font-size:0.85rem; color:#1b3a2f; }
@@ -1167,13 +1171,14 @@ nav.tabs button{ flex:1 1 0; min-width:0; padding:9px 2px; font-size:0.76rem; }
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=00436bb97c"></script>
-<script src="firebase-config.js?v=00436bb97c"></script>
-<script src="questions.js?v=00436bb97c"></script>
-<script src="music.js?v=00436bb97c"></script>
-<script src="app.js?v=00436bb97c"></script>
-<script src="leaderboard.js?v=00436bb97c"></script>
-<script src="auth.js?v=00436bb97c"></script>
-<script src="update.js?v=00436bb97c"></script>
+<script src="version.js?v=d7d6d42b96"></script>
+<script src="firebase-config.js?v=d7d6d42b96"></script>
+<script src="questions.js?v=d7d6d42b96"></script>
+<script src="music.js?v=d7d6d42b96"></script>
+<script src="drawings.js?v=d7d6d42b96"></script>
+<script src="app.js?v=d7d6d42b96"></script>
+<script src="leaderboard.js?v=d7d6d42b96"></script>
+<script src="auth.js?v=d7d6d42b96"></script>
+<script src="update.js?v=d7d6d42b96"></script>
 </body>
 </html>

@@ -1126,6 +1126,9 @@ function inverterListHtml(){
       if(!t) return `<details class="inv-type"><summary>${label}<small>Chưa có nội dung</small></summary><p class="inv-miss">${k==='offgrid'||k==='hybrid'||k==='grid' ? 'Hãng này chưa có dòng/tài liệu xác minh được cho loại này. Xem sách hướng dẫn đi kèm máy.' : ''}</p></details>`;
       return `<details class="inv-type"><summary>${label}<small>${escapeHtml(t.model)}</small></summary>
         <ol class="guide-steps">${t.steps.map(([x,v]) => `<li>${x}${v?'':' <span class="inv-unv">⚠ tuỳ model</span>'}</li>`).join('')}</ol>
+        ${(t.tables||[]).map(tb => `<div class="inv-sub">📊 ${escapeHtml(tb.t)}</div><div class="inv-tbl"><table><thead><tr>${tb.c.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${tb.r.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`).join('')}
+        ${t.check ? `<div class="inv-sub">✅ Quy trình nghiệm thu</div>` + [['truoc_khi_bat','Trước khi bật nguồn'],['sau_khi_bat','Sau khi bật nguồn'],['ban_giao','Bàn giao']].filter(([k]) => t.check[k]).map(([k,l]) => `<div class="inv-chk"><b>${l}</b><ul>${t.check[k].map(i => `<li>${i}</li>`).join('')}</ul></div>`).join('') : ''}
+        ${t.errors ? `<div class="inv-sub">🚨 Mã lỗi hay gặp</div>` + t.errors.map(e => `<div class="inv-err"><b>${e.c}</b>${e.v?'':' <span class="inv-unv">⚠ tuỳ model</span>'}<div>${e.m}</div><div class="inv-fix">→ ${e.x}</div></div>`).join('') : ''}
         ${t.tips.length ? `<div class="guide-note">💡 ${t.tips.join('<br>💡 ')}</div>` : ''}</details>`;
     }).join('');
     return `

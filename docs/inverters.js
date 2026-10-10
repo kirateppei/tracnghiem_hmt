@@ -273,7 +273,7 @@ const GUIDE_INVERTERS = [
   "app": "PV Master (cấu hình tại chỗ qua Bluetooth/WiFi), SolarGo (dòng mới), SEMS Portal (app/web giám sát: semsportal.com); cấu hình WiFi/mạng cho module giám sát qua trình duyệt tại http://10.10.100.253",
   "types": {
    "grid": {
-    "model": "DNS (G3), MS (G3), SMT hòa lưới",
+    "model": "DNS (G3), MS (G3), SMT hòa lưới; dòng thương mại GW73–136K-HT (HT/LV-HT)",
     "steps": [
      [
       "Đọc sách hướng dẫn đúng model (DNS G3, MS G3 hoặc SMT) và chỉ để kỹ thuật viên có chuyên môn thực hiện. Kiểm tra <b>Voc ở nhiệt độ thấp nhất</b> của chuỗi không vượt điện áp DC tối đa, dòng chuỗi trong giới hạn từng <b>MPPT</b>, và tỷ lệ công suất DC/AC theo datasheet.",
@@ -314,12 +314,38 @@ const GUIDE_INVERTERS = [
      [
       "Nếu SEMS báo offline: theo kinh nghiệm người dùng, đèn WiFi nháy 2 lần nghĩa là chưa vào được router, nháy 4 lần là lỗi kết nối máy chủ; thử cấu hình lại qua 10.10.100.253 hoặc khởi động lại biến tần. Một số người báo module rớt mạng lặp lại, khi đó liên hệ hỗ trợ GoodWe.",
       1
+     ],
+     [
+      "<b>Dòng thương mại GW75–136K-HT (sách V1.7):</b> điện áp hở mạch chuỗi PV mỗi MPPT không quá <b>1100V</b> (bản GW73KLV-HT: không quá <b>800V</b>). Khi áp vào khoảng 1000–1100V biến tần ở chế độ chờ, về lại 180–1000V thì chạy lại. Không đấu cùng một chuỗi PV vào nhiều biến tần; chuỗi PV không được nối đất.",
+      1
+     ],
+     [
+      "<b>Phía AC (HT):</b> mỗi biến tần một CB AC riêng (không dùng chung): 75/80/100K → 200A; 110K, 73KLV, 120K → 250A; 136K → 225A. Không đấu tải vào giữa biến tần và CB AC của nó. Nếu dùng RCD thì chọn loại A, ngưỡng tối thiểu theo model (ví dụ 100K: ≥1000mA, 136K: ≥1360mA). Đấu đúng L1, L2, L3, N, PE theo chữ in trên đầu cốt, cắm ngập hết lõi dây.",
+      1
+     ],
+     [
+      "<b>Thứ tự bật nguồn (sách GoodWe):</b> kiểm tra trước (lắp chắc, đấu PE/DC/AC/truyền thông đúng, bịt các cổng không dùng, điện áp và tần số điểm đấu nối đạt yêu cầu) → đóng <b>CB AC</b> giữa biến tần và lưới → rồi mới bật <b>công tắc DC</b>.",
+      1
+     ],
+     [
+      "<b>Đèn LED:</b> đèn không dây sáng liên tục là đã kết nối; nháy 1 lần là module đang khởi động lại; <b>nháy 2 lần là chưa kết nối được router</b>; <b>nháy 4 lần là lỗi máy chủ</b>; nháy là RS485 đang kết nối. Đèn \"đang hòa lưới\" nháy chậm một nhịp là tự kiểm tra trước khi hòa lưới.",
+      1
+     ],
+     [
+      "<b>Đặt thông số qua màn hình LCD (nếu có):</b> mật khẩu ban đầu theo sách là <b>1111</b> (nên đổi). Nhấn giữ 2 giây để vào/lưu, nhấn ngắn để đổi số. Màn hình tối và quay về trang đầu là thông số đã được lưu. Thông số công suất do kỹ thuật viên có chuyên môn đặt vì đặt sai làm giảm sản lượng. Cài đặt chi tiết hơn qua app <b>SolarGo</b> (Bluetooth/WiFi/LAN/4G), giám sát qua <b>SEMS Portal</b>.",
+      1
+     ],
+     [
+      "<b>Giới hạn công suất xuất lưới (power limit / zero export) theo tài liệu GoodWe V1.0:</b> một biến tần 1 pha (DNS/XS/MS/NS) dùng <b>CT90</b> (tải dưới 90A); 3 pha (SDT G2, SMT, MT) dùng <b>GM3000</b> hoặc <b>HK3000</b> (tải mỗi pha dưới 120A) — các cách này chỉ cho <b>một</b> biến tần. Hệ nhiều biến tần hoặc tải lớn: dùng <b>GM3000C + EzLogger Pro</b> hoặc <b>SEC1000</b> với CT ngoài (tỉ số nA/5A, n từ 200–5000, sai số ≤1%, khuyến nghị cấp 0.5 hoặc 0.2; dây thứ cấp 1.5mm²).",
+      1
      ]
     ],
     "tips": [
      "Làm theo đúng sách hướng dẫn của model và quy định điện lực địa phương; ngắt AC/DC và chờ xả tụ trước khi mở nắp.",
      "Chọn sai Safety Country là lỗi hay gặp, dẫn đến cắt lưới hoặc không đạt yêu cầu đấu nối.",
-     "Theo diễn đàn người dùng, lỗi mất lưới có lúc do dây trung tính tại tủ điện bị lỏng; siết lại đầu nối trước khi nghi ngờ biến tần."
+     "Theo diễn đàn người dùng, lỗi mất lưới có lúc do dây trung tính tại tủ điện bị lỏng; siết lại đầu nối trước khi nghi ngờ biến tần.",
+     "<b>CT giới hạn công suất:</b> kẹp CT trên dây pha (L, hoặc L1/L2/L3), <b>không kẹp vào dây N</b>, gần điểm đấu nối lưới, đúng chiều mũi tên (\"-->\" hướng từ biến tần ra lưới). Lắp ngược thì biến tần báo lỗi và không giới hạn được. Lỗ CT phải lớn hơn đường kính ngoài dây AC.",
+     "Quy trình trong tài liệu GoodWe mà bạn gửi: vào app SEMS Portal → <b>Configuration → Wi-Fi Configuration</b>, quét mã QR trên cục WiFi hoặc nối vào WiFi <b>Solar-WiFi</b>, chọn WiFi nhà rồi Apply; chọn <b>Grid Code</b> qua SolarGo (Vietnam hoặc Other 50Hz tuỳ phiên bản app, xem sách model)."
     ]
    },
    "hybrid": {
@@ -420,7 +446,7 @@ const GUIDE_INVERTERS = [
   "app": "iSolarCloud App (cấu hình qua WiNet-S / WiNet-S2, đăng nhập tài khoản Installer) và cổng iSolarCloud trên web",
   "types": {
    "grid": {
-    "model": "Sungrow SG RT (SG3.0RT đến SG20RT, ba pha, hòa lưới) / dòng SG CX cùng loại",
+    "model": "Sungrow SG RT (SG3.0RT đến SG20RT, ba pha, hòa lưới) / dòng SG CX cùng loại; SG110CX (110 kVA, 9 MPPT)",
     "steps": [
      [
       "Trước khi lắp, đối chiếu datasheet đúng model: điện áp DC đầu vào tối đa, dải MPPT, dòng vào tối đa mỗi MPPT và công suất DC/AC. Tính <b>Voc ở nhiệt độ thấp nhất</b> của chuỗi tấm pin, không để vượt điện áp DC tối đa của biến tần.",
@@ -465,12 +491,17 @@ const GUIDE_INVERTERS = [
      [
       "Thêm nhà máy lên iSolarCloud để giám sát từ xa, kiểm tra tín hiệu Wi-Fi hoặc mạng LAN ổn định. Có thể xuất báo cáo commissioning (PDF) từ app để bàn giao cho khách hoặc điện lực.",
       1
+     ],
+     [
+      "<b>Ví dụ SG110CX (datasheet V1.21):</b> điện áp PV tối đa <b>1100V</b>, khởi động 250V, dải MPPT 200–1000V (đủ công suất 550–850V), <b>9 MPPT</b> × tối đa 2 chuỗi/MPPT, dòng vào tối đa 26A mỗi MPPT, ngắn mạch 40A; AC 3/N/PE 400V (320–460V), 50Hz, dòng ra tối đa 158.8A, công suất 110 kVA ở 45°C / 100 kVA ở 50°C, THD &lt;3%, hệ số công suất 0.8 sớm–0.8 trễ; IP66, SPD loại II cả DC và AC, tích hợp chức năng phục hồi PID và Q at night. Thiết kế chuỗi sao cho Voc lạnh &lt; 1100V.",
+      1
      ]
     ],
     "tips": [
      "Luôn làm theo sách hướng dẫn của đúng model và phiên bản firmware, và theo quy định của điện lực địa phương. Tài liệu hãng nêu thông số lưới phải được xác nhận theo yêu cầu của nhà vận hành lưới tại từng dự án.",
      "Ngắt cả AC và DC, chờ tụ xả điện theo thời gian ghi trong sách hướng dẫn trước khi mở nắp hoặc đấu lại dây. Chuỗi DC vẫn có điện áp cao khi có ánh sáng.",
-     "Muốn đọc dữ liệu qua Modbus (Home Assistant, openHAB...) thì theo tài liệu tích hợp bên thứ ba phải bật Modbus trên WiNet-S và tắt danh sách trắng hoặc thêm IP của hệ thống vào đó qua giao diện web của WiNet-S. Khi bật, nhớ đổi mật khẩu mặc định và không mở cổng ra Internet."
+     "Muốn đọc dữ liệu qua Modbus (Home Assistant, openHAB...) thì theo tài liệu tích hợp bên thứ ba phải bật Modbus trên WiNet-S và tắt danh sách trắng hoặc thêm IP của hệ thống vào đó qua giao diện web của WiNet-S. Khi bật, nhớ đổi mật khẩu mặc định và không mở cổng ra Internet.",
+     "Quy trình trong tài liệu Sungrow bạn gửi (iSolarCloud): chọn server <b>International</b>, loại tài khoản <b>End User</b>; thêm trạm bằng dấu <b>+</b> → Residential/Distributed → PV (hoặc Storage nếu có pin) → WLAN → quét QR trên dongle/biến tần, nối WiFi do biến tần phát rồi chọn WiFi nhà. Vùng lưới chọn <b>Other 50Hz</b> hoặc tiêu chuẩn tương đương như tài liệu nêu — xác nhận lại với sách model và điện lực."
     ]
    },
    "hybrid": {
@@ -596,7 +627,7 @@ const GUIDE_INVERTERS = [
     ]
    },
    "hybrid": {
-    "model": "Solis RHI-(3-6)K-48ES-5G (1 pha, pin áp thấp 48V), S6-EH1P(3-10)K-L-PLUS (1 pha, pin áp thấp 40-60V), S6-EH3P (3 pha)",
+    "model": "Solis RHI-(3-6)K-48ES-5G (1 pha, pin áp thấp 48V), S6-EH1P(3-10)K-L-PLUS (1 pha, pin áp thấp 40-60V), S6-EH3P (3 pha); Solis S6-EH3P(8–18)K02-NV-YD-L (3 pha, điện áp thấp)",
     "steps": [
      [
       "Xác định model và tải sách hướng dẫn đúng bản. Dòng S6-EH1P(3-10)K-L-PLUS và RHI-48ES dùng pin áp thấp (khoảng 40-60V), hoạt động với pin lithium-ion và pin chì-axit.",
@@ -645,12 +676,17 @@ const GUIDE_INVERTERS = [
      [
       "Thử vận hành: kiểm tra pin sạc/xả đúng, thử ngắt lưới xem chuyển sang backup. Lỗi <b>Batt_Comm_FAIL / No Battery</b> thường do cáp CAN lỏng hoặc sai chân, pin chưa bật, hoặc chọn sai loại pin; Solis khuyên thay cáp do nhà phân phối cấp. Pin tắt hẳn (không còn đèn LED) có thể cần kỹ thuật viên sạc kích hoạt.",
       1
+     ],
+     [
+      "<b>Thông số S6-EH3P8–18K (brochure Solis Việt Nam):</b> PV tối đa 1000V, MPPT 200–850V, 2 MPPT; pin Li-ion hoặc chì-axit <b>40–60V</b> (2 cổng pin, 1 cổng BMS, truyền thông CAN/RS485); cho phép mảng PV tới <b>160%</b> công suất định mức; hỗ trợ tối đa <b>6 máy song song</b>; đầu ra dự phòng chuyển từ lưới sang off-grid <b>dưới 10 ms</b>, quá tải 200% trong 10 giây, đầu ra 3 pha không cân bằng (mỗi pha tối đa 50% công suất danh định); có cổng đầu vào máy phát, hỗ trợ ghép DC và AC.",
+      1
      ]
     ],
     "tips": [
      "Pin có điện áp luôn hiện diện ngay cả khi ngắt AC/DC; chỉ mở máy khi đã cách ly cầu dao pin và theo sách hướng dẫn.",
      "Làm đúng sách model và quy định điện lực; chỉ dùng pin trong danh sách tương thích để tránh lỗi giao tiếp BMS.",
-     "Thời gian chuyển sang backup của RAI/RHI-48ES khác nhau giữa các datasheet (dưới 20 ms ở bản này, dưới 50 ms ở bản khác); không coi là cam kết, đối chiếu datasheet đúng bản."
+     "Thời gian chuyển sang backup của RAI/RHI-48ES khác nhau giữa các datasheet (dưới 20 ms ở bản này, dưới 50 ms ở bản khác); không coi là cam kết, đối chiếu datasheet đúng bản.",
+     "Bản brochure này ghi chuyển backup dưới 10 ms (S6-EH3P); các datasheet khác của Solis có thể ghi dưới 20 hoặc 50 ms — xem đúng sách của model."
     ]
    },
    "offgrid": {

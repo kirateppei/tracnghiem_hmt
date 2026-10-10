@@ -480,6 +480,18 @@ function showResult(){
 }
 
 function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+/* ---------- Ảnh đại diện (ảnh Google của tài khoản; không có thì hiện chữ cái đầu) ---------- */
+const PHOTO_RE = /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.googleusercontent\.com\/[^\s"'<>]{1,280}$/i;
+function safePhotoUrl(u){ return (typeof u === 'string' && u.length <= 300 && PHOTO_RE.test(u)) ? u : ''; }
+function avatarHtml(name, photo, size){
+  const nm = String(name || '?').trim();
+  const ch = escapeHtml((Array.from(nm)[0] || '?').toUpperCase());
+  let h = 0; for(const c of nm) h = (h * 31 + c.codePointAt(0)) % 360;
+  const url = safePhotoUrl(photo);
+  const img = url ? `<img src="${escapeHtml(url)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()">` : '';
+  return `<span class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.45)}px;background:hsl(${h},55%,42%);">${ch}${img}</span>`;
+}
 function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
 
 /* ---------- Đồng bộ ngân hàng câu hỏi trực tuyến ---------- */

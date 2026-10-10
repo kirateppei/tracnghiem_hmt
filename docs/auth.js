@@ -205,7 +205,7 @@ async function handleAuthChange(user){
   }
   if(seq !== accessSeq) return;
   if(!res.ok){ showLoginState('denied', res.message); return; }
-  session = { role: res.role, name: res.name, uid: user.uid, email: (user.email || '').toLowerCase() };
+  session = { role: res.role, name: res.name, uid: user.uid, email: (user.email || '').toLowerCase(), photo: safePhotoUrl(user.photoURL) };
   startSyncListeners();
   enterApp();
   flushPendingResults();
@@ -234,7 +234,7 @@ function teardownSession(){
 function enterApp(){
   gid('login-screen').classList.add('hidden');
   gid('app-main').classList.remove('hidden');
-  gid('session-info').textContent = `Xin chào, ${session.name}`;
+  gid('session-info').innerHTML = `${avatarHtml(session.name, session.photo, 28)}<span>Xin chào, ${escapeHtml(session.name)}</span>`;
   gid('role-badge').textContent = session.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
   const isAdmin = session.role === 'admin';
   gid('tab-admin').classList.toggle('hidden', !isAdmin);

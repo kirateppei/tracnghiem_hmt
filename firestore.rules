@@ -45,7 +45,9 @@ service cloud.firestore {
     function validResult() {
       let d = request.resource.data;
       return d.keys().hasAll(['uid', 'name', 'score', 'total', 'pct', 'level', 'ts'])
-        && d.keys().hasOnly(['uid', 'name', 'score', 'total', 'pct', 'level', 'ts'])
+        && d.keys().hasOnly(['uid', 'name', 'score', 'total', 'pct', 'level', 'ts', 'photo'])
+        && (!('photo' in d) || (d.photo is string && d.photo.size() <= 300
+            && d.photo.matches('^https://[a-z0-9.-]+\\.googleusercontent\\.com/.*')))
         && d.uid == request.auth.uid
         && d.ts == request.time
         && d.name is string && d.name.size() <= 80

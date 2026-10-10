@@ -99,13 +99,14 @@ function aggregateResults(rows, sortKey){
     const key = rowKey(r);
     let a = by.get(key);
     if(!a){
-      a = { key, uid: r.uid || key, name: r.name || ANON_NAME, n: 0, sumPct: 0, best: 0, last: 0, items: [] };
+      a = { key, uid: r.uid || key, name: r.name || ANON_NAME, photo: '', n: 0, sumPct: 0, best: 0, last: 0, items: [] };
       by.set(key, a);
     }
     a.n++;
     a.sumPct += r.pct;
     a.best = Math.max(a.best, r.pct);
     if(r.ts >= a.last){ a.last = r.ts; a.name = r.name || a.name; }
+    if(r.photo && r.name !== ANON_NAME && r.ts >= (a.photoTs || 0)){ a.photo = r.photo; a.photoTs = r.ts; }
     a.items.push(r);
   });
   const out = Array.from(by.values()).map((a) => Object.assign(a, { avg: a.sumPct / a.n }));
@@ -158,7 +159,7 @@ function lbInvalidate(){ Object.keys(lbCache).forEach((k) => { delete lbCache[k]
 function docToRow(d){
   const v = d.data({ serverTimestamps: 'estimate' });
   return {
-    id: d.id, uid: v.uid, name: v.name, score: v.score, total: v.total, pct: v.pct, level: v.level,
+    id: d.id, uid: v.uid, name: v.name, photo: v.photo || '', score: v.score, total: v.total, pct: v.pct, level: v.level,
     ts: v.ts && typeof v.ts.toMillis === 'function' ? v.ts.toMillis() : (v.ts || 0),
   };
 }
@@ -225,6 +226,7 @@ function drawLeaderboard(){
     row.dataset.key = a.key;
     row.innerHTML = `
       <div class="lb-rank">${idx + 1}</div>
+      ${avatarHtml(a.name === ANON_NAME ? '?' : a.name, a.name === ANON_NAME ? '' : a.photo, 38)}
       <div class="lb-info">
         <div class="lb-name">${escapeHtml(a.name)}${isMe ? ' (bạn)' : ''}</div>
         <div class="lb-meta">${a.n} bài · gần nhất ${timeAgoVi(a.last)}</div>
@@ -300,7 +302,14 @@ function sendResult(rec){
     ts: firebase.firestore.FieldValue.serverTimestamp(), // giờ do máy chủ ghi, không sửa được từ máy người dùng
   };
   // Dùng id cố định để gửi lại không tạo bản trùng
-  return withTimeout(fbDb.collection('results').doc(rec.id).set(data), SEND_TIMEOUT_MS);
+  const photo = safePhotoUrl(rec.photo);
+  const ref = fbDb.collection('results').doc(rec.id);
+  if(!photo) return withTimeout(ref.set(data), SEND_TIMEOUT_MS);
+  // Luật Firestore cũ chưa cho phép trường "photo": nếu bị từ chối thì ghi lại không kèm ảnh.
+  return withTimeout(ref.set(Object.assign({ photo }, data)), SEND_TIMEOUT_MS).catch((e) => {
+    if(e && e.code === 'permission-denied') return withTimeout(ref.set(data), SEND_TIMEOUT_MS);
+    throw e;
+  });
 }
 
 async function submitLeaderboardEntry(entry){
@@ -309,6 +318,7 @@ async function submitLeaderboardEntry(entry){
     id: `${session.uid}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
     uid: session.uid,
     name: entry.anon ? ANON_NAME : session.name,
+    photo: entry.anon ? '' : (session.photo || ''),
     score: entry.score,
     total: entry.total,
     pct: entry.pct,

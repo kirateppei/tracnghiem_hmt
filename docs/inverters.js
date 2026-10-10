@@ -1785,7 +1785,7 @@ const GUIDE_INVERTERS = [
     }
    }
   },
-  "missing": "Chưa tìm được dòng off-grid thuần của GoodWe trong tài liệu truy cập được; dòng ES/EM thường được dùng hybrid có lưới. Trang chính en.goodwe.com bị chặn nên chưa đọc trực tiếp sách ET G2 và PV Master; phần lớn bước ghi v=0. Địa chỉ 10.10.100.253 chỉ xác nhận qua trang hỗ trợ bên thứ ba (V2C, Columbus Energy), không phải tài liệu GoodWe. Bổ sung: không tìm được nguồn tiếng Việt nào về GoodWe; chỉ github.com đọc được, còn lại là đoạn trích tìm kiếm."
+  "missing": "GoodWe không có dòng off-grid thuần trong tài liệu truy cập được; phần \"Độc lập\" dựa trên chế độ Off-grid của hybrid ES/ET (xem sách đúng model). Trang chính en.goodwe.com bị chặn nên chưa đọc trực tiếp sách ET G2 và PV Master; phần lớn bước ghi v=0. Địa chỉ 10.10.100.253 chỉ xác nhận qua trang hỗ trợ bên thứ ba (V2C, Columbus Energy), không phải tài liệu GoodWe. Bổ sung: không tìm được nguồn tiếng Việt nào về GoodWe; chỉ github.com đọc được, còn lại là đoạn trích tìm kiếm."
  },
  {
   "id": "sungrow",

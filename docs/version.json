@@ -1,7 +1,7 @@
 {
-  "version": "430925b0e4",
-  "date": "2026-10-10T00:07:33Z",
-  "notes": "Tài liệu: rà soát Kiến thức cơ bản và An toàn",
+  "version": "4eeec320d2",
+  "date": "2026-10-10T00:10:13Z",
+  "notes": "Sửa mất chữ dòng 'App' đầu mỗi hãng, nới giới hạn chiều cao mục gập",
   "apk": {
     "version": "",
     "url": "",

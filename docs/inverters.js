@@ -852,12 +852,12 @@ const GUIDE_INVERTERS = [
  },
  {
   "id": "sernergy",
-  "name": "Sernergy",
+  "name": "Senergy",
   "color": "#2E7D32",
   "badge": "SE",
-  "app": "",
+  "app": "Hãng: Shenzhen Senergy Technology (APD Senergy, Thâm Quyến) · Cấu hình bằng app Senergy chính hãng (theo gợi ý của SolarAssistant)",
   "types": {},
-  "missing": "Chưa tìm được tài liệu công khai cho hãng này (nghi là \"Senergy\"). Xem tem máy và sách hướng dẫn kèm theo; gửi tên hãng/model chính xác để bổ sung."
+  "missing": "Chưa có sách hướng dẫn công khai truy cập được (senergytec.com bị chặn), nên chưa soạn các bước để tránh sai. Dòng máy đã thấy: hòa lưới SE-xKTL; hybrid SE 5-10KHB-D3P, SE 8/10KHB-T/EU, SE-15KTL-G2P (split-phase); off-grid 6 kW (tối đa 12 máy song song). Xem tem máy và sách hướng dẫn kèm theo, hoặc hỏi nhà phân phối (ví dụ Gigawatt Energy, Đan Khuê Solar); gửi sách/model để bổ sung."
  },
  {
   "id": "powermaster",

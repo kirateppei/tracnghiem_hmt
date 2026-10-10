@@ -1103,6 +1103,30 @@ function accordionListHtml(brands, prefix){
       </div>
     </div>`).join('');
 }
+const INV_TYPES = [['grid','⚡ Hòa lưới (on-grid)'],['hybrid','🔋 Lưu trữ (hybrid)'],['offgrid','🏝️ Độc lập (off-grid)']];
+function inverterListHtml(){
+  return GUIDE_INVERTERS.map(b => {
+    const blocks = INV_TYPES.map(([k,label]) => {
+      const t = b.types[k];
+      if(!t) return `<details class="inv-type"><summary>${label}<small>Chưa có nội dung</small></summary><p class="inv-miss">${k==='offgrid'||k==='hybrid'||k==='grid' ? 'Hãng này chưa có dòng/tài liệu xác minh được cho loại này. Xem sách hướng dẫn đi kèm máy.' : ''}</p></details>`;
+      return `<details class="inv-type"><summary>${label}<small>${escapeHtml(t.model)}</small></summary>
+        <ol class="guide-steps">${t.steps.map(([x,v]) => `<li>${x}${v?'':' <span class="inv-unv">⚠ tuỳ model</span>'}</li>`).join('')}</ol>
+        ${t.tips.length ? `<div class="guide-note">💡 ${t.tips.join('<br>💡 ')}</div>` : ''}</details>`;
+    }).join('');
+    return `
+    <div class="guide-brand" id="inv-${b.id}">
+      <div class="guide-brand-head" onclick="toggleGuideBrand('inv-${b.id}')">
+        <span class="logo-badge" style="background:${b.color};">${b.badge}</span>
+        <span>${escapeHtml(b.name)}</span><span class="chev">▾</span>
+      </div>
+      <div class="guide-brand-body"><div class="guide-brand-inner">
+        ${b.app ? `<p class="guide-app">${escapeHtml(b.app)}</p>` : ''}
+        ${blocks}
+        ${b.missing ? `<p class="inv-miss">ℹ️ ${escapeHtml(b.missing)}</p>` : ''}
+      </div></div>
+    </div>`;
+  }).join('');
+}
 function recalcAncestorTocHeight(el){
   // Dùng 'none' thay vì tính scrollHeight bằng px: vì khung con (guide-brand-body) đang
   // trong lúc chuyển động (CSS transition .3s) nên đo scrollHeight lúc này dễ bị sai số
@@ -1218,6 +1242,18 @@ const TOC_SECTIONS = [
   {
     id: 'basics', title: 'Kiến thức cơ bản', sub: `${GUIDE_BASICS.length} khái niệm · điện mặt trời`,
     body: () => `<div class="card">${glossaryHtml(GUIDE_BASICS, true)}</div>`,
+  },
+  {
+    id: 'inverters', title: 'Cài đặt biến tần', sub: 'Hòa lưới · Lưu trữ · Độc lập · 9 hãng',
+    body: () => `
+      <div class="card" style="margin-bottom:14px;">
+        <p style="margin:0; font-size:0.85rem; color:#5c6a63; line-height:1.55;">
+          ⚠️ Đây là <b>quy trình chung</b> tổng hợp để tham khảo. Tên menu, giá trị, mật khẩu mặc định thay đổi theo model và firmware;
+          bước có nhãn <b>"tuỳ model"</b> chưa đối chiếu được với tài liệu hãng. Luôn làm theo <b>sách hướng dẫn của đúng model</b>
+          và quy định của điện lực địa phương.
+        </p>
+      </div>
+      ${inverterListHtml()}`
   },
   {
     id: 'drawings', title: 'Bản vẽ NLMT', sub: `${GUIDE_DRAWINGS.length} bản vẽ · phân vùng inverter, sơ đồ mái pin`,

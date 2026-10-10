@@ -937,6 +937,21 @@ const GUIDE_BRANDS = [
     note: 'Cần tài khoản <b>installer</b> (không phải tài khoản chủ nhà) để vào Commissioning. Router phải phát <b>2.4GHz</b>, nên dùng bảo mật WPA2; chế độ Enterprise không được hỗ trợ.',
   },
   {
+    id: 'huawei-dongle', name: 'Huawei — Smart Dongle (WLAN-FE / 4G)', color: '#C7000B', badge: 'HW',
+    app: 'Dongle: SDongleA-05 (WLAN hoặc cáp mạng FE) · SDongleB-06 (4G) · Cấu hình bằng app FusionSolar',
+    steps: [
+      '<b>Chọn loại dongle:</b> <b>SDongleA-05</b> nối internet qua WiFi router (WLAN) hoặc cáp mạng (FE); <b>SDongleB-06</b> dùng SIM 4G, phù hợp nơi không có WiFi/mạng dây. Lắp đúng loại, đúng cổng giao tiếp của biến tần SUN2000 theo hình trong sách.',
+      '<b>Lắp dongle</b> vào cổng giao tiếp ở đáy biến tần (khi biến tần đã ngắt điện hoặc theo hướng dẫn lắp trong sách), siết/khớp chắc chắn. Với bản 4G, lắp SIM theo hướng dẫn trong sách trước khi cắm dongle.',
+      '<b>Cấp điện</b> cho biến tần: đóng cả phía <b>AC và DC</b> rồi mới cài thông số (theo sách, phải có điện cả hai phía). Đèn LED trên dongle sẽ sáng, đợi dongle khởi động xong.',
+      'Mở app <b>FusionSolar</b> → <b>Commissioning (Nghiệm thu thiết bị)</b>, đăng nhập tài khoản <b>installer</b>, nối vào WLAN của thiết bị (tên có số serial, mật khẩu in trên nhãn) hoặc quét mã QR rồi vào phần cài đặt dongle.',
+      '<b>Nếu không thấy WLAN của dongle:</b> theo sách, WLAN của dongle mặc định <b>tắt</b> khi biến tần đã có WLAN tích hợp, và <b>bật</b> khi biến tần không có. Có thể bật trong app: vào nhà máy → Thiết bị → chọn SDongleA-05 → <b>O&amp;M Authorization → WLAN wakeup → Confirm</b> (tên mục có thể khác theo bản app).',
+      '<b>Kết nối router (SDongleA-05):</b> trong phần <b>Router connection settings</b> chọn WiFi nhà (chỉ <b>2.4GHz</b>, WPA2) và nhập mật khẩu; nếu dùng cáp mạng FE thì cắm cáp từ dongle vào router/switch và chọn kiểu kết nối tương ứng. Với bản 4G: kiểm tra SIM có dữ liệu, cài APN theo nhà mạng nếu app yêu cầu.',
+      'Xem đèn LED để biết trạng thái: <b>xanh lá nháy chậm</b> (khoảng 0,5 giây sáng/0,5 giây tắt) là đang kết nối router (bình thường); <b>đỏ nháy nhanh</b> là kết nối router thất bại hoặc chưa cài thông số, cần kiểm tra lại SSID/mật khẩu; <b>đỏ sáng liên tục</b> là dongle lỗi, cần thay. Ý nghĩa đầy đủ các màu khác xem bảng LED trong sách của đúng đời dongle.',
+      'Gắn thiết bị vào <b>nhà máy điện (Plant)</b> trên FusionSolar, hoàn tất nghiệm thu rồi đợi vài phút để trạng thái chuyển sang <b>"Trực tuyến"</b>.',
+    ],
+    note: 'Nội dung tổng hợp từ sách hướng dẫn nhanh của Huawei qua nguồn thứ ba (trang chính hãng không truy cập được từ đây). <b>Tên menu và màu/chu kỳ đèn LED có thể khác theo đời dongle và phiên bản app</b>, nên đối chiếu Smart Dongle Quick Guide của đúng model (SDongleA-05 hoặc SDongleB-06).',
+  },
+  {
     id: 'sungrow', name: 'Sungrow', color: '#FF6A00', badge: 'SG',
     app: 'App: iSolarCloud · Web: web.isolarcloud.com',
     steps: [

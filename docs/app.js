@@ -1264,7 +1264,7 @@ const TOC_SECTIONS = [
       <div class="card" style="margin-bottom:14px;">
         <p style="margin:0; font-size:0.85rem; color:#5c6a63; line-height:1.55;">
           ⚠️ Đây là <b>quy trình chung</b> tổng hợp để tham khảo. Tên menu, giá trị, mật khẩu mặc định thay đổi theo model và firmware;
-          bước có nhãn <b>"tuỳ model"</b> chưa đối chiếu được với tài liệu hãng. Luôn làm theo <b>sách hướng dẫn của đúng model</b>
+          bước có nhãn <b>"tuỳ model"</b> chưa đối chiếu được với tài liệu hãng. Với Huawei, Sungrow, GoodWe, Solis, Deye, SMA, nhiều chi tiết (tên menu, mã lỗi, mẹo hiện trường) lấy thêm từ <b>nguồn không chính thức</b> (diễn đàn, nhà phân phối, bên thứ ba) — hãy đối chiếu lại với sách hướng dẫn của đúng model trước khi áp dụng. Luôn làm theo <b>sách hướng dẫn của đúng model</b>
           và quy định của điện lực địa phương.
         </p>
       </div>

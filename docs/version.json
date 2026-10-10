@@ -1,7 +1,7 @@
 {
-  "version": "4eeec320d2",
-  "date": "2026-10-10T00:10:13Z",
-  "notes": "Sửa mất chữ dòng 'App' đầu mỗi hãng, nới giới hạn chiều cao mục gập",
+  "version": "72282df881",
+  "date": "2026-10-10T00:15:20Z",
+  "notes": "Tài liệu: bổ sung nguồn không chính thức cho Huawei, Sungrow, GoodWe, Solis, Deye, SMA",
   "apk": {
     "version": "",
     "url": "",

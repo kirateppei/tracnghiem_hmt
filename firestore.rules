@@ -69,6 +69,24 @@ service cloud.firestore {
         && d.name is string && d.name.size() <= 80;
     }
 
+    // Điểm cao nhất của game "Chạy năng lượng": mỗi người một tài liệu, id = uid.
+    // best = kWh + thưởng tia nắng (xem INTEGRACION_RUNNER.md), nên best >= kwh và best <= kwh + coins.
+    function validRunner() {
+      let d = request.resource.data;
+      return d.keys().hasAll(['uid', 'name', 'best', 'kwh', 'coins', 'ts'])
+        && d.keys().hasOnly(['uid', 'name', 'photo', 'best', 'kwh', 'coins', 'ts'])
+        && (!('photo' in d) || (d.photo is string && d.photo.size() <= 300
+            && d.photo.matches('^https://[a-z0-9.-]+\\.googleusercontent\\.com/.*')))
+        && d.uid == request.auth.uid
+        && d.ts == request.time
+        && d.name is string && d.name.size() <= 80
+        && d.best is int && d.kwh is int && d.coins is int
+        && d.best >= 0 && d.best <= 10000000
+        && d.kwh >= 0 && d.kwh <= 10000000
+        && d.coins >= 0 && d.coins <= 10000000
+        && d.best >= d.kwh && d.best <= d.kwh + d.coins;
+    }
+
     // ---------- Hồ sơ đặc biệt: quản trị viên, người bị khoá, tên hiển thị, danh sách cho phép ----------
     match /allowed/{email} {
       allow get: if signedIn() && (email == myEmail() || isAdmin());
@@ -91,6 +109,15 @@ service cloud.firestore {
       allow read: if isMember();
       allow create: if isMember() && validResult();
       allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Game "Chạy năng lượng": bảng xếp hạng điểm cao nhất (mỗi người một tài liệu) ----------
+    match /runner_scores/{uid} {
+      allow read: if isMember();
+      allow create: if isMember() && uid == request.auth.uid && validRunner();
+      allow update: if isMember() && uid == request.auth.uid && validRunner()
+        && request.resource.data.best >= resource.data.best;     // chỉ được ghi khi điểm mới >= điểm cũ
       allow delete: if isAdmin();
     }
 

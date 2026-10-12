@@ -113,22 +113,10 @@ service cloud.firestore {
     }
 
     // ---------- Game "Run now: HMT": bảng top 100 điểm cao (mỗi ván lọt top là một tài liệu, một người có thể nhiều dòng) ----------
-    // Tất cả: runner_scores; theo năm: runner_y/{năm}/scores; theo tháng: runner_m/{năm-tháng}/scores
+    // Một collection duy nhất runner_scores; bảng tháng/năm/tất cả lấy theo trường ts và best.
     match /runner_scores/{id} {
       allow read: if isMember();
       allow create: if isMember() && validRunner();
-      allow update: if false;
-      allow delete: if isAdmin();
-    }
-    match /runner_y/{y}/scores/{id} {
-      allow read: if isMember();
-      allow create: if isMember() && y.matches('^[0-9]{4}$') && validRunner();
-      allow update: if false;
-      allow delete: if isAdmin();
-    }
-    match /runner_m/{ym}/scores/{id} {
-      allow read: if isMember();
-      allow create: if isMember() && ym.matches('^[0-9]{4}-[0-9]{2}$') && validRunner();
       allow update: if false;
       allow delete: if isAdmin();
     }

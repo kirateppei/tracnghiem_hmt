@@ -223,7 +223,8 @@
   #quiz-play{ position:relative; }
   #quiz-play .progress-row{ padding-right:42px; }
   /* làm bài / xem kết quả: giao diện riêng toàn màn hình, nút ✕ Thoát về màn chọn */
-  #view-quiz.qz-fs{ position:fixed !important; left:0; top:0; right:0; bottom:0; width:auto; max-width:none; margin:0; z-index:2147481000; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; display:block; padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 24px); background-color:var(--bg); background-image:linear-gradient(rgba(0,0,0,.22),rgba(0,0,0,.05)); animation:none; }
+  #view-quiz.qz-fs{ position:fixed !important; left:0; top:0; right:0; bottom:0; width:auto; max-width:none; margin:0; z-index:2147481000; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; display:block; padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 24px); background:#0b2a4a url(bg-solar.svg) center bottom/cover no-repeat; background-attachment:fixed; animation:none; }
+  @media (min-aspect-ratio: 5/4){ #view-quiz.qz-fs{ background-image:url(bg-solar-wide.svg); } }
   #view-quiz.qz-fs #quiz-play, #view-quiz.qz-fs #quiz-result{ width:100%; max-width:760px; margin-left:auto; margin-right:auto; }
   @media (min-width:900px){
     #view-quiz.qz-fs{ padding-top:max(4vh, 24px); }
@@ -1394,16 +1395,16 @@ html{ scroll-behavior:smooth; }
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=e3bebe4b23"></script>
-<script src="firebase-config.js?v=e3bebe4b23"></script>
-<script src="questions.js?v=e3bebe4b23"></script>
-<script src="music.js?v=e3bebe4b23"></script>
-<script src="inverters.js?v=e3bebe4b23"></script>
-<script src="drawings.js?v=e3bebe4b23"></script>
-<script src="games.js?v=e3bebe4b23"></script>
-<script src="app.js?v=e3bebe4b23"></script>
-<script src="leaderboard.js?v=e3bebe4b23"></script>
-<script src="auth.js?v=e3bebe4b23"></script>
-<script src="update.js?v=e3bebe4b23"></script>
+<script src="version.js?v=b151882e8a"></script>
+<script src="firebase-config.js?v=b151882e8a"></script>
+<script src="questions.js?v=b151882e8a"></script>
+<script src="music.js?v=b151882e8a"></script>
+<script src="inverters.js?v=b151882e8a"></script>
+<script src="drawings.js?v=b151882e8a"></script>
+<script src="games.js?v=b151882e8a"></script>
+<script src="app.js?v=b151882e8a"></script>
+<script src="leaderboard.js?v=b151882e8a"></script>
+<script src="auth.js?v=b151882e8a"></script>
+<script src="update.js?v=b151882e8a"></script>
 </body>
 </html>

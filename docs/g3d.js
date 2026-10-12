@@ -11,9 +11,12 @@ const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 /* Logo công ty (docs/logo.png): nạp một lần, dùng làm huy hiệu tròn trên các cảnh 3D */
-let logoImg = null, logoP = null;
-export function loadLogo(){
-  if(!logoP) logoP = new Promise((res) => { const i = new Image(); i.onload = () => { logoImg = i; res(i); }; i.onerror = () => res(null); i.src = 'logo.png'; });
+let logoImg = null, bgImg = null, logoP = null;
+export function loadLogo(){   // nạp logo và ảnh tập thể công ty (dùng làm nền sân chơi)
+  if(!logoP){
+    const load = (src, set) => new Promise((res) => { const i = new Image(); i.onload = () => { set(i); res(i); }; i.onerror = () => res(null); i.src = src; });
+    logoP = Promise.all([load('logo.png', (i) => { logoImg = i; }), load('hmt-bg.jpg', (i) => { bgImg = i; })]).then(() => logoImg);
+  }
   return logoP;
 }
 // vẽ huy hiệu logo (nền trắng, viền) vào ctx tại (cx,cy) bán kính r; sx,sy co giãn để bù méo khi dán lên mặt cong
@@ -153,6 +156,12 @@ export function dice(container, opt = {}){
   const felt = canvasTex(512, 512, (c, w, h) => {
     const g = c.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w * 0.55); g.addColorStop(0, '#1d5a9e'); g.addColorStop(1, '#0c2850');
     c.fillStyle = g; c.fillRect(0, 0, w, h);
+    if(bgImg){   // ảnh tập thể nhân viên Hiệp Minh Thịnh làm mặt bàn, phủ màu xanh đậm cho dịu và vẫn đọc rõ xúc xắc
+      const s = Math.max(w / bgImg.width, h / bgImg.height), dw = bgImg.width * s, dh = bgImg.height * s;
+      c.globalAlpha = 0.9; c.drawImage(bgImg, (w - dw) / 2, (h - dh) / 2, dw, dh); c.globalAlpha = 1;
+      const ov = c.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w * 0.6); ov.addColorStop(0, 'rgba(14,52,110,.5)'); ov.addColorStop(1, 'rgba(6,24,56,.72)');
+      c.fillStyle = ov; c.fillRect(0, 0, w, h);
+    }
     for(let i = 0; i < 2600; i++){ c.fillStyle = `rgba(255,255,255,${Math.random() * 0.05})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
   });
   const table = new THREE.Mesh(new THREE.CircleGeometry(6.2, 64), new THREE.MeshStandardMaterial({ map: felt, roughness: 0.95 }));

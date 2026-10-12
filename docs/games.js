@@ -79,8 +79,20 @@
   #view-games .gm-card .ico{ font-size:2.4rem; display:block; margin-bottom:6px; }
   #view-games .gm-card b{ display:block; font-size:.95rem; }
   #view-games .gm-card small{ display:block; color:#5c6a63; margin-top:3px; font-size:.74rem; line-height:1.3; }
-  #view-games.gm-fs{ position:fixed !important; left:0; top:0; right:0; bottom:0; width:auto; max-width:none; margin:0; z-index:2147482000; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; display:block; padding:calc(env(safe-area-inset-top,0px) + 8px) 12px calc(env(safe-area-inset-bottom,0px) + 18px); background:radial-gradient(circle at 50% 0%,#216a94,#0d2a40 55%,#07141f 100%); }
-  #view-games.gm-fs .gm-top{ position:sticky; top:0; z-index:5; padding:6px 0; background:linear-gradient(#0d2a40 70%,rgba(13,42,64,0)); }
+  #view-games.gm-fs{ position:fixed !important; left:0; top:0; right:0; bottom:0; width:auto; max-width:none; margin:0; z-index:2147482000; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; display:block; padding:calc(env(safe-area-inset-top,0px) + 8px) 12px calc(env(safe-area-inset-bottom,0px) + 18px); background:#0b2a4a url(bg-solar.svg) center bottom/cover no-repeat; background-attachment:fixed; }
+  @media (min-aspect-ratio: 5/4){ #view-games.gm-fs{ background-image:url(bg-solar-wide.svg); } }
+  /* màn hình rộng (máy tính): gom nội dung thành một cột giữa, sân chơi cao hơn cho dễ nhìn */
+  #view-games.gm-fs > *{ max-width:640px; margin-left:auto !important; margin-right:auto !important; }
+  #view-games.gm-fs > button{ display:block; }
+  @media (min-width:900px){
+    #view-games.gm-fs{ padding-top:max(3vh, 18px); }
+    #view-games.gm-fs .gm-mouth.croc3d{ height:min(62vh,540px); max-width:520px; }
+    #view-games.gm-fs .gm-pbarrel.pirate3d{ max-width:500px; height:min(62vh,520px); }
+    #view-games.gm-fs .gm-wheel3d{ height:min(56vh,480px); max-width:520px; }
+    #view-games.gm-fs .gm-dicestage canvas, #view-games.gm-fs .gm-d3d{ min-height:min(44vh,380px); }
+    #view-games.gm-fs > *{ max-width:680px; }
+  }
+  #view-games.gm-fs .gm-top{ position:sticky; top:0; z-index:5; padding:6px 0; background:linear-gradient(rgba(6,30,56,.82) 60%,rgba(6,30,56,0)); border-radius:0 0 14px 14px; }
   #view-games .gm-mini.gm-exit{ background:rgba(214,41,31,.9); border-color:rgba(255,255,255,.5); color:#fff; font-weight:800; padding:8px 14px; }
   #view-games .gm-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
   #view-games .gm-top h2{ margin:0; font-size:1.15rem; flex:1; }
@@ -142,7 +154,7 @@
   #view-games .gm-rot{ display:flex; justify-content:center; gap:16px; margin-top:8px; }
   #view-games .gm-rot button{ width:48px; height:40px; border-radius:20px; border:2px solid #4b2e12; background:linear-gradient(#e7b562,#b9812f); font-size:1.3rem; font-weight:900; color:#3b2410; cursor:pointer; }
   /* xí ngầu 3D */
-  #view-games .gm-dicestage{ border-radius:18px; padding:14px 8px 10px; background:radial-gradient(circle at 50% 30%,#2a6ab4,#0f2f5c 72%); box-shadow:inset 0 0 40px rgba(0,0,0,.35); }
+  #view-games .gm-dicestage{ border-radius:18px; padding:14px 8px 10px; background:linear-gradient(rgba(14,52,110,.55),rgba(6,24,56,.78)),url(hmt-bg.jpg) center/cover; box-shadow:inset 0 0 40px rgba(0,0,0,.35); }
   #view-games .gm-arena.arena3d{ min-height:330px; background:linear-gradient(#1c1209 0%,#3b2a18 52%,#7a5630 53%,#a97c45 100%); }
   #view-games .gm-arena.arena3d .gm-cside .chick{ width:140px; height:160px; animation:none !important; transform:none !important; }
   #view-games .gm-arena.arena3d .gm-cside .chick svg{ visibility:hidden; animation:none !important; }
@@ -191,7 +203,7 @@
   #view-games .gm-sum{ text-align:center; font-size:1.3rem; font-weight:800; }
   #view-games .gm-hist{ text-align:center; font-size:.82rem; opacity:.85; margin-top:6px; }
   /* vòng quay */
-  #view-games .gm-wheelstage{ position:relative; border-radius:18px; padding:26px 8px 10px; background:radial-gradient(circle at 50% 25%,#2d6fb5 0%,#163B6D 48%,#0a2040 100%); box-shadow:inset 0 0 50px rgba(0,0,0,.4); overflow:hidden; }
+  #view-games .gm-wheelstage{ position:relative; border-radius:18px; padding:26px 8px 10px; background:linear-gradient(rgba(14,52,110,.5),rgba(6,24,56,.8)),url(hmt-bg.jpg) center/cover; box-shadow:inset 0 0 50px rgba(0,0,0,.4); overflow:hidden; }
   #view-games .gm-wheelstage::before{ content:''; position:absolute; left:50%; top:-40px; width:340px; height:340px; margin-left:-170px; background:radial-gradient(circle,rgba(255,236,160,.35),transparent 65%); pointer-events:none; }
   #view-games .gm-wheelbox{ position:relative; width:310px; max-width:100%; margin:4px auto; }
   #view-games .gm-wheelbox canvas{ width:100%; height:auto; display:block; filter:drop-shadow(0 10px 14px rgba(0,0,0,.55)); }
@@ -369,30 +381,36 @@
     if(!RN) RN = import('./runner.js?v=' + (window.APP_VERSION || '0')).catch(() => null);
     return RN;
   }
-  // Bảng kỷ lục: mỗi ván lọt top 100 là một dòng riêng (một người có thể có nhiều dòng). Ba bảng tách theo collection để chỉ cần
-  // sắp theo một trường (không phải tạo chỉ mục Firestore): tất cả = runner_scores, năm = runner_y/{năm}/scores, tháng = runner_m/{năm-tháng}/scores
-  function runnerRef(period){
-    const d = new Date(), y = String(d.getFullYear()), ym = y + '-' + String(d.getMonth() + 1).padStart(2, '0');
-    if(period === 'year') return fbDb.collection('runner_y').doc(y).collection('scores');
-    if(period === 'month') return fbDb.collection('runner_m').doc(ym).collection('scores');
-    return fbDb.collection('runner_scores');
-  }
+  // Bảng kỷ lục: mỗi ván lọt top 100 (tháng, năm hoặc tất cả) là MỘT dòng riêng trong collection runner_scores (một người có thể nhiều dòng).
+  // Bảng "tất cả" sắp theo điểm; bảng tháng/năm lấy các dòng có ts trong kỳ rồi sắp theo điểm ở máy (chỉ cần chỉ mục một trường, không phải tạo chỉ mục Firestore).
+  // Dòng cũ (mỗi người một tài liệu) vẫn tính vào các bảng nhờ trường ts.
+  const RUNNER_TOP = 100, RUNNER_RANGE = 500, RUNNER_CACHE_MS = 5 * 60 * 1000;
+  function runnerMap(snap){ return snap.docs.map((d) => { const x = d.data(); return { uid: x.uid || d.id, name: x.name, photo: x.photo || '', best: x.best | 0, kwh: x.kwh | 0, coins: x.coins | 0 }; }); }
   function runnerBoard(period){
     if(typeof fbDb === 'undefined' || !fbDb) return Promise.resolve([]);
-    return runnerRef(period || 'all').orderBy('best', 'desc').limit(100).get().then((snap) =>
-      snap.docs.map((d) => { const x = d.data(); return { uid: x.uid || d.id, name: x.name, photo: x.photo || '', best: x.best | 0, kwh: x.kwh | 0, coins: x.coins | 0 }; }));
+    const col = fbDb.collection('runner_scores'), p = period || 'all';
+    if(p === 'all') return col.orderBy('best', 'desc').limit(RUNNER_TOP).get().then(runnerMap);
+    const d = new Date(), from = p === 'year' ? new Date(d.getFullYear(), 0, 1) : new Date(d.getFullYear(), d.getMonth(), 1);
+    return col.where('ts', '>=', firebase.firestore.Timestamp.fromDate(from)).orderBy('ts', 'desc').limit(RUNNER_RANGE).get()
+      .then((snap) => runnerMap(snap).sort((a, b) => b.best - a.best).slice(0, RUNNER_TOP));
+  }
+  const runnerCache = {};   // ngưỡng top 100 của từng bảng, lưu 5 phút để mỗi ván không phải đọc lại ~700 tài liệu
+  async function runnerRows(p){
+    const c = runnerCache[p];
+    if(c && Date.now() - c.t < RUNNER_CACHE_MS) return c.rows;
+    const rows = await runnerBoard(p); runnerCache[p] = { rows, t: Date.now() }; return rows;
   }
   async function runnerSubmit(rec){
     if(typeof fbDb === 'undefined' || !fbDb || typeof session === 'undefined' || !session) throw new Error('offline');
     const doc = { uid: session.uid, name: String(session.name || 'Ẩn danh').slice(0, 80), best: rec.best | 0, kwh: rec.kwh | 0, coins: rec.coins | 0, ts: firebase.firestore.FieldValue.serverTimestamp() };
     if(session.photo && session.photo.length <= 300 && /^https:\/\/[a-z0-9.-]+\.googleusercontent\.com\//.test(session.photo)) doc.photo = session.photo;
     const periods = ['month', 'year', 'all'];
-    const lists = await Promise.all(periods.map((p) => runnerBoard(p)));
-    const targets = periods.filter((p, i) => lists[i].length < 100 || doc.best > lists[i][lists[i].length - 1].best);   // chỉ ghi bảng nào điểm này lọt top 100
-    if(!targets.length) return 'skip';
-    const batch = fbDb.batch();
-    targets.forEach((p) => batch.set(runnerRef(p).doc(), doc));
-    await batch.commit();
+    const lists = await Promise.all(periods.map(runnerRows));
+    const qualifies = periods.some((p, i) => lists[i].length < RUNNER_TOP || doc.best > lists[i][lists[i].length - 1].best);   // lọt top 100 của ít nhất một bảng
+    if(!qualifies) return 'skip';
+    await fbDb.collection('runner_scores').add(doc);
+    const row = { uid: doc.uid, name: doc.name, photo: doc.photo || '', best: doc.best, kwh: doc.kwh, coins: doc.coins };
+    periods.forEach((p, i) => { const rows = lists[i].concat([row]).sort((a, b) => b.best - a.best).slice(0, RUNNER_TOP); runnerCache[p] = { rows, t: Date.now() }; });
     return 'ok';
   }
   // câu hỏi trắc nghiệm để hồi sinh: lấy ngẫu nhiên từ ngân hàng câu hỏi của phần Làm bài (bỏ câu có ảnh/video, câu quá dài)

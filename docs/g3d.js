@@ -450,23 +450,32 @@ export function croc(container, opt = {}){
   const lip = new THREE.Mesh(new THREE.TorusGeometry(2.46, 0.14, 12, 64, Math.PI), skin2M); lip.rotation.x = Math.PI / 2; lip.rotation.z = Math.PI; lip.scale.set(1, 0.9, 1); lip.position.y = 0.04; lower.add(lip);
   // răng dưới (bấm được)
   const R = 2.0, Rz = 1.85, teeth = [], hitMat = new THREE.MeshBasicMaterial({ visible: false });
-  for(let i = 0; i < N; i++){
-    const f = N === 1 ? 0.5 : i / (N - 1), phi = (f - 0.5) * 2.5;
+  const nL = Math.ceil(N / 2), nUp = N - nL;   // răng chẵn: hàm dưới, răng lẻ: hàm trên (cả hai hàm đều bấm được)
+  for(let j = 0; j < nL; j++){
+    const i = j * 2, f = nL === 1 ? 0.5 : j / (nL - 1), phi = (f - 0.5) * 2.5;
     const g = new THREE.Group(); g.position.set(Math.sin(phi) * R, 0.05, Math.cos(phi) * Rz); g.rotation.y = phi * 0.35;
     const m = new THREE.Mesh(toothGeo(0.62), toothM()); m.position.y = 0.3; m.castShadow = true; g.add(m);
     const gum = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.12, 14), new THREE.MeshStandardMaterial({ color: 0xe0687a, roughness: 0.6 })); gum.position.y = 0.02; g.add(gum);
     const hit = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), hitMat); hit.position.y = 0.25; hit.userData.i = i; g.add(hit);
-    lower.add(g); teeth.push({ g, m, hit, down: 0, target: 0, bad: false });
+    lower.add(g); teeth[i] = { g, m, hit, down: 0, target: 0, bad: false };
   }
   // hàm trên: bản lề phía sau
   const hinge = new THREE.Group(); hinge.position.set(0, 0.1, -1.9); root.add(hinge);
   const upper = new THREE.Group(); upper.position.set(0, 0, 1.9); hinge.add(upper);
   const shellU = new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), skinM); shellU.scale.set(hippo ? 1.12 : shark ? 0.95 : 1, hippo ? 0.98 : shark ? 0.7 : 0.8, hippo ? 1.0 : 1.15); shellU.castShadow = true; upper.add(shellU);
   const innerU = new THREE.Mesh(new THREE.SphereGeometry(2.38, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), inM); innerU.scale.set(1, 0.72, 0.86); innerU.position.y = -0.04; upper.add(innerU);
-  const nU = hippo ? 7 : shark ? 13 : 9;
-  for(let i = 0; i < nU; i++){
-    const f = i / (nU - 1), phi = (f - 0.5) * 2.4, g = new THREE.Mesh(toothGeo(0.58), toothM());
-    g.rotation.x = Math.PI; g.position.set(Math.sin(phi) * 2.0, -0.28, Math.cos(phi) * 1.85); g.castShadow = true; upper.add(g);
+  for(let j = 0; j < nUp; j++){   // răng hàm trên bấm được (đảo ngược, cắm xuống)
+    const i = j * 2 + 1, f = nUp === 1 ? 0.5 : j / (nUp - 1), phi = (f - 0.5) * 2.4;
+    const g = new THREE.Group(); g.position.set(Math.sin(phi) * R, -0.05, Math.cos(phi) * Rz); g.rotation.order = 'YXZ'; g.rotation.y = phi * 0.35; g.rotation.x = Math.PI;
+    const m = new THREE.Mesh(toothGeo(0.62), toothM()); m.position.y = 0.3; m.castShadow = true; g.add(m);
+    const gum = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.12, 14), new THREE.MeshStandardMaterial({ color: 0xe0687a, roughness: 0.6 })); gum.position.y = 0.02; g.add(gum);
+    const hit = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), hitMat); hit.position.y = 0.25; hit.userData.i = i; g.add(hit);
+    upper.add(g); teeth[i] = { g, m, hit, down: 0, target: 0, bad: false };
+  }
+  for(let j = -1; j < nUp; j++){   // răng phụ nhỏ (không bấm) cho hàm trên đỡ trống
+    const f = nUp === 1 ? (j < 0 ? 0.1 : 0.9) : (j + 0.5) / (nUp - 1), phi = (f - 0.5) * 2.4;
+    if(nUp > 1 && (f < 0 || f > 1)) continue;
+    const g = new THREE.Mesh(toothGeo(0.4), toothM()); g.rotation.x = Math.PI; g.position.set(Math.sin(phi) * 2.0, -0.2, Math.cos(phi) * 1.85); g.scale.setScalar(0.7); g.castShadow = true; upper.add(g);
   }
   if(shark){
     [-1, 1].forEach((sx) => {

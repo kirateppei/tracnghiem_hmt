@@ -27,6 +27,7 @@ export const CFG = {
   COINS_PER_POINT: 2, // cứ 2 tia nắng cộng 1 điểm vào điểm cuối
   // --- vật phẩm ---
   MAGNET_T: 10, BOOST_T: 8, BOOST_MULT: 2, MAGNET_R: 7, INVULN: 1.2,
+  BIKE_T: 10, BIKE_SPEED: 2, BIKE_SCORE: 2,   // xe đạp: 10 s, tốc độ x2, mỗi mét ghi gấp đôi kWh và tia nắng nhặt được tính gấp đôi; va chạm làm hỏng xe thay vì thua
   // --- sinh đường ---
   REACT: 0.25,        // khoảng nghỉ tối thiểu giữa hai cụm chướng ngại (giây × tốc độ)
   GAP_K: 0.6, GAP_ADD: 2,           // khoảng trống giữa hai cụm = GAP_K × tốc độ + GAP_ADD (đủ đổi tới 2 làn)
@@ -171,8 +172,8 @@ function genRow(T){
   if(G > 6 && r() < 0.6) line(T.prevZ1 + 1.2, Math.floor(r() * 3), Math.min(5, Math.floor((G - 2) / 1.2)), 1.2);
   // vật phẩm
   if(z0 > T.nextItem){
-    const types = ['magnet', 'shield', 'boost'];
-    T.items.push({ type: types[Math.floor(r() * 3)], x: r1(T.prevZ1 + G * 0.5), lane: Math.floor(r() * 3), y: 1.1, taken: false });
+    const types = ['magnet', 'shield', 'boost', 'bike'];
+    T.items.push({ type: types[Math.floor(r() * 4)], x: r1(T.prevZ1 + G * 0.5), lane: Math.floor(r() * 3), y: 1.1, taken: false });
     T.nextItem = z0 + 280 + r() * 200;
   }
   coins.sort((a, b) => a.x - b.x);
@@ -186,7 +187,7 @@ export function createGame(seed = 1){
   return {
     track, t: 0, dist: 0, speed: CFG.V0, y: 0, vy: 0, onGround: true, jumps: 0, jumpBuf: 0, jumpAge: 0, cut: false, held: false,
     lane: 1, lx: 1, fromLane: 1, sliding: false, slideT: 0, slideQ: false, dead: false, cause: '', deadT: 0, coins: 0, energy: 0,
-    magnet: 0, boost: 0, shield: false, invuln: 0, combo: 0, comboT: 0, spin: 0, events: [],
+    magnet: 0, boost: 0, bike: 0, shield: false, invuln: 0, combo: 0, comboT: 0, spin: 0, events: [],
   };
 }
 
@@ -248,7 +249,7 @@ export function stepGame(g, dt, inp){
   const T = g.track;
   if(g.dead){ g.deadT += dt; return; }
   g.t += dt;
-  g.speed = speedAt(g.dist);
+  g.speed = speedAt(g.dist) * (g.bike > 0 ? CFG.BIKE_SPEED : 1);
   const v = g.speed;
   g.held = !!inp.held;
   if(inp.jump) g.jumpBuf = CFG.JUMP_BUF;
@@ -288,9 +289,10 @@ export function stepGame(g, dt, inp){
 
   // --- tiến lên, điểm ---
   g.dist += v * dt;
-  g.energy += v * dt * CFG.KWH_PER_M * (g.boost > 0 ? CFG.BOOST_MULT : 1);
+  g.energy += v * dt * CFG.KWH_PER_M * Math.max(g.boost > 0 ? CFG.BOOST_MULT : 1, g.bike > 0 ? CFG.BIKE_SCORE : 1);
   if(g.magnet > 0) g.magnet = Math.max(0, g.magnet - dt);
   if(g.boost > 0) g.boost = Math.max(0, g.boost - dt);
+  if(g.bike > 0){ g.bike = Math.max(0, g.bike - dt); if(g.bike === 0){ g.invuln = Math.max(g.invuln, 1.0); g.events.push('bike_end'); } }   // hết xe: tốc độ giảm đột ngột nên được an toàn một nhịp
   if(g.invuln > 0) g.invuln -= dt;
   if(g.comboT > 0){ g.comboT -= dt; if(g.comboT <= 0) g.combo = 0; }
   T.ensure(g.dist + 200);
@@ -298,8 +300,8 @@ export function stepGame(g, dt, inp){
   // --- va chạm ---
   const h = collides(g, false);
   if(h && g.invuln <= 0){
-    if(g.shield){
-      g.shield = false; g.events.push('shield');
+    if(g.bike > 0 || g.shield){
+      if(g.bike > 0){ g.bike = 0; g.events.push('bike_break'); } else { g.shield = false; g.events.push('shield'); }
       if(h.type === 'building'){ g.lane = g.fromLane !== g.lane ? g.fromLane : (g.lane === 1 ? 0 : 1); g.invuln = 0.6; }   // bật lại làn cũ
       else { g.invuln = CFG.INVULN; h.broken = true; }
     } else { die(g, h.type); return; }
@@ -318,7 +320,7 @@ export function stepGame(g, dt, inp){
       dz = c.x - g.dist; dx = c.px - px; dy = c.y - cy; d2 = dz * dz + dx * dx + dy * dy; c.pulled = true;
     }
     if(d2 < 0.9 * 0.9){
-      c.taken = true; g.coins++; g.combo = g.comboT > 0 ? g.combo + 1 : 1; g.comboT = 0.9;
+      c.taken = true; g.coins += g.bike > 0 ? CFG.BIKE_SCORE : 1; g.combo = g.comboT > 0 ? g.combo + 1 : 1; g.comboT = 0.9;
       g.events.push('coin');
     }
   }
@@ -327,7 +329,7 @@ export function stepGame(g, dt, inp){
     const dz = it.x - g.dist, dx = laneX(it.lane) - px, dy = it.y - cy;
     if(dz * dz + dx * dx + dy * dy < 1.2 * 1.2){
       it.taken = true;
-      if(it.type === 'magnet') g.magnet = CFG.MAGNET_T; else if(it.type === 'boost') g.boost = CFG.BOOST_T; else g.shield = true;
+      if(it.type === 'magnet') g.magnet = CFG.MAGNET_T; else if(it.type === 'boost') g.boost = CFG.BOOST_T; else if(it.type === 'bike') g.bike = CFG.BIKE_T; else g.shield = true;
       g.events.push('item:' + it.type);
     }
   }

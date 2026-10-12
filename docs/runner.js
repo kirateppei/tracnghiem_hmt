@@ -8,14 +8,11 @@ const { CFG } = L;
 
 /* ================= Hằng số dễ chỉnh theo phản hồi người chơi (giao diện/điều khiển) ================= */
 const UI = {
-  SWIPE_PX: 20,          // vuốt ít nhất chừng này điểm ảnh thì tính là vuốt (trái/phải = đổi làn, xuống = trượt, lên = nhảy)
+  SWIPE_PX: 14,          // vuốt ít nhất chừng này điểm ảnh thì tính là vuốt (trái/phải = đổi làn, xuống = trượt, lên = nhảy)
   SWIPE_RATIO: 1.0,      // độ lệch theo hướng chính phải lớn hơn hướng kia × hệ số này
   CYCLE_M: 2000,         // chu kỳ đổi bầu trời: sáng → trưa → hoàng hôn → đêm (mét)
   START_PHASE: 0.02,     // pha bầu trời lúc xuất phát (0 = sáng sớm)
   VIS_W: 8.6,            // bề ngang cảnh nhìn thấy (m) tại chỗ nhân vật; nhỏ hơn = nhân vật to hơn
-  TAP_DELAY_MS: 70,      // chờ chừng này ms sau khi chạm để phân biệt chạm (nhảy) với vuốt
-  TAP_SLOP: 9,           // ngón xê dịch quá chừng này điểm ảnh trong thời gian chờ thì coi là đang vuốt, không nhảy
-  TAP_DEBOUNCE_MS: 110,  // hai lần chạm cách nhau ít hơn thế chỉ tính một (chống nảy ngón); nhảy đôi cần chạm lần hai chậm hơn
   DRAW_DIST: 105,        // nhìn xa bao nhiêu mét (vật ở xa hơn không được vẽ)
     MAX_DPR: 2,
   KEY: { best: 'gm_runner_best', rec: 'gm_runner_bestrec', char: 'gm_runner_char', skin: 'gm_runner_skin', synced: 'gm_runner_synced' },
@@ -40,6 +37,18 @@ const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t
 const store = (k, v) => { try{ if(v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){} return null; };
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+function roundedBoxGeo(size, r, seg){   // hộp bo tròn (giữ UV của BoxGeometry nên texture vẫn dán đúng mặt)
+  const g = new THREE.BoxGeometry(size, size, size, seg, seg, seg);
+  const p = g.attributes.position, n = g.attributes.normal, half = size / 2 - r;
+  const v = new THREE.Vector3(), inner = new THREE.Vector3(), d = new THREE.Vector3();
+  for(let i = 0; i < p.count; i++){
+    v.fromBufferAttribute(p, i);
+    inner.set(Math.max(-half, Math.min(half, v.x)), Math.max(-half, Math.min(half, v.y)), Math.max(-half, Math.min(half, v.z)));
+    d.copy(v).sub(inner);
+    if(d.lengthSq() > 1e-9){ d.normalize(); n.setXYZ(i, d.x, d.y, d.z); v.copy(inner).addScaledVector(d, r); p.setXYZ(i, v.x, v.y, v.z); }
+  }
+  return g;
+}
 function canvasTex(w, h, draw, opt = {}){
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   draw(c.getContext('2d'), w, h);
@@ -211,83 +220,95 @@ function shirtTextures(skin){
 
 /* ================= Nhân vật ================= */
 function buildCharacter(gender, skin, tex){
+  // nhân vật dáng hoạt hình mềm: thân và chi bo tròn, đầu to, mắt có điểm sáng, má hồng, mũ bảo hộ bóng, ba lô đồ nghề
   const female = gender === 'f';
   const M = (color, o = {}) => new THREE.MeshLambertMaterial({ color, ...o });
-  const mShirt = M(skin.shirt), mPants = M(skin.pants), mBand = M(skin.band, { emissive: '#222' }), mBoot = M(skin.boots), mGlove = M(skin.glove);
-  const mSkin = M(skin.skin), mHelm = M(skin.helmet), mBelt = M(skin.belt), mDark = M('#1a1a1a'), mHair = M('#2b1a10');
-  const mWhite = M('#ffffff'), mBuckle = M('#c9ccd2'), mShirt2 = M(skin.shirt2), mPouch = M('#6b4a2b'), mHelmD = M('#e0b000'), mPad = M('#2c2f36');
+  const G = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.05, ...o });
+  const mShirt = M(skin.shirt), mPants = M(skin.pants), mBand = new THREE.MeshStandardMaterial({ color: skin.band, roughness: 0.25, metalness: 0.55, emissive: '#2a2a2a' }), mBoot = G(skin.boots, { roughness: 0.5 }), mGlove = M(skin.glove);
+  const mSkin = M(skin.skin), mHelm = G(skin.helmet), mBelt = M(skin.belt), mDark = M('#1a1a1a'), mHair = M('#2b1a10');
+  const mWhite = M('#ffffff'), mBuckle = G('#c9ccd2', { metalness: 0.7, roughness: 0.3 }), mShirt2 = M(skin.shirt2), mPouch = M('#6b4a2b'), mHelmD = G('#e0b000'), mPad = M('#2c2f36');
   const box = (w, h, d, mat, x = 0, y = 0, z = 0, parent) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); if(parent) parent.add(m); return m; };
+  const rbox = (w, h, d, r, mat, x = 0, y = 0, z = 0, parent) => { const g = roundedBoxGeo(1, r, 4); g.scale(w, h, d); const m = new THREE.Mesh(g, mat); m.position.set(x, y, z); if(parent) parent.add(m); return m; };
+  const cap = (r, len, mat, x, y, z, parent) => { const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 6, 12), mat); m.position.set(x, y, z); if(parent) parent.add(m); return m; };
+  const ring = (r, tube, mat, x, y, z, parent) => { const m = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 6, 18), mat); m.rotation.x = Math.PI / 2; m.position.set(x, y, z); if(parent) parent.add(m); return m; };
+  const sph = (r, mat, x, y, z, parent, sx = 1, sy = 1, sz = 1) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), mat); m.scale.set(sx, sy, sz); m.position.set(x, y, z); if(parent) parent.add(m); return m; };
   const root = new THREE.Group(), flip = new THREE.Group(), body = new THREE.Group(), hips = new THREE.Group();
   root.add(flip); flip.add(body); body.add(hips);
   flip.position.y = 0.9; body.position.y = -0.9; hips.position.y = 0.86;
   const tw = female ? 0.44 : 0.5;
-  // thân áo: +z là phía trước (ngực). Thứ tự mặt: +x, -x, +y, -y, +z, -z
+  // thân áo (hộp bo tròn giữ nguyên mapping texture): +z là phía trước. Thứ tự mặt: +x, -x, +y, -y, +z, -z
   const side = new THREE.MeshLambertMaterial({ map: tex.side }), front = new THREE.MeshLambertMaterial({ map: tex.front }), back = new THREE.MeshLambertMaterial({ map: tex.back });
   const torso = new THREE.Group(); torso.position.y = 0.0; hips.add(torso);
-  const tb = new THREE.Mesh(new THREE.BoxGeometry(tw, 0.62, 0.3), [side, side, mShirt, mShirt, front, back]); tb.position.y = 0.33; torso.add(tb);
-  box(tw + 0.02, 0.07, 0.32, mBelt, 0, 0.05, 0, torso);                                   // đai đồ nghề
-  box(0.08, 0.06, 0.02, mBuckle, 0, 0.05, 0.165, torso);                                   // khóa đai
-  box(0.3, 0.07, 0.32, mShirt, 0, 0.62, 0, torso);                                         // cổ áo dựng
-  box(tw + 0.02, 0.025, 0.31, mBand, 0, 0.58, 0, torso);                                   // vạch phản quang vai
-  for(const sx of [-1, 1]) box(0.1, 0.025, 0.2, mShirt2, sx * (tw / 2 - 0.02), 0.645, 0, torso);   // cầu vai
-  box(0.12, 0.17, 0.07, mPouch, -tw * 0.5 - 0.06, -0.01, 0.06, torso);                     // túi đồ nghề bên phải
-  box(0.07, 0.15, 0.05, mDark, tw * 0.5 + 0.04, 0.0, -0.06, torso);                        // bộ đàm
-  box(0.012, 0.09, 0.012, mDark, tw * 0.5 + 0.04, 0.1, -0.06, torso);                      // ăng-ten
-  box(0.1, 0.12, 0.08, mBelt, tw * 0.5 + 0.03, 0.04, 0.05, torso); box(0.1, 0.12, 0.08, mBelt, -tw * 0.5 - 0.03, 0.04, 0.05, torso);
-  box(0.06, 0.14, 0.06, mDark, tw * 0.5 + 0.03, -0.06, 0.05, torso);                      // tua vít
-  // đầu + mũ bảo hộ
-  const neck = box(0.1, 0.08, 0.1, mSkin, 0, 0.68, 0, torso);
-  const head = new THREE.Group(); head.position.set(0, 0.84, 0.01); torso.add(head);
-  const face = new THREE.Mesh(new THREE.SphereGeometry(0.135, 16, 12), mSkin); head.add(face);
-  const eyeG = new THREE.SphereGeometry(0.02, 6, 6), eyeW = new THREE.SphereGeometry(0.03, 6, 6);
-  for(const sx of [-0.05, 0.05]){
-    const w_ = new THREE.Mesh(eyeW, mWhite); w_.scale.set(1, 0.8, 0.5); w_.position.set(sx, 0.012, 0.122); head.add(w_);
-    const e = new THREE.Mesh(eyeG, mDark); e.scale.set(0.8, 1, 0.6); e.position.set(sx, 0.012, 0.13); head.add(e);
-    box(0.06, 0.012, 0.02, mHair, sx, 0.05, 0.125, head);                                  // lông mày
-    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mSkin); ear.scale.set(0.5, 1, 0.8); ear.position.set(sx * 2.6, -0.005, 0); head.add(ear);
+  const tg = roundedBoxGeo(1, 0.16, 5); tg.scale(tw, 0.64, 0.32);
+  const tb = new THREE.Mesh(tg, [side, side, mShirt, mShirt, front, back]); tb.position.y = 0.33; torso.add(tb);
+  rbox(tw + 0.03, 0.075, 0.34, 0.3, mBelt, 0, 0.05, 0, torso);                            // đai đồ nghề
+  rbox(0.09, 0.065, 0.03, 0.3, mBuckle, 0, 0.05, 0.172, torso);                           // khóa đai
+  rbox(0.3, 0.07, 0.3, 0.4, mShirt, 0, 0.64, 0, torso);                                   // cổ áo dựng
+  rbox(tw + 0.03, 0.03, 0.335, 0.3, mBand, 0, 0.56, 0, torso);                            // vạch phản quang ngang ngực
+  rbox(0.12, 0.17, 0.07, 0.3, mPouch, -tw * 0.5 - 0.06, -0.01, 0.06, torso);              // túi đồ nghề
+  rbox(0.07, 0.15, 0.05, 0.3, mDark, tw * 0.5 + 0.04, 0.0, -0.06, torso);                 // bộ đàm
+  box(0.012, 0.09, 0.012, mDark, tw * 0.5 + 0.04, 0.1, -0.06, torso);                     // ăng-ten
+  rbox(0.1, 0.12, 0.08, 0.3, mBelt, tw * 0.5 + 0.03, 0.04, 0.05, torso); rbox(0.1, 0.12, 0.08, 0.3, mBelt, -tw * 0.5 - 0.03, 0.04, 0.05, torso);
+  cap(0.025, 0.1, mDark, tw * 0.5 + 0.03, -0.06, 0.05, torso);                            // tua vít
+  // ba lô đồ nghề phía sau, có vạch phản quang
+  rbox(tw * 0.82, 0.42, 0.14, 0.3, mShirt2, 0, 0.36, -0.23, torso); rbox(tw * 0.84, 0.035, 0.145, 0.3, mBand, 0, 0.3, -0.23, torso); rbox(tw * 0.6, 0.12, 0.05, 0.3, mPouch, 0, 0.18, -0.31, torso);
+  // đầu to hoạt hình + mũ bảo hộ
+  cap(0.045, 0.04, mSkin, 0, 0.7, 0, torso);                                              // cổ
+  const head = new THREE.Group(); head.position.set(0, 0.86, 0.01); torso.add(head);
+  sph(0.16, mSkin, 0, 0, 0, head, 1.02, 0.98, 0.96);
+  for(const sx of [-0.055, 0.055]){
+    const w_ = sph(0.036, mWhite, sx, 0.01, 0.135, head, 1, 1.1, 0.5);
+    sph(0.022, mDark, sx + sx * 0.08, 0.008, 0.147, head, 0.9, 1.1, 0.5);
+    sph(0.008, new THREE.MeshBasicMaterial({ color: '#ffffff' }), sx + sx * 0.14 + 0.006, 0.02, 0.158, head);   // điểm sáng trong mắt
+    const br = box(0.062, 0.014, 0.02, mHair, sx, 0.062, 0.138, head); br.rotation.z = sx > 0 ? -0.15 : 0.15;
+    sph(0.025, M('#ff9a9a'), sx * 1.55, -0.04, 0.125, head, 1, 0.65, 0.4);                // má hồng
+    sph(0.034, mSkin, sx * 2.9, -0.005, 0, head, 0.5, 1, 0.8);                            // tai
   }
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), mSkin); nose.position.set(0, -0.012, 0.135); head.add(nose);
-  box(0.05, 0.01, 0.02, M('#a0504a'), 0, -0.055, 0.122, head);                              // miệng
-  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.155, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), mHelm); helm.position.set(0, 0.03, -0.005); head.add(helm);
-  box(0.3, 0.025, 0.14, mHelm, 0, 0.045, 0.14, head);                                      // vành mũ phía trước
-  box(0.34, 0.02, 0.05, mHelmD, 0, 0.04, -0.15, head);                                     // vành sau
-  box(0.045, 0.035, 0.32, mHelmD, 0, 0.18, 0, head);                                       // gờ nóc mũ
+  sph(0.022, mSkin, 0, -0.018, 0.152, head);                                              // mũi
+  const sm = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 6, 14, Math.PI), M('#8a3a3a')); sm.position.set(0, -0.045, 0.14); sm.rotation.z = Math.PI; head.add(sm);   // miệng cười
+  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.172, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.53), mHelm); helm.position.set(0, 0.03, -0.005); head.add(helm);
+  rbox(0.3, 0.03, 0.15, 0.5, mHelm, 0, 0.045, 0.145, head);                               // vành mũ phía trước
+  rbox(0.34, 0.025, 0.06, 0.5, mHelmD, 0, 0.04, -0.16, head);                             // vành sau
+  rbox(0.05, 0.04, 0.34, 0.5, mHelmD, 0, 0.2, 0, head);                                   // gờ nóc mũ
   for(const sx of [-1, 1]){
-    box(0.012, 0.03, 0.2, mHelmD, sx * 0.1, 0.12, 0, head);                                // gân bên mũ
-    box(0.012, 0.1, 0.012, mDark, sx * 0.135, -0.04, 0.05, head);                          // quai mũ
+    rbox(0.014, 0.035, 0.22, 0.5, mHelmD, sx * 0.11, 0.13, 0, head);                       // gân bên mũ
+    box(0.012, 0.1, 0.012, mDark, sx * 0.15, -0.04, 0.05, head);                           // quai mũ
   }
-  box(0.1, 0.07, 0.02, mDark, 0, -0.1, 0.1, head).rotation.x = 0.3;                         // quai cằm
-  box(0.07, 0.045, 0.045, mBuckle, 0, 0.1, 0.16, head);                                    // đèn pin gắn mũ
-  box(0.045, 0.03, 0.012, M('#fff6b0', { emissive: '#fff6b0' }), 0, 0.1, 0.185, head);
+  box(0.1, 0.06, 0.02, mDark, 0, -0.115, 0.11, head).rotation.x = 0.3;                      // quai cằm
+  rbox(0.08, 0.05, 0.05, 0.4, mBuckle, 0, 0.115, 0.17, head);                              // đèn pin gắn mũ
+  box(0.05, 0.034, 0.012, M('#fff6b0', { emissive: '#fff6b0' }), 0, 0.115, 0.197, head);
+  const dec = new THREE.Mesh(new THREE.CircleGeometry(0.04, 20), new THREE.MeshBasicMaterial({ color: '#ffffff' })); dec.position.set(0.1, 0.13, 0.115); dec.rotation.y = 0.9; head.add(dec);   // tem tròn trên mũ
   let tail = null;
   if(female){
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.145, 14, 10, 0, Math.PI * 2, Math.PI * 0.42, Math.PI * 0.5), mHair); hair.position.set(0, 0.01, -0.025); head.add(hair);
-    tail = new THREE.Group(); tail.position.set(0, -0.01, -0.14); head.add(tail);
-    const t1 = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), mHair); t1.position.set(0, 0, -0.03); tail.add(t1);
-    const t2 = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.22, 4, 8), mHair); t2.position.set(0, -0.14, -0.06); t2.rotation.x = 0.25; tail.add(t2);
-    box(0.07, 0.03, 0.07, M('#e0405a'), 0, 0.01, -0.01, tail);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.162, 16, 12, 0, Math.PI * 2, Math.PI * 0.42, Math.PI * 0.5), mHair); hair.position.set(0, 0.01, -0.03); head.add(hair);
+    tail = new THREE.Group(); tail.position.set(0, -0.01, -0.15); head.add(tail);
+    sph(0.065, mHair, 0, 0, -0.03, tail);
+    const t2 = cap(0.055, 0.22, mHair, 0, -0.15, -0.06, tail); t2.rotation.x = 0.25;
+    box(0.075, 0.035, 0.075, M('#e0405a'), 0, 0.01, -0.01, tail);
   }
-  // tay
+  // tay: vai tròn, cánh tay/cẳng tay dạng viên nhộng, găng tay tròn, vạch phản quang là vòng đeo quanh tay
   const arm = (sx) => {
-    const sh = new THREE.Group(); sh.position.set(sx * (tw / 2 + 0.06), 0.57, 0); torso.add(sh);
-    box(0.12, 0.3, 0.13, mShirt, 0, -0.14, 0, sh); box(0.125, 0.045, 0.135, mBand, 0, -0.1, 0, sh); box(0.13, 0.05, 0.14, mShirt2, 0, 0.0, 0, sh);
+    const sh = new THREE.Group(); sh.position.set(sx * (tw / 2 + 0.065), 0.57, 0); torso.add(sh);
+    sph(0.08, mShirt2, 0, 0, 0, sh, 1, 1, 1);
+    cap(0.058, 0.2, mShirt, 0, -0.15, 0, sh); ring(0.062, 0.014, mBand, 0, -0.12, 0, sh);
     const fore = new THREE.Group(); fore.position.y = -0.29; sh.add(fore);
-    box(0.105, 0.26, 0.115, mShirt, 0, -0.12, 0, fore); box(0.115, 0.04, 0.125, mShirt2, 0, -0.22, 0, fore);
-    box(0.11, 0.1, 0.12, mGlove, 0, -0.29, 0, fore); box(0.116, 0.03, 0.126, mBand, 0, -0.245, 0, fore); box(0.03, 0.05, 0.1, mGlove, sx * 0.065, -0.3, 0.02, fore);
+    sph(0.058, mShirt2, 0, 0, 0, fore);
+    cap(0.052, 0.17, mShirt, 0, -0.13, 0, fore); ring(0.056, 0.012, mBand, 0, -0.1, 0, fore);
+    sph(0.07, mGlove, 0, -0.27, 0.01, fore, 1, 1.05, 1);                                    // găng tay
+    sph(0.03, mGlove, sx * 0.065, -0.28, 0.04, fore);                                       // ngón cái
     return { sh, fore };
   };
   const aL = arm(1), aR = arm(-1);
-  // chân
+  // chân: đùi/ống chân dạng viên nhộng, đầu gối có bảo vệ, giày bảo hộ mũi tròn
   const leg = (sx) => {
     const th = new THREE.Group(); th.position.set(sx * (tw * 0.24), 0, 0); hips.add(th);
-    box(0.18, 0.42, 0.2, mPants, 0, -0.2, 0, th);
-    box(0.1, 0.12, 0.03, mShirt2, sx * 0.04, -0.16, 0.105, th);                            // túi hộp trên đùi
-    box(0.1, 0.02, 0.032, mDark, sx * 0.04, -0.11, 0.105, th);
+    cap(0.098, 0.26, mPants, 0, -0.2, 0, th);
+    rbox(0.1, 0.12, 0.04, 0.3, mShirt2, sx * 0.04, -0.17, 0.095, th);                      // túi hộp trên đùi
     const shin = new THREE.Group(); shin.position.y = -0.41; th.add(shin);
-    box(0.155, 0.36, 0.17, mPants, 0, -0.17, 0, shin); box(0.162, 0.05, 0.178, mBand, 0, -0.14, 0, shin); box(0.162, 0.05, 0.178, mBand, 0, -0.22, 0, shin);
-    box(0.13, 0.1, 0.04, mPad, 0, 0.0, 0.1, shin);                                         // bảo vệ đầu gối
-    box(0.17, 0.12, 0.3, mBoot, 0, -0.33, 0.045, shin); box(0.18, 0.03, 0.32, mDark, 0, -0.385, 0.05, shin); box(0.16, 0.06, 0.1, mPad, 0, -0.35, 0.16, shin);   // đế và mũi giày bảo hộ
-    box(0.17, 0.02, 0.03, mBuckle, 0, -0.3, 0.1, shin);
+    sph(0.088, mPants, 0, 0, 0, shin);
+    cap(0.082, 0.22, mPants, 0, -0.18, 0, shin); ring(0.086, 0.014, mBand, 0, -0.14, 0, shin); ring(0.085, 0.014, mBand, 0, -0.23, 0, shin);
+    rbox(0.13, 0.1, 0.05, 0.4, mPad, 0, 0.0, 0.085, shin);                                 // bảo vệ đầu gối
+    rbox(0.19, 0.13, 0.32, 0.35, mBoot, 0, -0.33, 0.05, shin); rbox(0.2, 0.035, 0.34, 0.3, mDark, 0, -0.385, 0.05, shin); sph(0.085, mPad, 0, -0.34, 0.17, shin, 1, 0.8, 0.9);   // giày và mũi giày bảo hộ
     return { th, shin };
   };
   const lL = leg(1), lR = leg(-1);
@@ -407,6 +428,27 @@ function makeBird(T){
   g.userData.wl = wing(1); g.userData.wr = wing(-1);
   return g;
 }
+function makeBike(T){
+  // xe đạp hướng về +z (cùng hướng nhân vật): khung đỏ cam, hai bánh có nan hoa, ghi đông, yên, bàn đạp
+  const g = new THREE.Group();
+  const red = new THREE.MeshLambertMaterial({ color: '#ff7a1a' }), dark = new THREE.MeshLambertMaterial({ color: '#202226' }), chrome = new THREE.MeshStandardMaterial({ color: '#cfd5dc', metalness: 0.8, roughness: 0.25 });
+  const tube = (x0, y0, z0, x1, y1, z1, r, m) => { const a = new THREE.Vector3(x0, y0, z0), b = new THREE.Vector3(x1, y1, z1), d = b.clone().sub(a), mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 8), m); mesh.position.copy(a.clone().add(b).multiplyScalar(0.5)); mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); g.add(mesh); return mesh; };
+  const wheels = [];
+  for(const z of [-0.55, 0.55]){
+    const w = new THREE.Group(); w.position.set(0, 0.33, z); g.add(w);
+    const tire = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.04, 8, 24), dark); tire.rotation.y = Math.PI / 2; w.add(tire);
+    for(let i = 0; i < 6; i++){ const sp = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.6, 0.012), chrome); sp.rotation.x = i * Math.PI / 6; w.add(sp); }
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.08, 8), chrome); hub.rotation.z = Math.PI / 2; w.add(hub);
+    wheels.push(w);
+  }
+  tube(0, 0.33, -0.55, 0, 0.62, -0.1, 0.022, red); tube(0, 0.62, -0.1, 0, 0.62, 0.38, 0.022, red); tube(0, 0.33, 0.55, 0, 0.62, 0.38, 0.022, red); tube(0, 0.33, -0.55, 0, 0.2, -0.05, 0.02, red); tube(0, 0.2, -0.05, 0, 0.62, -0.1, 0.02, red); tube(0, 0.2, -0.05, 0, 0.62, 0.38, 0.02, red);
+  tube(0, 0.62, 0.38, 0, 0.95, 0.4, 0.02, chrome); tube(-0.22, 0.97, 0.4, 0.22, 0.97, 0.4, 0.017, dark);   // cổ phuộc và ghi đông
+  tube(0, 0.62, -0.1, 0, 0.82, -0.14, 0.017, chrome); const seat = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.26), dark); seat.position.set(0, 0.85, -0.15); g.add(seat);
+  const crank = new THREE.Group(); crank.position.set(0, 0.2, -0.05); g.add(crank);
+  for(const s of [-1, 1]){ const arm = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.02), chrome); arm.position.set(s * 0.1, s * 0.11, 0); crank.add(arm); const pd = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.025, 0.12), dark); pd.position.set(s * 0.14, s * 0.22, 0); crank.add(pd); }
+  g.userData = { wheels, crank };
+  return g;
+}
 function makeItem(type, T){
   const g = new THREE.Group();
   if(type === 'magnet'){
@@ -416,11 +458,13 @@ function makeItem(type, T){
     const c = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.5, 12), T.ceramic); c.rotation.z = Math.PI / 2; g.add(c);
     for(const s of [-1, 1]){ const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.12, 10), T.gold); cap.rotation.z = Math.PI / 2; cap.position.x = s * 0.3; g.add(cap); }
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.025, 6, 24), T.cyan); g.add(ring);
+  } else if(type === 'bike'){
+    const b = makeBike(T); b.scale.setScalar(0.62); b.rotation.y = Math.PI / 2; b.position.y = -0.3; g.add(b); g.userData.bike = b;
   } else {   // x2: huy hiệu logo công ty
     const gm = new THREE.CylinderGeometry(0.46, 0.46, 0.1, 32); gm.rotateX(Math.PI / 2);
     const m = new THREE.Mesh(gm, [T.gold, T.medal, T.medal]); g.add(m);
   }
-  const glow = new THREE.Sprite(type === 'magnet' ? T.glowRed : type === 'shield' ? T.glowCyan : T.glowGold); glow.scale.set(1.6, 1.6, 1); g.add(glow);
+  const glow = new THREE.Sprite(type === 'magnet' ? T.glowRed : type === 'shield' ? T.glowCyan : type === 'bike' ? T.glowGreen : T.glowGold); glow.scale.set(1.6, 1.6, 1); g.add(glow);
   g.scale.setScalar(1.2);
   return g;
 }
@@ -631,15 +675,16 @@ export function runner(container, opt = {}){
   const sparks = []; for(let i = 0; i < 20; i++){ const s = new THREE.Sprite(spr('#ffe27a')); s.visible = false; s.scale.set(0.5, 0.5, 1); scene.add(s); sparks.push({ s, t: 0, vx: 0, vy: 0 }); }
   let sparkI = 0;
   function spark(x, y, color){ const p = sparks[sparkI++ % sparks.length]; p.t = 0.45; p.vx = (Math.random() - 0.3) * 3; p.vy = 1 + Math.random() * 2.5; p.s.position.set(x, y, 0.5); p.s.material.color.set(color || '#ffe27a'); p.s.visible = true; }
+  const bikeRide = makeBike(TEX); bikeRide.visible = false; scene.add(bikeRide);
   const bubble = new THREE.Mesh(new THREE.SphereGeometry(1.05, 20, 14), keep(new THREE.MeshBasicMaterial({ color: '#5ae0ff', transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }))); bubble.visible = false; scene.add(bubble);
   const magRing = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.03, 6, 40), keep(new THREE.MeshBasicMaterial({ color: '#ff6a5a', transparent: true, opacity: 0.6, fog: false }))); magRing.visible = false; scene.add(magRing);
   const boostRing = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.04, 6, 40), keep(new THREE.MeshBasicMaterial({ color: '#7dff7a', transparent: true, opacity: 0.55, fog: false }))); boostRing.visible = false; scene.add(boostRing);
 
   /* ---------- Pool vật cản, tia nắng, vật phẩm ---------- */
-  const pools = { crate: [], panel: [], wire: [], bird: [], zap: [], tray: [], item: { magnet: [], shield: [], boost: [] } };
+  const pools = { crate: [], panel: [], wire: [], bird: [], zap: [], tray: [], item: { magnet: [], shield: [], boost: [], bike: [] } };
   const mk = (n, f, arr) => { for(let i = 0; i < n; i++){ const o = f(); o.visible = false; scene.add(o); arr.push(o); } };
   mk(14, () => makeCrate(TEX), pools.crate); mk(10, () => makePanel(TEX), pools.panel); mk(10, () => makeWire(TEX), pools.wire); mk(10, () => makeBird(TEX), pools.bird); mk(6, () => makeZap(TEX), pools.zap); mk(9, () => makeTray(TEX), pools.tray);
-  for(const t of ['magnet', 'shield', 'boost']) mk(3, () => makeItem(t, TEX), pools.item[t]);
+  for(const t of ['magnet', 'shield', 'boost', 'bike']) mk(3, () => makeItem(t, TEX), pools.item[t]);
   const coinGeo = (() => { const g = new THREE.CylinderGeometry(0.34, 0.34, 0.08, 20); g.rotateX(Math.PI / 2); return g; })();
   const coinMats = [keep(new THREE.MeshLambertMaterial({ color: '#ffb020', emissive: '#ff8a00', emissiveIntensity: 0.7 })), keep(new THREE.MeshLambertMaterial({ map: Tx.coin, emissive: '#ffa000', emissiveMap: Tx.coin, emissiveIntensity: 0.6 })), keep(new THREE.MeshLambertMaterial({ map: Tx.coin, emissive: '#ffa000', emissiveMap: Tx.coin, emissiveIntensity: 0.6 }))];
   const coinPool = [];
@@ -713,11 +758,12 @@ export function runner(container, opt = {}){
       <div class="rn-pw">
         <div class="rn-chip" id="rn-pw-magnet" hidden><span>🧲</span><i></i></div>
         <div class="rn-chip" id="rn-pw-shield" hidden><span>🛡️</span><i></i></div>
+        <div class="rn-chip" id="rn-pw-bike" hidden><span>🚲</span><i></i></div>
         <div class="rn-chip" id="rn-pw-boost" hidden><span><img src="${LOGO_URL}" alt=""><b>x2</b></span><i></i></div>
       </div>
     </div>
     <div class="rn-scr rn-menu">
-      <div class="rn-title"><h2>⚡ Chạy năng lượng</h2><p>Vuốt trái/phải = đổi làn · chạm hoặc vuốt lên = nhảy (chạm lần nữa = nhảy đôi; nhảy lên mái nhà thấp để chạy trên đó) · vuốt xuống = trượt · tránh tia sét giật</p></div>
+      <div class="rn-title"><h2>⚡ Chạy năng lượng</h2><p>Vuốt trái/phải = đổi làn · vuốt lên = nhảy (vuốt lên lần nữa trên không = nhảy đôi; nhảy lên mái nhà, biến tần để chạy trên đó) · vuốt xuống = trượt · tránh tia sét giật</p></div>
       <div class="rn-bottom">
         <div class="rn-chars" role="group" aria-label="Chọn nhân vật">
           <button class="rn-char" data-g="m">👷‍♂️ Nam</button><button class="rn-char" data-g="f">👷‍♀️ Nữ</button>
@@ -749,7 +795,7 @@ export function runner(container, opt = {}){
   const $ = (id) => wrap.querySelector('#' + id);
   const scr = { hud: wrap.querySelector('.rn-hud'), menu: wrap.querySelector('.rn-menu'), pause: wrap.querySelector('.rn-pausescr'), over: wrap.querySelector('.rn-over'), board: wrap.querySelector('.rn-boardscr') };
   const showOnly = (...names) => { for(const k in scr) scr[k].hidden = !names.includes(k); };
-  const hudEl = { kwh: $('rn-kwh'), coin: $('rn-coin'), best: $('rn-bestv'), chips: { magnet: $('rn-pw-magnet'), shield: $('rn-pw-shield'), boost: $('rn-pw-boost') } };
+  const hudEl = { kwh: $('rn-kwh'), coin: $('rn-coin'), best: $('rn-bestv'), chips: { magnet: $('rn-pw-magnet'), shield: $('rn-pw-shield'), boost: $('rn-pw-boost'), bike: $('rn-pw-bike') } };
   const hudCache = { kwh: -1, coin: -1, best: -1 };
   if(opt.onExit) ['rn-exit1', 'rn-exit2', 'rn-exit3'].forEach((id) => { const b = $(id); b.hidden = false; b.addEventListener('click', () => { try{ opt.onExit(); }catch(e){} }); });
 
@@ -827,35 +873,24 @@ export function runner(container, opt = {}){
   }
 
   /* ---------- Điều khiển ---------- */
-  let ptr = null, lastDown = 0, lastAct = 0;
-  const near = (p, e, r) => Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < r;
+  // Chỉ điều khiển bằng VUỐT (không còn chạm = nhảy, vì chạm hay bị nhận nhầm khi vuốt): lên = nhảy (vuốt lần nữa trên không = nhảy đôi),
+  // xuống = trượt, trái/phải = đổi làn. Mỗi lần đặt ngón chỉ một thao tác; ngưỡng vuốt thấp nên phản hồi ngay khi ngón vừa trượt.
+  let ptr = null;
   canvas.addEventListener('pointerdown', (e) => {
     if(screen !== 'play' || paused) return;
     e.preventDefault(); try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
-    const now = performance.now();
-    if(now - lastDown < UI.TAP_DEBOUNCE_MS) return;          // ngón tay nảy / hai sự kiện chạm liền nhau: chỉ tính một
-    lastDown = now;
-    const p = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, acted: false, timer: 0, t0: now };
-    // chạm = nhảy: chờ một chút (TAP_DELAY_MS) để biết có phải vuốt không; nếu ngón đã bắt đầu trượt thì không nhảy
-    ptr = p;   // quyết định "chạm = nhảy" nằm trong vòng lặp khung hình (tapCheck), sau khi mọi sự kiện kéo đã được xử lý
+    ptr = { id: e.pointerId, x0: e.clientX, y0: e.clientY, acted: false, up: false };
   });
   canvas.addEventListener('pointermove', (e) => {
-    if(!ptr || e.pointerId !== ptr.id || screen !== 'play' || ptr.acted) return;     // mỗi lần chạm chỉ một thao tác
-    ptr.x = e.clientX; ptr.y = e.clientY;
+    if(!ptr || e.pointerId !== ptr.id || screen !== 'play' || ptr.acted) return;
     const dx = e.clientX - ptr.x0, dy = e.clientY - ptr.y0, ax = Math.abs(dx), ay = Math.abs(dy), R = UI.SWIPE_RATIO;
-    if(ax > UI.SWIPE_PX && ax > ay * R){ ptr.acted = true; lastAct = performance.now(); if(dx > 0) input.right = true; else input.left = true; }
-    else if(dy > UI.SWIPE_PX && dy > ax * R){ ptr.acted = true; lastAct = performance.now(); input.slide = true; input.held = false; }
-    else if(dy < -UI.SWIPE_PX && ay > ax * R){ ptr.acted = true; lastAct = performance.now(); input.jump = true; input.held = true; }
+    if(ax < UI.SWIPE_PX && ay < UI.SWIPE_PX) return;
+    ptr.acted = true;
+    if(ax > ay * R){ if(dx > 0) input.right = true; else input.left = true; }
+    else if(dy > 0){ input.slide = true; input.held = false; }
+    else { input.jump = true; input.held = true; ptr.up = true; }       // giữ ngón thì nhảy cao hơn, nhấc sớm thì nhảy thấp
   });
-  function tapCheck(){
-    if(ptr && !ptr.acted && performance.now() - ptr.t0 >= UI.TAP_DELAY_MS && near(ptr, { clientX: ptr.x, clientY: ptr.y }, UI.TAP_SLOP)){ ptr.acted = true; lastAct = performance.now(); input.jump = true; input.held = true; }
-  }
-  const up = (e) => {
-    if(!ptr || e.pointerId !== ptr.id) return;
-    // chạm rất nhanh (ngón nhấc lên trước khi hết thời gian chờ) và gần như không xê dịch: nhảy thấp
-    if(!ptr.acted && e.type === 'pointerup' && near(ptr, e, UI.SWIPE_PX) && performance.now() - lastAct > UI.TAP_DEBOUNCE_MS) input.jump = true;
-    ptr = null; input.held = false;
-  };
+  const up = (e) => { if(!ptr || e.pointerId !== ptr.id) return; const wasUp = ptr.up; ptr = null; if(wasUp) setTimeout(() => { if(!ptr) input.held = false; }, 380); else input.held = false; };   // vuốt lên nhanh vẫn nhảy hết cỡ
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   const JUMPK = new Set([' ', 'Spacebar', 'ArrowUp', 'w', 'W']), SLIDEK = new Set(['ArrowDown', 's', 'S']), LEFTK = new Set(['ArrowLeft', 'a', 'A']), RIGHTK = new Set(['ArrowRight', 'd', 'D']);
@@ -939,7 +974,7 @@ export function runner(container, opt = {}){
       m.visible = true; m.position.set(c.px != null ? c.px : L.laneX(c.lane), c.y + Math.sin(tClock * 4 + c.x) * 0.05, -(c.x - d)); m.rotation.y = tClock * 3 + c.x * 0.7;
     }
     for(; ci < coinPool.length; ci++) coinPool[ci].visible = false;
-    const iu = { magnet: 0, shield: 0, boost: 0 };
+    const iu = { magnet: 0, shield: 0, boost: 0, bike: 0 };
     for(const it of T.items){
       if(it.taken || it.x < d - 8 || it.x > d + DRAW) continue;
       const o = pools.item[it.type][iu[it.type]++]; if(!o) continue;
@@ -970,6 +1005,12 @@ export function runner(container, opt = {}){
       T_.armL = 0.95 * s; T_.armR = -0.95 * s; T_.foreL = -1.0 - 0.25 * s; T_.foreR = -1.0 + 0.25 * s; T_.lean = 0.2; T_.bob = Math.abs(s) * 0.05;
       T_.tail = 0.5 + 0.35 * Math.sin(ph * 1.0);
     }
+    const riding = g.bike > 0 && !g.dead && screen === 'play';
+    if(riding){   // ngồi trên xe đạp, người chồm về trước, hai tay nắm ghi đông, hai chân đạp
+      const pc = g.dist * 2.4;
+      T_.legL = -1.05 + 0.45 * Math.sin(pc); T_.legR = -1.05 - 0.45 * Math.sin(pc); T_.shinL = 1.25 + 0.55 * Math.cos(pc); T_.shinR = 1.25 - 0.55 * Math.cos(pc);
+      T_.armL = T_.armR = -1.2; T_.foreL = T_.foreR = -0.45; T_.lean = 0.42; T_.bob = 0; T_.flip = 0; T_.tail = 0.9;
+    }
     const k = 1 - Math.exp(-dt * (g.dead ? 14 : (screen === 'menu' ? 8 : 24)));
     for(const n in T_) pose[n] += (T_[n] - pose[n]) * (n === 'flip' && g.spin > 0 ? 1 : k);
     ch.legL.rotation.x = pose.legL; ch.legR.rotation.x = pose.legR; ch.shinL.rotation.x = pose.shinL; ch.shinR.rotation.x = pose.shinR;
@@ -979,7 +1020,9 @@ export function runner(container, opt = {}){
     if(ch.tail) ch.tail.rotation.x = pose.tail;
     const px = L.laneX(g.lx);
     ch.root.rotation.y = pose.yaw; ch.body.rotation.z = pose.roll;
-    ch.root.position.set(px, Math.max(g.y, -4), 0);
+    ch.root.position.set(px, Math.max(g.y, -4) + (g.bike > 0 && !g.dead && screen === 'play' ? 0.1 : 0), 0);
+    const rideOn = g.bike > 0 && !g.dead && screen === 'play'; bikeRide.visible = rideOn;
+    if(rideOn){ bikeRide.position.set(px, Math.max(g.y, -4), -0.15); bikeRide.rotation.y = pose.yaw; bikeRide.userData.wheels.forEach((w) => { w.rotation.x = -g.dist / 0.33; }); bikeRide.userData.crank.rotation.x = g.dist * 2.4; }
     shadow.position.set(px, L.floorAt(g, g.y) + 0.04, 0);
     shadow.visible = g.y > -0.2; const sc = (female() ? 0.9 : 1) * 1.0 * (1 - clamp(g.y / 5, 0, 0.6)); shadow.scale.set(1.2 * sc, 1.2 * sc, 1);
     shadow.material.opacity = 0.7 - clamp(g.y / 6, 0, 0.45);
@@ -999,6 +1042,7 @@ export function runner(container, opt = {}){
     const set = (el, on, frac) => { if(el.hidden === on) el.hidden = !on; if(on) el.style.setProperty('--p', Math.round(frac * 100) + '%'); };
     set(hudEl.chips.magnet, G.magnet > 0, G.magnet / CFG.MAGNET_T);
     set(hudEl.chips.boost, G.boost > 0, G.boost / CFG.BOOST_T);
+    set(hudEl.chips.bike, G.bike > 0, G.bike / CFG.BIKE_T);
     set(hudEl.chips.shield, !!G.shield, 1);
   }
 
@@ -1015,6 +1059,8 @@ export function runner(container, opt = {}){
       else if(e === 'slide'){ snd.noise(0.14, 0.07); }
       else if(e === 'lane'){ snd.noise(0.06, 0.05); }
       else if(e === 'shield'){ snd.noise(0.25, 0.2); snd.beep(240, 0.2, 'sawtooth', 0.12); snd.buzz([40, 30, 60]); shake = 0.25; for(let i = 0; i < 8; i++) spark(L.laneX(G.lx), G.y + 0.9, '#6ae0ff'); }
+      else if(e === 'bike_break'){ snd.noise(0.3, 0.25); snd.beep(180, 0.25, 'sawtooth', 0.12); snd.buzz([50, 30, 80]); shake = 0.3; for(let i = 0; i < 10; i++) spark(L.laneX(G.lx), G.y + 0.5, '#ffb347'); }
+      else if(e === 'bike_end'){ snd.beep(440, 0.1, 'triangle', 0.08); snd.beep(330, 0.14, 'triangle', 0.08, 0.1); }
       else if(e.startsWith('item:')){ snd.beep(660, 0.08, 'triangle', 0.1); snd.beep(880, 0.08, 'triangle', 0.1, 0.08); snd.beep(1320, 0.14, 'triangle', 0.1, 0.16); for(let i = 0; i < 6; i++) spark(L.laneX(G.lx), G.y + 0.9, '#9dffb0'); }
       else if(e === 'die'){ snd.noise(0.35, 0.28); snd.beep(110, 0.45, 'sawtooth', 0.2); snd.beep(70, 0.5, 'sine', 0.2, 0.1); snd.buzz([60, 40, 140]); shake = 0.4; }
     }
@@ -1052,7 +1098,6 @@ export function runner(container, opt = {}){
     tClock += dt;
     if(++frames > 30 && frames < 150){ slow += dt; if(frames === 149 && slow / 119 > 0.03 && dpr > 1){ dpr = 1; renderer.setPixelRatio(1); resize(); } }
     if(screen === 'play'){
-      tapCheck();
       if(dbg.autoplay){ dbg.bot.birdMode = dbg.bird; const a = L.botStep(G, dbg.bot); input.jump = a.jump; input.held = a.held; input.slide = a.slide; input.left = a.left; input.right = a.right; }
       let rest = dt;
       while(rest > 1e-6){

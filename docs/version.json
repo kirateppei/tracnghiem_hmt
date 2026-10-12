@@ -1,7 +1,7 @@
 {
-  "version": "5bdef2d25a",
-  "date": "2026-10-12T17:45:18Z",
-  "notes": "Game chạy: giao diện toàn màn hình, biến tần GoodWe/Sungrow/Huawei chạy lên được, máng đi dây nối pin và biến tần",
+  "version": "fd9c209271",
+  "date": "2026-10-12T17:55:24Z",
+  "notes": "Game chạy: xe đạp x2, điều khiển chỉ vuốt, nhân vật đẹp hơn; mọi game mini toàn màn hình có nút Thoát",
   "apk": {
     "version": "",
     "url": "",

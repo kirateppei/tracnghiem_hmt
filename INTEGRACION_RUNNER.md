@@ -97,10 +97,10 @@ Không cần thêm gì vào `window.leaveGames`: nó đã gọi `clearTimers()` 
 
 ## 4. Luật chơi, điểm, kỷ lục
 
-- Kiểu Subway Surfers: đường 3 làn, camera sau lưng, hai bên là cánh đồng pin mặt trời, nhà cao tầng, cột điện. Điều khiển: **vuốt trái/phải = đổi làn**, chạm hoặc vuốt lên = nhảy (giữ lâu nhảy cao hơn), chạm lần hai khi đang bay = nhảy đôi, vuốt xuống = trượt (đang bay thì lao xuống rồi trượt). Bàn phím: `←`/`A`, `→`/`D` đổi làn, `Space`/`↑`/`W` nhảy, `↓`/`S` trượt, `P` tạm dừng.
+- Kiểu Subway Surfers: đường 3 làn, camera sau lưng, hai bên là cánh đồng pin mặt trời, nhà cao tầng, cột điện. Điều khiển (chỉ vuốt, chạm đơn thuần không làm gì): **vuốt trái/phải = đổi làn**, vuốt lên = nhảy hết cỡ (vuốt lên lần hai khi đang bay = nhảy đôi), vuốt xuống = trượt (đang bay thì lao xuống rồi trượt). Bàn phím: `←`/`A`, `→`/`D` đổi làn, `Space`/`↑`/`W` nhảy, `↓`/`S` trượt, `P` tạm dừng.
 - Tốc độ: 7,5 m/s lúc đầu, tăng tuyến tính theo quãng đường tới 17 m/s ở 2400 m (≈ 3 phút 26 giây chạy).
 - Chướng ngại (mỗi cái chiếm một làn): **nhà thấp mái pin mặt trời** cao 1,3 m dài 10–26 m (từ 80 m, mỗi cụm tối đa 2 trong 3 làn): nhảy (kể cả nhảy ngắn) để lên mái và chạy trên đó, hết mái thì rơi; đâm thẳng vào tường hoặc rẽ vào sườn khi đang ở dưới đất thì thua; **tia sét giật** (từ 150 m, 1–2 làn mỗi cụm): vòng cảnh báo trên đường, nhảy/trượt đều không qua, chỉ đổi làn; biến tần (inverter) năng lượng mặt trời kiểu GoodWe/Sungrow/Huawei, nhảy qua hoặc nhảy lên mặt trên chạy tiếp (từ đầu); **máng đi dây điện** vắt ngang cả 3 làn (từ 120 m), phải trượt, hai đầu nối ra dàn pin và biến tần ngoài đường; tấm pin vỡ, nhảy (≥ 100 m); giàn dây điện, **phải trượt** (≥ 250 m); chim bay thấp, trượt hoặc nhảy hết cỡ (≥ 500 m). Đâm sườn tòa nhà khi đổi làn cũng thua. Sinh đường luôn có chỗ qua được (kiểm chứng ở mục 8).
-- Vật phẩm: nam châm 10 s, khiên "cầu chì" chịu một cú va chạm (đâm tòa nhà thì bị bật lại làn cũ), **huy hiệu logo HMT = nhân đôi tốc độ ghi điểm trong 8 s** (hiện "x2" trên HUD).
+- Vật phẩm: nam châm 10 s, khiên "cầu chì" chịu một cú va chạm (đâm tòa nhà thì bị bật lại làn cũ), **huy hiệu logo HMT = nhân đôi tốc độ ghi điểm trong 8 s, **xe đạp 🚲 = 10 s đạp xe: tốc độ x2, kWh mỗi mét x2, tia nắng nhặt được x2; đâm chướng ngại thì hỏng xe (không thua), hết giờ cũng được an toàn 1 s**** (hiện "x2" trên HUD).
 - **Công thức điểm**
   - `kWh = floor(quãng đường / 10)` (1 kWh mỗi 10 m; trong lúc có pin sạc, mỗi mét tính gấp đôi).
   - `Điểm cuối = kWh + floor(số tia nắng / 2)` (cứ 2 tia nắng cộng 1 điểm).

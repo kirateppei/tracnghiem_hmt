@@ -81,6 +81,16 @@ ok('biến tần (thùng): nhảy lên mặt trên đứng được rồi rơi x
   run(j, 6, (g) => { if(!up && g.onGround && g.dist > 18.8){ up = true; return { jump: true }; } if(g.onGround && g.y > 0.8) top++; return {}; });
   assert.ok(!j.dead, 'nhảy ngắn lên mặt biến tần thì sống: ' + j.cause); assert.ok(top >= 1, 'có chạy trên mặt trên ' + top); assert.ok(j.y === 0 && j.onGround && j.dist > 30, 'xuống đất sau khi hết');
 });
+ok('xe đạp: tốc độ x2, điểm x2, tia nắng x2, va chạm làm hỏng xe thay vì thua, hết giờ trở lại bình thường', () => {
+  const base = blank(); run(base, 3); const d0 = base.dist, e0 = base.energy;
+  const g = blank(); g.bike = L.CFG.BIKE_T; run(g, 3);
+  assert.ok(Math.abs(g.speed / L.speedAt(g.dist) - 2) < 1e-6 || g.speed > 1.9 * L.speedAt(0), 'tốc độ x2 ' + g.speed);
+  assert.ok(g.dist > 1.9 * d0, 'quãng đường ~x2 ' + g.dist + ' vs ' + d0); assert.ok(g.energy > 3.8 * e0, 'kWh x4 trong cùng thời gian (x2 tốc độ, x2 mỗi mét) ' + g.energy + ' vs ' + e0);
+  const c = blank(); c.bike = 5; c.track.coins.push({ x: 8, lane: 1, y: 0.9, taken: false }); run(c, 1.2); assert.equal(c.coins, 2, 'tia nắng tính gấp đôi');
+  const h = blank([{ type: 'crate', x: 20, w: 1.2, y1: 0.9 }]); h.bike = 10; run(h, 3); assert.ok(!h.dead && h.bike === 0, 'đâm thùng chỉ hỏng xe ' + h.cause);
+  const o = blank(); o.bike = 1; run(o, 1.6); assert.equal(o.bike, 0); assert.ok(Math.abs(o.speed / L.speedAt(o.dist) - 1) < 0.01, 'hết xe: tốc độ về bình thường ' + o.speed);
+  const it = blank(); it.track.items.push({ type: 'bike', x: 6, lane: 1, y: 1.1, taken: false }); run(it, 1.5); assert.ok(it.bike > 0, 'nhặt vật phẩm xe đạp');
+});
 ok('máng đi dây vắt ngang 3 làn: phải trượt, đứng yên/nhảy/đổi làn đều thua', () => {
   const Tr = () => [0, 1, 2].map((lane) => ({ type: 'tray', x: 20, w: 0.6, y0: 0.95, y1: 6, lane }));
   const a = blank(Tr()); run(a, 6); assert.ok(a.dead && a.cause === 'tray', 'đâm thẳng');

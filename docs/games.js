@@ -79,6 +79,9 @@
   #view-games .gm-card .ico{ font-size:2.4rem; display:block; margin-bottom:6px; }
   #view-games .gm-card b{ display:block; font-size:.95rem; }
   #view-games .gm-card small{ display:block; color:#5c6a63; margin-top:3px; font-size:.74rem; line-height:1.3; }
+  #view-games.gm-fs{ position:fixed !important; left:0; top:0; right:0; bottom:0; width:auto; max-width:none; margin:0; z-index:2147482000; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; display:block; padding:calc(env(safe-area-inset-top,0px) + 8px) 12px calc(env(safe-area-inset-bottom,0px) + 18px); background:radial-gradient(circle at 50% 0%,#216a94,#0d2a40 55%,#07141f 100%); }
+  #view-games.gm-fs .gm-top{ position:sticky; top:0; z-index:5; padding:6px 0; background:linear-gradient(#0d2a40 70%,rgba(13,42,64,0)); }
+  #view-games .gm-mini.gm-exit{ background:rgba(214,41,31,.9); border-color:rgba(255,255,255,.5); color:#fff; font-weight:800; padding:8px 14px; }
   #view-games .gm-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
   #view-games .gm-top h2{ margin:0; font-size:1.15rem; flex:1; }
   #view-games .gm-mini{ border:1px solid var(--board-line,#4b6a5c); background:var(--glass,rgba(255,255,255,.08)); color:var(--chalk,#fff); border-radius:10px; padding:7px 11px; font:inherit; font-size:.82rem; cursor:pointer; }
@@ -327,7 +330,19 @@
   function clearTimers(){ timers.forEach(clearTimeout); timers = []; stopWheelAnim(); stopShake(); disposeViews(); }
   const nameOf = (i) => (players.names[i] || '').trim() || ('Người ' + (i + 1));
 
-  function render(html){ root.innerHTML = html; }
+  // vào game: giao diện riêng toàn màn hình (phủ kín cửa sổ, ẩn thanh trang, Fullscreen API nếu được); menu và thoát thì về giao diện chung
+  let fsOn = false;
+  function setFs(on){
+    if(on === fsOn) return; fsOn = on;
+    root.classList.toggle('gm-fs', on); document.body.style.overflow = on ? 'hidden' : '';
+    try{
+      if(on){ const rf = root.requestFullscreen || root.webkitRequestFullscreen; if(rf){ const p = rf.call(root, { navigationUI: 'hide' }); if(p && p.catch) p.catch(() => {}); } }
+      else if(document.fullscreenElement && document.exitFullscreen){ document.exitFullscreen().catch(() => {}); }
+      else if(document.webkitFullscreenElement && document.webkitExitFullscreen){ document.webkitExitFullscreen(); }
+    }catch(e){}
+    if(!on) root.scrollTop = 0;
+  }
+  function render(html){ setFs(screen !== 'menu' && screen !== 'runner'); root.innerHTML = html; if(fsOn) root.scrollTop = 0; }
 
   /* ---------- Menu ---------- */
   function showMenu(){
@@ -404,7 +419,7 @@
     if(g === 'runner') return showRunner();
   }
   function topBar(title){
-    return `<div class="gm-top"><button class="gm-mini" id="gm-back">← Menu</button><h2>${title}</h2><span></span></div>`;
+    return `<div class="gm-top"><button class="gm-mini gm-exit" id="gm-back">✕ Thoát</button><h2>${title}</h2><span></span></div>`;
   }
   function bindBack(){ const b = $('gm-back'); if(b) b.addEventListener('click', showMenu); }
 
@@ -1411,6 +1426,6 @@
     injectCss();
     if(!root.dataset.ready){ root.dataset.ready = '1'; showMenu(); }
   };
-  window.leaveGames = function(){ clearTimers(); };
+  window.leaveGames = function(){ clearTimers(); if(root) setFs(false); };
   window.__games = { chickSvg, SKINS_CH, get flock(){ return flock; }, simulate, newChicken, SPECIALS, openGame, showMenu, get screen(){ return screen; }, winnerIndex, get wheelItems(){ return wheelItems; }, get views(){ return views; } };
 })();

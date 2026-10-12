@@ -19,11 +19,10 @@ const UI = {
   MAX_DPR: 2,
   KEY: { best: 'gm_runner_best', rec: 'gm_runner_bestrec', char: 'gm_runner_char', synced: 'gm_runner_synced' },
 };
-const LOGO_URL = new URL('./logo.png', import.meta.url).href;
 
 /* ================= Sổ đăng ký skin (thêm skin mới: thêm một mục, rồi gọi setSkin(id)) ================= */
 export const SKINS = {
-  dongphuc: { name: 'Đồng phục vàng cam', shirt: '#ff9a1f', shirt2: '#f08a10', pants: '#f58a12', helmet: '#f5f5f0', band: '#dfe3e8', boots: '#3a2f2a', glove: '#3d3d44', belt: '#5a3a1e', skin: '#e6b08a', logo: true },
+  dongphuc: { name: 'Đồng phục vàng cam', shirt: '#ff9a1f', shirt2: '#f08a10', pants: '#f58a12', helmet: '#ffd21a', band: '#dfe3e8', boots: '#3a2f2a', glove: '#3d3d44', belt: '#5a3a1e', skin: '#e6b08a' },
 };
 export const supported = () => { try{ const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); }catch(e){ return false; } };
 
@@ -136,18 +135,6 @@ const cloudTex = () => canvasTex(256, 96, (c, w, h) => {
   }
 });
 
-/* Ảnh logo công ty (docs/logo.png) cho áo; tải một lần, vẽ lại texture khi xong */
-let logoImg = null, logoWait = [];
-function withLogo(cb){
-  if(logoImg && logoImg.complete && logoImg.naturalWidth){ cb(logoImg); return; }
-  logoWait.push(cb);
-  if(!logoImg){
-    logoImg = new Image();
-    logoImg.onload = () => { const w = logoWait; logoWait = []; w.forEach((f) => { try{ f(logoImg); }catch(e){} }); };
-    logoImg.onerror = () => { logoWait = []; };
-    logoImg.src = LOGO_URL;
-  }
-}
 function shirtTextures(skin){
   const stripes = (c, w, h) => {
     for(const y of [0.60, 0.74]){
@@ -162,25 +149,23 @@ function shirtTextures(skin){
   const side = canvasTex(64, 128, (c, w, h) => { base(c, w, h); stripes(c, w, h); });
   const back = canvasTex(256, 320, (c, w, h) => {
     base(c, w, h); stripes(c, w, h);
-    c.fillStyle = 'rgba(40,20,0,.65)'; c.font = '800 20px "Trebuchet MS",Arial'; c.textAlign = 'center'; c.fillText('ĐIỆN MẶT TRỜI', w / 2, h * 0.30);
-    c.fillStyle = skin.band; c.fillRect(w * 0.1, h * 0.36, w * 0.8, 6);
+    c.fillStyle = 'rgba(40,20,0,.7)'; c.font = '800 21px "Trebuchet MS",Arial'; c.textAlign = 'center'; c.fillText('HIỆP MINH THỊNH', w / 2, h * 0.28); c.font = '700 15px "Trebuchet MS",Arial'; c.fillText('ĐIỆN MẶT TRỜI', w / 2, h * 0.34);
+    c.fillStyle = skin.band; c.fillRect(w * 0.1, h * 0.40, w * 0.8, 6);
   });
-  const draw = (c, w, h, img) => {
+  const front = canvasTex(256, 320, (c, w, h) => {
     base(c, w, h); stripes(c, w, h);
-    c.fillStyle = 'rgba(0,0,0,.22)'; c.fillRect(w / 2 - 1.5, h * 0.2, 3, h * 0.8);                  // khóa kéo
-    c.fillStyle = 'rgba(120,60,0,.35)'; c.beginPath(); c.moveTo(w * 0.3, 0); c.lineTo(w / 2, h * 0.2); c.lineTo(w * 0.7, 0); c.fill();   // cổ áo
-    const cx = w * 0.5, cy = h * 0.38, r = w * 0.33;
-    c.fillStyle = '#ffffff'; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.fill();
-    c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 3; c.stroke();
-    if(img){
-      c.save(); c.beginPath(); c.arc(cx, cy, r - 4, 0, 7); c.clip();
-      const s = (r - 4) * 2 * 1.02; c.drawImage(img, cx - s / 2, cy - s / 2, s, s); c.restore();
+    c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(w / 2 - 1.5, h * 0.17, 3, h * 0.83);                  // khóa kéo
+    c.fillStyle = '#c9ccd2'; c.fillRect(w / 2 - 4, h * 0.17, 8, 10);
+    c.fillStyle = 'rgba(110,50,0,.45)'; c.beginPath(); c.moveTo(w * 0.28, 0); c.lineTo(w / 2, h * 0.19); c.lineTo(w * 0.72, 0); c.fill();   // cổ áo
+    for(const x of [0.1, 0.55]){                                                                      // hai túi ngực có nắp và cúc
+      const px = w * x, py = h * 0.30, pw = w * 0.35, ph = h * 0.15;
+      c.fillStyle = skin.shirt2; c.fillRect(px, py, pw, ph); c.strokeStyle = 'rgba(80,35,0,.55)'; c.lineWidth = 2; c.strokeRect(px, py, pw, ph);
+      c.fillStyle = 'rgba(80,35,0,.35)'; c.fillRect(px, py, pw, ph * 0.38);
+      c.fillStyle = '#c9ccd2'; c.beginPath(); c.arc(px + pw / 2, py + ph * 0.38, 4, 0, 7); c.fill();
     }
-    c.fillStyle = '#1b2a4a'; c.font = '800 21px "Trebuchet MS",Arial'; c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-    c.fillText('HIỆP MINH THỊNH', cx, cy + r + 26);
-  };
-  const front = canvasTex(256, 320, (c, w, h) => draw(c, w, h, null));
-  withLogo((img) => { const cv = front.image; draw(cv.getContext('2d'), cv.width, cv.height, img); front.needsUpdate = true; });
+    c.fillStyle = '#f4f1e8'; c.fillRect(w * 0.58, h * 0.50, w * 0.28, h * 0.05);                    // bảng tên trống
+    c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = 1.5; c.strokeRect(w * 0.58, h * 0.50, w * 0.28, h * 0.05);
+  });
   return { side, back, front };
 }
 
@@ -190,6 +175,7 @@ function buildCharacter(gender, skin, tex){
   const M = (color, o = {}) => new THREE.MeshLambertMaterial({ color, ...o });
   const mShirt = M(skin.shirt), mPants = M(skin.pants), mBand = M(skin.band, { emissive: '#222' }), mBoot = M(skin.boots), mGlove = M(skin.glove);
   const mSkin = M(skin.skin), mHelm = M(skin.helmet), mBelt = M(skin.belt), mDark = M('#1a1a1a'), mHair = M('#2b1a10');
+  const mWhite = M('#ffffff'), mBuckle = M('#c9ccd2'), mShirt2 = M(skin.shirt2), mPouch = M('#6b4a2b'), mHelmD = M('#e0b000'), mPad = M('#2c2f36');
   const box = (w, h, d, mat, x = 0, y = 0, z = 0, parent) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); if(parent) parent.add(m); return m; };
   const root = new THREE.Group(), flip = new THREE.Group(), body = new THREE.Group(), hips = new THREE.Group();
   root.add(flip); flip.add(body); body.add(hips);
@@ -200,17 +186,39 @@ function buildCharacter(gender, skin, tex){
   const torso = new THREE.Group(); torso.position.y = 0.0; hips.add(torso);
   const tb = new THREE.Mesh(new THREE.BoxGeometry(tw, 0.62, 0.3), [side, side, mShirt, mShirt, front, back]); tb.position.y = 0.33; torso.add(tb);
   box(tw + 0.02, 0.07, 0.32, mBelt, 0, 0.05, 0, torso);                                   // đai đồ nghề
+  box(0.08, 0.06, 0.02, mBuckle, 0, 0.05, 0.165, torso);                                   // khóa đai
+  box(0.3, 0.07, 0.32, mShirt, 0, 0.62, 0, torso);                                         // cổ áo dựng
+  box(tw + 0.02, 0.025, 0.31, mBand, 0, 0.58, 0, torso);                                   // vạch phản quang vai
+  for(const sx of [-1, 1]) box(0.1, 0.025, 0.2, mShirt2, sx * (tw / 2 - 0.02), 0.645, 0, torso);   // cầu vai
+  box(0.12, 0.17, 0.07, mPouch, -tw * 0.5 - 0.06, -0.01, 0.06, torso);                     // túi đồ nghề bên phải
+  box(0.07, 0.15, 0.05, mDark, tw * 0.5 + 0.04, 0.0, -0.06, torso);                        // bộ đàm
+  box(0.012, 0.09, 0.012, mDark, tw * 0.5 + 0.04, 0.1, -0.06, torso);                      // ăng-ten
   box(0.1, 0.12, 0.08, mBelt, tw * 0.5 + 0.03, 0.04, 0.05, torso); box(0.1, 0.12, 0.08, mBelt, -tw * 0.5 - 0.03, 0.04, 0.05, torso);
   box(0.06, 0.14, 0.06, mDark, tw * 0.5 + 0.03, -0.06, 0.05, torso);                      // tua vít
   // đầu + mũ bảo hộ
   const neck = box(0.1, 0.08, 0.1, mSkin, 0, 0.68, 0, torso);
   const head = new THREE.Group(); head.position.set(0, 0.84, 0.01); torso.add(head);
   const face = new THREE.Mesh(new THREE.SphereGeometry(0.135, 16, 12), mSkin); head.add(face);
-  const eyeG = new THREE.SphereGeometry(0.02, 6, 6);
-  for(const sx of [-0.05, 0.05]){ const e = new THREE.Mesh(eyeG, mDark); e.position.set(sx, 0.015, 0.125); head.add(e); }
+  const eyeG = new THREE.SphereGeometry(0.02, 6, 6), eyeW = new THREE.SphereGeometry(0.03, 6, 6);
+  for(const sx of [-0.05, 0.05]){
+    const w_ = new THREE.Mesh(eyeW, mWhite); w_.scale.set(1, 0.8, 0.5); w_.position.set(sx, 0.012, 0.122); head.add(w_);
+    const e = new THREE.Mesh(eyeG, mDark); e.scale.set(0.8, 1, 0.6); e.position.set(sx, 0.012, 0.13); head.add(e);
+    box(0.06, 0.012, 0.02, mHair, sx, 0.05, 0.125, head);                                  // lông mày
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mSkin); ear.scale.set(0.5, 1, 0.8); ear.position.set(sx * 2.6, -0.005, 0); head.add(ear);
+  }
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), mSkin); nose.position.set(0, -0.012, 0.135); head.add(nose);
+  box(0.05, 0.01, 0.02, M('#a0504a'), 0, -0.055, 0.122, head);                              // miệng
   const helm = new THREE.Mesh(new THREE.SphereGeometry(0.155, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), mHelm); helm.position.set(0, 0.03, -0.005); head.add(helm);
   box(0.3, 0.025, 0.14, mHelm, 0, 0.045, 0.14, head);                                      // vành mũ phía trước
-  box(0.04, 0.03, 0.3, M(skin.band), 0, 0.17, 0, head);                                    // gờ mũ
+  box(0.34, 0.02, 0.05, mHelmD, 0, 0.04, -0.15, head);                                     // vành sau
+  box(0.045, 0.035, 0.32, mHelmD, 0, 0.18, 0, head);                                       // gờ nóc mũ
+  for(const sx of [-1, 1]){
+    box(0.012, 0.03, 0.2, mHelmD, sx * 0.1, 0.12, 0, head);                                // gân bên mũ
+    box(0.012, 0.1, 0.012, mDark, sx * 0.135, -0.04, 0.05, head);                          // quai mũ
+  }
+  box(0.1, 0.07, 0.02, mDark, 0, -0.1, 0.1, head).rotation.x = 0.3;                         // quai cằm
+  box(0.07, 0.045, 0.045, mBuckle, 0, 0.1, 0.16, head);                                    // đèn pin gắn mũ
+  box(0.045, 0.03, 0.012, M('#fff6b0', { emissive: '#fff6b0' }), 0, 0.1, 0.185, head);
   let tail = null;
   if(female){
     const hair = new THREE.Mesh(new THREE.SphereGeometry(0.145, 14, 10, 0, Math.PI * 2, Math.PI * 0.42, Math.PI * 0.5), mHair); hair.position.set(0, 0.01, -0.025); head.add(hair);
@@ -222,9 +230,10 @@ function buildCharacter(gender, skin, tex){
   // tay
   const arm = (sx) => {
     const sh = new THREE.Group(); sh.position.set(sx * (tw / 2 + 0.06), 0.57, 0); torso.add(sh);
-    box(0.12, 0.3, 0.13, mShirt, 0, -0.14, 0, sh); box(0.125, 0.045, 0.135, mBand, 0, -0.1, 0, sh);
+    box(0.12, 0.3, 0.13, mShirt, 0, -0.14, 0, sh); box(0.125, 0.045, 0.135, mBand, 0, -0.1, 0, sh); box(0.13, 0.05, 0.14, mShirt2, 0, 0.0, 0, sh);
     const fore = new THREE.Group(); fore.position.y = -0.29; sh.add(fore);
-    box(0.105, 0.26, 0.115, mShirt, 0, -0.12, 0, fore); box(0.11, 0.1, 0.12, mGlove, 0, -0.27, 0, fore);
+    box(0.105, 0.26, 0.115, mShirt, 0, -0.12, 0, fore); box(0.115, 0.04, 0.125, mShirt2, 0, -0.22, 0, fore);
+    box(0.11, 0.1, 0.12, mGlove, 0, -0.29, 0, fore); box(0.116, 0.03, 0.126, mBand, 0, -0.245, 0, fore); box(0.03, 0.05, 0.1, mGlove, sx * 0.065, -0.3, 0.02, fore);
     return { sh, fore };
   };
   const aL = arm(1), aR = arm(-1);
@@ -232,9 +241,13 @@ function buildCharacter(gender, skin, tex){
   const leg = (sx) => {
     const th = new THREE.Group(); th.position.set(sx * (tw * 0.24), 0, 0); hips.add(th);
     box(0.18, 0.42, 0.2, mPants, 0, -0.2, 0, th);
+    box(0.1, 0.12, 0.03, mShirt2, sx * 0.04, -0.16, 0.105, th);                            // túi hộp trên đùi
+    box(0.1, 0.02, 0.032, mDark, sx * 0.04, -0.11, 0.105, th);
     const shin = new THREE.Group(); shin.position.y = -0.41; th.add(shin);
-    box(0.155, 0.36, 0.17, mPants, 0, -0.17, 0, shin); box(0.162, 0.05, 0.178, mBand, 0, -0.14, 0, shin);
-    box(0.17, 0.12, 0.3, mBoot, 0, -0.33, 0.045, shin);
+    box(0.155, 0.36, 0.17, mPants, 0, -0.17, 0, shin); box(0.162, 0.05, 0.178, mBand, 0, -0.14, 0, shin); box(0.162, 0.05, 0.178, mBand, 0, -0.22, 0, shin);
+    box(0.13, 0.1, 0.04, mPad, 0, 0.0, 0.1, shin);                                         // bảo vệ đầu gối
+    box(0.17, 0.12, 0.3, mBoot, 0, -0.33, 0.045, shin); box(0.18, 0.03, 0.32, mDark, 0, -0.385, 0.05, shin); box(0.16, 0.06, 0.1, mPad, 0, -0.35, 0.16, shin);   // đế và mũi giày bảo hộ
+    box(0.17, 0.02, 0.03, mBuckle, 0, -0.3, 0.1, shin);
     return { th, shin };
   };
   const lL = leg(1), lR = leg(-1);

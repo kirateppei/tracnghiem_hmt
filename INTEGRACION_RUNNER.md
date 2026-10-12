@@ -93,7 +93,7 @@ function showRunner(){
 
 Không cần thêm gì vào `window.leaveGames`: nó đã gọi `clearTimers()` → `disposeViews()`. Nếu import thất bại (mất mạng, trình duyệt cũ không hỗ trợ top-level await), nên hiện thông báo trong `#gm-runner` thay vì để trống.
 
-**d)** Thêm `runner.js` và `runner-logic.js` không cần vào danh sách precache nào (service worker đang cache theo `?v=`); `bump_version.py` đổi `?v=` khi docs/ đổi. `logo.png` đã có sẵn.
+**d)** Thêm `runner.js` và `runner-logic.js` không cần vào danh sách precache nào (service worker đang cache theo `?v=`); `bump_version.py` đổi `?v=` khi docs/ đổi.
 
 ## 4. Luật chơi, điểm, kỷ lục
 
@@ -142,14 +142,14 @@ Lưu ý: bảng xếp hạng đọc bằng `orderBy('best','desc').limit(20)` tr
 
 ## 6. Nhân vật và cách thêm skin sau
 
-Hai nhân vật Nam/Nữ (nữ nhỏ hơn, tóc đuôi ngựa thò ra dưới mũ), cùng đồng phục vàng cam, vạch phản quang bạc, mũ bảo hộ, đai đồ nghề; áo có logo `docs/logo.png` và chữ "HIỆP MINH THỊNH" vẽ lên texture canvas. Không dùng logo EVN hay hãng khác. Lựa chọn lưu ở `gm_runner_char`.
+Hai nhân vật Nam/Nữ (nữ nhỏ hơn, tóc đuôi ngựa thò ra dưới mũ), cùng đồng phục vàng cam, mũ bảo hộ vàng có đèn pin và quai cằm, vạch phản quang bạc, túi ngực/túi đùi, cầu vai, đai đồ nghề kèm túi và bộ đàm, bảo vệ đầu gối, giày bảo hộ. **Không có logo trên áo** (đã bỏ theo yêu cầu); chỉ có dòng chữ nhỏ "HIỆP MINH THỊNH" ở lưng áo. Lựa chọn lưu ở `gm_runner_char`.
 
 Thêm skin: thêm một mục vào `SKINS` đầu `docs/runner.js`, rồi gọi `api.setSkin('id')`:
 
 ```js
 export const SKINS = {
-  dongphuc: { name: 'Đồng phục vàng cam', shirt: '#ff9a1f', shirt2: '#f08a10', pants: '#f58a12', helmet: '#f5f5f0',
-              band: '#dfe3e8', boots: '#3a2f2a', glove: '#3d3d44', belt: '#5a3a1e', skin: '#e6b08a', logo: true },
+  dongphuc: { name: 'Đồng phục vàng cam', shirt: '#ff9a1f', shirt2: '#f08a10', pants: '#f58a12', helmet: '#ffd21a',
+              band: '#dfe3e8', boots: '#3a2f2a', glove: '#3d3d44', belt: '#5a3a1e', skin: '#e6b08a' },
   // moi: { name: '...', shirt: '#...', ... }
 };
 ```

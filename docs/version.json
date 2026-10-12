@@ -1,7 +1,7 @@
 {
-  "version": "6340bb4ef7",
-  "date": "2026-10-12T14:35:45Z",
-  "notes": "Lưu bài dở, phóng to ảnh, đánh dấu câu, tài liệu liên quan, xếp hạng từ 3 bài, công cụ tính nhanh, checklist lắp đặt",
+  "version": "322875c010",
+  "date": "2026-10-12T15:05:50Z",
+  "notes": "Mini game đồ họa 3D (xúc xắc, vòng quay, cá sấu, thùng gỗ, gà chọi) bằng Three.js",
   "apk": {
     "version": "",
     "url": "",

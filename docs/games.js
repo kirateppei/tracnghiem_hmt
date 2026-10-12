@@ -140,6 +140,22 @@
   #view-games .gm-rot button{ width:48px; height:40px; border-radius:20px; border:2px solid #4b2e12; background:linear-gradient(#e7b562,#b9812f); font-size:1.3rem; font-weight:900; color:#3b2410; cursor:pointer; }
   /* xí ngầu 3D */
   #view-games .gm-dicestage{ border-radius:18px; padding:14px 8px 10px; background:radial-gradient(circle at 50% 30%,#3b2a9a,#1a1050 70%); box-shadow:inset 0 0 40px rgba(0,0,0,.35); }
+  #view-games .gm-arena.arena3d{ min-height:330px; background:linear-gradient(#1c1209 0%,#3b2a18 52%,#7a5630 53%,#a97c45 100%); }
+  #view-games .gm-arena.arena3d .gm-cside .chick{ width:140px; height:160px; animation:none !important; transform:none !important; }
+  #view-games .gm-arena.arena3d .gm-cside .chick svg{ visibility:hidden; animation:none !important; }
+  #view-games .gm-arena.arena3d .gm-cside .chick.dead, #view-games .gm-arena.arena3d .gm-cside .chick.win{ animation:none !important; transform:none !important; filter:none !important; opacity:1 !important; }
+  #view-games .gm-a3d{ position:absolute; inset:0; z-index:0; pointer-events:none; }
+  #view-games .gm-mouth.croc3d{ aspect-ratio:auto; height:340px; max-width:380px; }
+  #view-games .gm-mouth.croc3d .gm-mouthsvg, #view-games .gm-mouth.croc3d .gm-lowteeth{ visibility:hidden; pointer-events:none; }
+  #view-games .gm-mouth.croc3d.snap{ animation:none; }
+  #view-games .gm-c3d{ position:absolute; inset:0; }
+  #view-games .gm-pbarrel.pirate3d{ width:100%; max-width:380px; aspect-ratio:auto; height:380px; margin-top:34px; }
+  #view-games .gm-pbarrel.pirate3d .layer, #view-games .gm-pbarrel.pirate3d .pirate{ display:none; }
+  #view-games .gm-pbarrel.pirate3d .gm-pslot, #view-games .gm-pbarrel.pirate3d .gm-pknife{ visibility:hidden; pointer-events:none; }
+  #view-games .gm-pbarrel.pirate3d.boom{ animation:none; }
+  #view-games .gm-b3d{ position:absolute; inset:0; }
+  #view-games .gm-wheel3d{ height:340px; margin:0 auto; max-width:420px; }
+  #view-games .gm-dice3d{ height:300px; border-radius:14px; overflow:hidden; }
   #view-games .gm-dice{ display:flex; flex-wrap:wrap; gap:26px 22px; justify-content:center; margin:6px 0 4px; min-height:150px; align-items:center; }
   #view-games .gm-scene{ width:var(--s); height:var(--s); perspective:520px; margin:18px 12px; }
   #view-games .gm-camera{ width:100%; height:100%; transform-style:preserve-3d; transform:rotateX(-26deg) rotateY(-32deg); }
@@ -280,8 +296,26 @@
   let screen = 'menu';
   let players = (function(){ const p = store('players'); return (p && p.count) ? p : { count: 2, names: [] }; })();
   let timers = [];
+  /* ---------- Đồ họa 3D (Three.js, tải khi cần; không có WebGL thì dùng bản 2D) ---------- */
+  let G3 = null, g3Loading = null, views = [];
+  const lowEnd = () => { try{ return (navigator.deviceMemory && navigator.deviceMemory <= 2) || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){ return false; } };
+  const want3d = () => { const v = store('g3d'); return (v === undefined || v === null) ? !lowEnd() : !!v; };
+  function load3d(){
+    if(!want3d() || window.GAMES_NO3D) return Promise.resolve(null);
+    if(G3) return Promise.resolve(G3);
+    if(!g3Loading) g3Loading = import('./g3d.js?v=' + (window.APP_VERSION || '0')).then((m) => { G3 = m.supported() ? m : null; return G3; }).catch(() => { G3 = null; return null; });
+    return g3Loading;
+  }
+  // dựng một khung 3D: gọi build(api) khi module sẵn sàng; chỉ giữ nếu màn hình hiện tại còn đúng
+  function mount3d(scr, build){
+    load3d().then((api) => {
+      if(!api || screen !== scr) return;
+      try{ const v = build(api); if(v){ views.push(v); } }catch(e){ console.warn('3D lỗi, dùng bản 2D', e); }
+    });
+  }
+  function disposeViews(){ views.forEach((v) => { try{ v.dispose(); }catch(e){} }); views = []; }
   const later = (fn, ms) => { const id = setTimeout(fn, FAST ? Math.min(ms, 30) : ms); timers.push(id); return id; };
-  function clearTimers(){ timers.forEach(clearTimeout); timers = []; stopWheelAnim(); stopShake(); }
+  function clearTimers(){ timers.forEach(clearTimeout); timers = []; stopWheelAnim(); stopShake(); disposeViews(); }
   const nameOf = (i) => (players.names[i] || '').trim() || ('Người ' + (i + 1));
 
   function render(html){ root.innerHTML = html; }
@@ -290,7 +324,7 @@
   function showMenu(){
     clearTimers(); screen = 'menu';
     render(`
-      <div class="gm-top"><h2>🎮 Trò chơi</h2><button class="gm-mini" id="gm-mute">${muted ? '🔇 Tắt tiếng' : '🔊 Có tiếng'}</button></div>
+      <div class="gm-top"><h2>🎮 Trò chơi</h2><span style="display:flex;gap:6px"><button class="gm-mini" id="gm-3d">${want3d() ? '🧊 3D: Bật' : '🧊 3D: Tắt'}</button><button class="gm-mini" id="gm-mute">${muted ? '🔇 Tắt tiếng' : '🔊 Có tiếng'}</button></span></div>
       <div class="gm-menu">
         <button class="gm-card" data-g="croc"><span class="ico">🐊</span><b>Khám răng cá sấu</b><small>Bấm răng, ai bấm trúng răng đau thì bị cạp</small></button>
         <button class="gm-card" data-g="pirate"><span class="ico">🏴‍☠️</span><b>Thùng gỗ cướp biển</b><small>Nhét dao vào khe, coi chừng hải tặc bật ra</small></button>
@@ -301,6 +335,7 @@
       <p class="gm-hint">Chỉ để giải trí, kết quả không tính vào bảng xếp hạng.</p>`);
     root.querySelectorAll('.gm-card').forEach((b) => b.addEventListener('click', () => openGame(b.dataset.g)));
     $('gm-mute').addEventListener('click', () => { muted = !muted; store('mute', muted); showMenu(); });
+    $('gm-3d').addEventListener('click', () => { store('g3d', !want3d()); showMenu(); });
   }
   function openGame(g){
     clearTimers();
@@ -463,11 +498,18 @@
       <button class="gm-primary" id="gm-again" style="display:none">Chơi lại</button>`);
     bindBack();
     const st = $('gm-status'), mouth = $('gm-croc');
+    let crocV = null;
+    mount3d('croc', (api) => {
+      const holder = document.createElement('div'); holder.className = 'gm-c3d'; mouth.appendChild(holder); mouth.classList.add('croc3d');
+      crocV = api.croc(holder, { N, colors: ch, onPick: (i) => { const el = root.querySelector(`.gm-tooth[data-i="${i}"]`); if(el) el.click(); } });
+      g.used.forEach((u) => crocV.toothDown(u));
+      return { ctl: crocV, dispose(){ if(crocV){ crocV.dispose(); crocV = null; } } };
+    });
     $('gm-gear').addEventListener('click', openCrocModal);
     root.querySelectorAll('.gm-tooth').forEach((t) => t.addEventListener('click', () => {
       const i = +t.dataset.i;
       turnPick(g, i, () => {
-        t.classList.add('down'); beep(520 + g.safe * 30, 0.12, 'triangle'); buzz(15);
+        t.classList.add('down'); if(crocV) crocV.toothDown(i); beep(520 + g.safe * 30, 0.12, 'triangle'); buzz(15);
         st.innerHTML = crocStatus(g);
         if(N - g.used.size === P){
           // hết răng an toàn: lượt kế tiếp chắc chắn trúng răng phạt
@@ -475,7 +517,7 @@
           later(() => { if(!g.over && screen === 'croc'){ const rest = [...g.traps].filter((x) => !g.used.has(x)); if(rest.length){ const x = root.querySelector(`.gm-tooth[data-i="${rest[0]}"]`); if(x) x.click(); } } }, 1100);
         }
       }, () => {
-        mouth.classList.add('snap');
+        mouth.classList.add('snap'); if(crocV) crocV.snap([...g.traps]);
         root.querySelectorAll('.gm-tooth').forEach((x) => { if(g.traps.has(+x.dataset.i)) x.classList.add('bad'); });
         noise(0.25, 0.25); beep(110, 0.4, 'sawtooth', 0.2); buzz([60, 40, 120]);
         st.classList.add('lose'); st.innerHTML = endText(g);
@@ -520,7 +562,7 @@
     clearTimers(); screen = 'pirate'; normPirate();
     const N = pirateCfg.slots;
     const g = makeTurnGame(N); g.total = N;
-    let rot = 0;
+    let rot = 0, barrelV = null;
     render(`${topBar('🏴‍☠️ Thùng gỗ cướp biển')}
       <div class="gm-beach">
         <span class="deco" style="left:4px;top:78px">🌴</span><span class="deco" style="right:6px;top:92px;font-size:2.4rem">🌴</span>
@@ -534,6 +576,13 @@
     bindBack();
     const st = $('gm-status'), barrel = $('gm-barrel'), box = $('gm-pslots');
     const pat = barrel.querySelector('#gmStave');
+    barrelV = null;
+    mount3d('pirate', (api) => {
+      const holder = document.createElement('div'); holder.className = 'gm-b3d'; barrel.appendChild(holder); barrel.classList.add('pirate3d');
+      barrelV = api.barrel(holder, { N, onPick: (i) => pick(i) });
+      barrelV.setRot(rot);
+      return { ctl: barrelV, dispose(){ if(barrelV){ barrelV.dispose(); barrelV = null; } } };
+    });
     const pos = [];
     for(let i = 0; i < N; i++){
       const b = document.createElement('button'); b.className = 'gm-pslot'; b.setAttribute('aria-label', 'Khe ' + (i + 1)); b.dataset.i = i;
@@ -560,11 +609,12 @@
         }
       }
       if(pat) pat.setAttribute('patternTransform', `translate(${(rot * 60).toFixed(1)} 0)`);
+      if(barrelV) barrelV.setRot(rot);
     }
     layout();
     function pick(i){
       turnPick(g, i, () => {
-        pos[i].b.classList.add('used'); layout(); beep(300, 0.08, 'square', 0.1); buzz(15);
+        pos[i].b.classList.add('used'); if(barrelV) barrelV.knife(i); layout(); beep(300, 0.08, 'square', 0.1); buzz(15);
         const left = N - g.used.size;   // số khe còn trống (gồm cả khe bí mật)
         st.innerHTML = players.count < 2 ? `Còn ${left - 1} khe an toàn · đã qua ${g.safe} lượt` : `Lượt của <span style="color:var(--accent,#f2b705)">${esc(nameOf(g.turn))}</span> · còn ${left} khe trống`;
         if(left === 1){
@@ -576,7 +626,7 @@
           if(!anyFront) bringFront();
         }
       }, () => {
-        pos[i].b.classList.add('used'); layout();
+        pos[i].b.classList.add('used'); if(barrelV) { barrelV.knife(i); barrelV.boom(); } layout();
         barrel.classList.add('boom'); noise(0.3, 0.2); beep(660, 0.12, 'square', 0.15); beep(220, 0.5, 'sawtooth', 0.15, 0.1); buzz([40, 30, 40, 30, 150]);
         st.classList.add('lose'); st.innerHTML = '🏴‍☠️ Hải tặc bật ra! ' + endText(g).replace('💥 ', '');
         $('gm-again').style.display = 'block';
@@ -624,7 +674,7 @@
   let diceCount = +store('dice') || 2;
   let skinIdx = Math.max(0, SKINS.findIndex((k) => k.id === store('dskin')));
   let diceHist = [];
-  let shakeHandler = null, shakeLast = 0, rolling = false;
+  let shakeHandler = null, shakeLast = 0, rolling = false, diceV = null;
 
   function faceHtml(n, r){
     const gl = ZODIAC.map((z, k) => `<i style="transform:rotate(${k * 30}deg) translateY(calc(var(--s) * -.355))"><span style="transform:rotate(${-k * 30}deg)">${z}︎</span></i>`).join('');
@@ -650,21 +700,28 @@
         <label style="margin-top:12px">Kiểu xúc xắc</label>
         <div class="gm-skins" id="gm-skins">${SKINS.map((k, i) => `<button data-i="${i}" class="${i === skinIdx ? 'on' : ''}" title="${esc(k.name)}" aria-label="${esc(k.name)}" style="background:${k.bg}"></button>`).join('')}</div>
       </div>
-      <div class="gm-dicestage"><div class="gm-dice" id="gm-dice"></div></div>
+      <div class="gm-dicestage"><div class="gm-dice3d" id="gm-dice3d" style="display:none"></div><div class="gm-dice" id="gm-dice"></div></div>
       <div class="gm-sum" id="gm-sum" style="margin-top:12px">Bấm nút để gieo</div>
       <button class="gm-primary" id="gm-roll">🎲 Lắc!</button>
       <button class="gm-mini" id="gm-shake" style="display:block;margin:10px auto 0">📳 Bật lắc điện thoại để gieo</button>
       <div class="gm-hist" id="gm-hist"></div>`);
     bindBack();
     drawDice();
+    diceV = null;
+    mount3d('dice', (api) => {
+      const box = $('gm-dice3d'); if(!box) return null;
+      box.style.display = 'block'; $('gm-dice').style.display = 'none';
+      diceV = api.dice(box, { count: diceCount, skin: SKINS[skinIdx].id });
+      return { dispose(){ if(diceV){ diceV.dispose(); diceV = null; } } };
+    });
     $('gm-dcount').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       diceCount = +b.dataset.n; store('dice', diceCount);
       $('gm-dcount').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
-      drawDice(); $('gm-sum').textContent = 'Bấm nút để gieo';
+      drawDice(); if(diceV) diceV.setCount(diceCount); $('gm-sum').textContent = 'Bấm nút để gieo';
     }));
     $('gm-skins').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       skinIdx = +b.dataset.i; store('dskin', SKINS[skinIdx].id);
-      $('gm-skins').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); applySkin();
+      $('gm-skins').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); applySkin(); if(diceV) diceV.setSkin(SKINS[skinIdx].id);
     }));
     $('gm-roll').addEventListener('click', rollDice);
     $('gm-shake').addEventListener('click', toggleShake);
@@ -681,6 +738,7 @@
     const final = Array.from({ length: diceCount }, () => 1 + rand(6));
     const dur = FAST ? 40 : 1100;
     $('gm-sum').textContent = '…';
+    if(diceV) diceV.roll(final, dur / 1000 + 0.3);
     $('gm-dice').querySelectorAll('.gm-cube').forEach((c, i) => {
       const k = [2 + rand(2), 2 + rand(3), 1 + rand(2)];
       c.style.transitionDuration = (dur / 1000 + i * (FAST ? 0 : 0.08)) + 's';
@@ -697,7 +755,7 @@
       diceHist.unshift(diceCount > 1 ? `${final.join('+')}=${sum}` : String(sum)); diceHist = diceHist.slice(0, 6);
       $('gm-hist').textContent = 'Các lượt trước: ' + diceHist.slice(1).join(' · ');
       beep(660, 0.12, 'triangle'); beep(880, 0.15, 'triangle', 0.1, 0.1);
-    }, dur + diceCount * 80 + 60);
+    }, dur + diceCount * 80 + 60 + (diceV ? 450 : 0));
   }
   async function toggleShake(){
     const btn = $('gm-shake');
@@ -723,7 +781,7 @@
   const WHEEL_DEFAULT = ['Giải nhất 🎁', 'Chúc may mắn', 'Hát một bài 🎤', 'Kể chuyện cười 😄', 'Chống đẩy 5 cái 💪', 'Được miễn bài 🙌', 'Đãi trà sữa 🧋', 'Quay lại lượt nữa'];
   const WHEEL_COLORS = ['#f2b705', '#e76f51', '#2a9d8f', '#457b9d', '#9b5de5', '#f15bb5', '#43aa8b', '#f8961e', '#577590', '#90be6d', '#d62828', '#6d6875'];
   let wheelItems = (function(){ const w = store('wheel'); return (Array.isArray(w) && w.length >= 2) ? w : WHEEL_DEFAULT.slice(); })();
-  let wheelAngle = 0, wheelRaf = 0, wheelSpinning = false, removeWinner = !!store('wheelRemove');
+  let wheelV = null, wheelAngle = 0, wheelRaf = 0, wheelSpinning = false, removeWinner = !!store('wheelRemove');
 
   let ledRaf = 0, ledPhase = 0, wheelHL = -1, lastLed = 0;
   function stopWheelAnim(){ if(wheelRaf){ cancelAnimationFrame(wheelRaf); wheelRaf = 0; } if(ledRaf){ cancelAnimationFrame(ledRaf); ledRaf = 0; } wheelSpinning = false; }
@@ -739,7 +797,8 @@
     clearTimers(); screen = 'wheel'; wheelHL = -1;
     render(`${topBar('🎡 Vòng quay may mắn')}
       <div class="gm-wheelstage">
-        <div class="gm-wheelbox"><div class="gm-pointer" id="gm-pointer"></div><canvas id="gm-canvas" width="640" height="640"></canvas></div>
+        <div class="gm-wheel3d" id="gm-wheel3d" style="display:none"></div>
+        <div class="gm-wheelbox" id="gm-wheelbox"><div class="gm-pointer" id="gm-pointer"></div><canvas id="gm-canvas" width="640" height="640"></canvas></div>
         <div class="gm-result" id="gm-result"></div>
         <button class="gm-spinbtn" id="gm-spin">🎡 QUAY!</button>
       </div>
@@ -752,6 +811,13 @@
     bindBack();
     drawWheel();
     startLeds();
+    wheelV = null;
+    mount3d('wheel', (api) => {
+      const box = $('gm-wheel3d'); if(!box) return null;
+      box.style.display = 'block'; $('gm-wheelbox').style.display = 'none';
+      wheelV = api.wheel(box); drawWheel();
+      return { dispose(){ if(wheelV){ wheelV.dispose(); wheelV = null; } } };
+    });
     $('gm-items').addEventListener('input', () => {
       const v = $('gm-items').value.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 12);
       if(v.length >= 2){ wheelItems = v; store('wheel', v); wheelHL = -1; drawWheel(); }
@@ -765,7 +831,32 @@
     const m = (v) => Math.max(0, Math.min(255, Math.round(f < 0 ? v * (1 + f) : v + (255 - v) * f)));
     return `rgb(${m(r)},${m(g)},${m(b)})`;
   }
+  /* Mặt vòng quay (chỉ các ô và chữ, góc 0) để dán lên đĩa 3D */
+  let faceCv = null;
+  function wheelFace(){
+    const key = wheelItems.join('|');
+    if(faceCv && faceCv.key === key) return faceCv;
+    const W = 1024, M = W / 2, Rw = M - 4, n = wheelItems.length, s = (Math.PI * 2) / n;
+    faceCv = document.createElement('canvas'); faceCv.width = faceCv.height = W; faceCv.key = key;
+    const c = faceCv.getContext('2d');
+    c.translate(M, M);
+    for(let i = 0; i < n; i++){
+      const col = WHEEL_COLORS[i % WHEEL_COLORS.length];
+      const g = c.createRadialGradient(0, 0, 40, 0, 0, Rw);
+      g.addColorStop(0, shade(col, -.35)); g.addColorStop(.55, col); g.addColorStop(1, shade(col, .18));
+      c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, Rw, i * s, (i + 1) * s); c.closePath();
+      c.fillStyle = g; c.fill(); c.lineWidth = 8; c.strokeStyle = '#ffe9a8'; c.stroke();
+      c.save(); c.rotate(i * s + s / 2); c.textAlign = 'right'; c.textBaseline = 'middle';
+      const label = wheelItems[i]; c.font = `800 ${Math.round(Rw * (n > 8 ? 0.108 : 0.13))}px 'Trebuchet MS',Arial,sans-serif`;
+      let txt = label; while(txt.length > 3 && c.measureText(txt).width > Rw - 150) txt = txt.slice(0, -2);
+      txt = txt === label ? txt : txt + '…';
+      c.lineWidth = 10; c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineJoin = 'round'; c.strokeText(txt, Rw - 44, 0);
+      c.fillStyle = '#fff'; c.fillText(txt, Rw - 44, 0); c.restore();
+    }
+    return faceCv;
+  }
   function drawWheel(now){
+    if(wheelV){ wheelV.update({ angle: wheelAngle, face: wheelFace(), n: wheelItems.length, hl: wheelHL, led: ledPhase, spinning: wheelSpinning, t: now || performance.now() }); return; }
     const cv = $('gm-canvas'); if(!cv) return;
     const c = cv.getContext('2d'), W = cv.width, M = W / 2, Rw = M - 52, n = wheelItems.length, s = (Math.PI * 2) / n, t = now || performance.now();
     c.clearRect(0, 0, W, W);
@@ -815,6 +906,7 @@
     return Math.min(n - 1, Math.floor(a / s));
   }
   function flickPointer(){
+    if(wheelV){ wheelV.flick(); return; }
     const p = $('gm-pointer'); if(!p) return;
     p.classList.remove('flick'); void p.offsetWidth; p.classList.add('flick');
   }
@@ -1117,6 +1209,12 @@
       <div class="gm-log" id="gm-log"></div>
       <div class="gm-ctl" id="gm-fctl"><button class="pri" id="gm-play">▶ Bắt đầu</button></div>`);
     bindBack();
+    mount3d('chicken-fight', (api) => {
+      const ar = root.querySelector('.gm-arena'); if(!ar) return null;
+      const holder = document.createElement('div'); holder.className = 'gm-a3d'; ar.appendChild(holder); ar.classList.add('arena3d');
+      const v = api.arena(holder, { skins: [skinById(A.skin), skinById(B.skin)], els: [$('ch0'), $('ch1')], arenaEl: ar });
+      return v;
+    });
     const log = (txt) => { const l = $('gm-log'); if(!l) return; const d = document.createElement('div'); d.textContent = txt; l.appendChild(d); l.scrollTop = l.scrollHeight; };
     const setBars = (e) => {
       for(let k = 0; k < 2; k++){
@@ -1252,5 +1350,5 @@
     if(!root.dataset.ready){ root.dataset.ready = '1'; showMenu(); }
   };
   window.leaveGames = function(){ clearTimers(); };
-  window.__games = { chickSvg, SKINS_CH, get flock(){ return flock; }, simulate, newChicken, SPECIALS, openGame, showMenu, get screen(){ return screen; }, winnerIndex, get wheelItems(){ return wheelItems; } };
+  window.__games = { chickSvg, SKINS_CH, get flock(){ return flock; }, simulate, newChicken, SPECIALS, openGame, showMenu, get screen(){ return screen; }, winnerIndex, get wheelItems(){ return wheelItems; }, get views(){ return views; } };
 })();

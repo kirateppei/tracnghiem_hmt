@@ -16,12 +16,18 @@ const UI = {
   TAP_DELAY_MS: 55,      // chờ chừng này ms sau khi chạm để phân biệt chạm (nhảy) với vuốt
   DRAW_DIST: 105,        // nhìn xa bao nhiêu mét (vật ở xa hơn không được vẽ)
     MAX_DPR: 2,
-  KEY: { best: 'gm_runner_best', rec: 'gm_runner_bestrec', char: 'gm_runner_char', synced: 'gm_runner_synced' },
+  KEY: { best: 'gm_runner_best', rec: 'gm_runner_bestrec', char: 'gm_runner_char', skin: 'gm_runner_skin', synced: 'gm_runner_synced' },
 };
 
 /* ================= Sổ đăng ký skin (thêm skin mới: thêm một mục, rồi gọi setSkin(id)) ================= */
 export const SKINS = {
-  dongphuc: { name: 'Đồng phục vàng cam', shirt: '#ff9a1f', shirt2: '#f08a10', pants: '#f58a12', helmet: '#ffd21a', band: '#dfe3e8', boots: '#3a2f2a', glove: '#3d3d44', belt: '#5a3a1e', skin: '#e6b08a' },
+  dongphuc: { name: 'Đồng phục vàng cam', need: 0, shirt: '#ff9a1f', shirt2: '#f08a10', pants: '#f58a12', helmet: '#ffd21a', band: '#dfe3e8', boots: '#3a2f2a', glove: '#3d3d44', belt: '#5a3a1e', skin: '#e6b08a' },
+  dien:    { name: 'Điện lực cam đậm', need: 0, shirt: '#f2680c', shirt2: '#d9570a', pants: '#e8610b', helmet: '#f4f6f8', band: '#e8edf0', boots: '#2e2a28', glove: '#e9e9ea', belt: '#4a3018', skin: '#e6b08a' },
+  xanh:    { name: 'Kỹ thuật viên xanh HMT', need: 60, shirt: '#1d4f8f', shirt2: '#163B6D', pants: '#17407a', helmet: '#f4f6f8', band: '#F2B807', boots: '#1b1f2a', glove: '#F2B807', belt: '#2a2a2a', skin: '#e6b08a' },
+  nang:    { name: 'Chiến binh mặt trời', need: 120, shirt: '#ffd24d', shirt2: '#f2b705', pants: '#ff9a1f', helmet: '#ff7a00', band: '#ffffff', boots: '#5a3a1e', glove: '#ffffff', belt: '#7a3a00', skin: '#e6b08a' },
+  pin:     { name: 'Xanh lá pin sạc', need: 200, shirt: '#1e9e6b', shirt2: '#14805A', pants: '#0f6b4a', helmet: '#F2B807', band: '#dfffe9', boots: '#1f2a24', glove: '#F2B807', belt: '#33261a', skin: '#e6b08a' },
+  dem:     { name: 'Ca đêm phản quang', need: 300, shirt: '#2a2e38', shirt2: '#1f222a', pants: '#232630', helmet: '#3a3f4a', band: '#7dffd1', boots: '#111318', glove: '#7dffd1', belt: '#111318', skin: '#e6b08a' },
+  vang:    { name: 'Vàng kim huyền thoại', need: 500, shirt: '#f0c53a', shirt2: '#d9a91e', pants: '#d9a91e', helmet: '#fff0a0', band: '#8a5a00', boots: '#1a1a1a', glove: '#fff0a0', belt: '#1a1a1a', skin: '#e6b08a' },
 };
 export const supported = () => { try{ const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); }catch(e){ return false; } };
 
@@ -545,6 +551,7 @@ export function runner(container, opt = {}){
 
   /* ---------- Nhân vật ---------- */
   let gender = store(UI.KEY.char) === 'f' ? 'f' : 'm';
+  const unlockedSkin = (id) => !!SKINS[id] && (SKINS[id].need || 0) <= best;
   let skinId = 'dongphuc';
   const shirtTex = {};
   let ch = null;
@@ -589,6 +596,7 @@ export function runner(container, opt = {}){
   let G = L.createGame((opt.seed || 1) | 0 || 1);
   let paused = false, last = performance.now(), raf = 0, acc = 0, tClock = 0, shake = 0, deathShown = false;
   let best = +store(UI.KEY.best) || 0;
+  { const sv = store(UI.KEY.skin); if(unlockedSkin(sv) && sv !== skinId){ skinId = sv; setCharacterModel(); } }
   const input = { jump: false, held: false, slide: false, left: false, right: false };
   let rIdx = 0, comboSfx = 0;
   const dbg = { autoplay: false, bot: L.createBot(), phase: null, bird: 'mix' };
@@ -615,6 +623,8 @@ export function runner(container, opt = {}){
         <div class="rn-chars" role="group" aria-label="Chọn nhân vật">
           <button class="rn-char" data-g="m">👷‍♂️ Nam</button><button class="rn-char" data-g="f">👷‍♀️ Nữ</button>
         </div>
+        <div class="rn-skins" id="rn-skins" role="group" aria-label="Chọn trang phục"></div>
+        <div class="rn-skinname" id="rn-skinname"></div>
         <div class="rn-best" id="rn-menubest"></div>
         <button class="rn-btn rn-pri" id="rn-start">▶ Bắt đầu</button>
         <div class="rn-row"><button class="rn-btn" id="rn-board1">🏆 Xếp hạng</button><button class="rn-btn" id="rn-exit1" hidden>← Thoát</button></div>
@@ -646,12 +656,18 @@ export function runner(container, opt = {}){
 
   function refreshMenu(){
     wrap.querySelectorAll('.rn-char').forEach((b) => b.classList.toggle('on', b.dataset.g === gender));
+    $('rn-skins').innerHTML = Object.keys(SKINS).map((id) => { const s = SKINS[id], ok = unlockedSkin(id);
+      return `<button class="rn-sk${id === skinId ? ' on' : ''}${ok ? '' : ' lock'}" data-s="${id}" aria-label="${s.name}" style="background:linear-gradient(135deg,${s.shirt} 55%,${s.helmet} 55%)">${ok ? '' : '🔒'}</button>`; }).join('');
+    $('rn-skinname').textContent = SKINS[skinId].name;
     $('rn-menubest').innerHTML = best > 0 ? `Kỷ lục của bạn: <b>${best}</b> điểm` : 'Chưa có kỷ lục — chạy thử nào!';
   }
   function setCharacter(g2){
     gender = g2 === 'f' ? 'f' : 'm'; store(UI.KEY.char, gender); setCharacterModel(); refreshMenu();
   }
-  function setSkin(id){ if(!SKINS[id]) return; skinId = id; setCharacterModel(); }
+  function setSkin(id){ if(!SKINS[id]) return; skinId = id; store(UI.KEY.skin, id); setCharacterModel(); refreshMenu(); }
+  $('rn-skins').addEventListener('click', (e) => { const b = e.target.closest('.rn-sk'); if(!b) return; const id = b.dataset.s;
+    if(unlockedSkin(id)){ setSkin(id); snd.beep(660, 0.06, 'triangle', 0.07); }
+    else { $('rn-skinname').textContent = '🔒 ' + SKINS[id].name + ' — mở khóa khi đạt ' + SKINS[id].need + ' điểm'; snd.beep(220, 0.08, 'square', 0.05); } });
   wrap.querySelectorAll('.rn-char').forEach((b) => b.addEventListener('click', () => { setCharacter(b.dataset.g); snd.beep(660, 0.06, 'triangle', 0.07); }));
 
   function startGame(){
@@ -904,6 +920,8 @@ export function runner(container, opt = {}){
     $('rn-newrec').hidden = !rec; $('rn-onote').textContent = '';
     screen = 'over'; showOnly('over');
     if(rec){
+      const old = best, got = Object.values(SKINS).filter((s) => s.need > old && s.need <= score).map((s) => s.name);
+      if(got.length) $('rn-newrec').textContent = '🎉 Kỷ lục mới! 🎁 Mở khóa: ' + got.join(', '); else $('rn-newrec').textContent = '🎉 Kỷ lục mới!';
       best = score; store(UI.KEY.best, best); store(UI.KEY.rec, { kwh, coins: G.coins });
       snd.beep(784, 0.12, 'triangle', 0.1, 0.1); snd.beep(988, 0.12, 'triangle', 0.1, 0.22); snd.beep(1318, 0.25, 'triangle', 0.1, 0.34);
       submitBest({ best: score, kwh, coins: G.coins }).then((r) => {
@@ -998,6 +1016,11 @@ function injectCss(doc){
 .rn-title p{margin:6px auto 0;font-size:.82rem;line-height:1.35;max-width:30em;background:rgba(0,0,0,.35);border-radius:10px;padding:5px 10px;display:inline-block}
 .rn-bottom{margin-top:auto;padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px;align-items:center;background:linear-gradient(transparent,rgba(0,0,0,.55) 40%)}
 .rn-chars{display:flex;gap:8px}
+.rn-skins{display:flex;gap:6px;padding:0 54px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.rn-sk{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.55);cursor:pointer;font-size:.9rem;padding:0;line-height:1;color:#fff}
+.rn-sk.on{border-color:#fff;box-shadow:0 0 0 3px #ff9a1f}
+.rn-sk.lock{filter:grayscale(.85) brightness(.6)}
+.rn-skinname{text-align:center;color:#fff;font-weight:800;font-size:.85rem;margin-top:4px;text-shadow:0 1px 3px #000}
 .rn-char{border:2px solid rgba(255,255,255,.5);background:rgba(0,0,0,.4);color:#fff;border-radius:999px;padding:8px 18px;font-size:.95rem;font-weight:700;cursor:pointer}
 .rn-char.on{background:#ff9a1f;border-color:#fff;color:#2a1600}
 .rn-best{font-size:.9rem;text-shadow:0 1px 4px #000}

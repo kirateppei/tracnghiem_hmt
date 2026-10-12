@@ -1,4 +1,4 @@
-// Kiểm thử logic thuần của game "Chạy năng lượng" (3 làn). Chạy: node tools/runner-test/logic.test.mjs
+// Kiểm thử logic thuần của game "Run now: HMT" (3 làn). Chạy: node tools/runner-test/logic.test.mjs
 import assert from 'node:assert/strict';
 import * as L from '../../docs/runner-logic.js';
 const { CFG } = L;
@@ -15,14 +15,14 @@ function blank(hzs = []){
   return g;
 }
 
-ok('tốc độ: bắt đầu 7,5, tối đa 17, tăng đơn điệu', () => {
-  assert.equal(L.speedAt(0), 7.5); assert.equal(L.speedAt(1e6), 17);
+ok('tốc độ: bắt đầu 9,5, tối đa 23, tăng đơn điệu', () => {
+  assert.equal(L.speedAt(0), 9.5); assert.equal(L.speedAt(1e6), 23);
   let p = 0; for(let d = 0; d <= 3000; d += 10){ const s = L.speedAt(d); assert.ok(s >= p); p = s; }
 });
-ok('thời gian đạt tốc độ tối đa ≈ 3–4 phút', () => {
-  let d = 0, t = 0; while(L.speedAt(d) < 16.95){ d += L.speedAt(d) / 60; t += 1 / 60; }
-  console.log('     đạt ~17 m/s sau', (t / 60).toFixed(2), 'phút,', Math.round(d), 'm');
-  assert.ok(t > 180 && t < 240);
+ok('thời gian đạt tốc độ tối đa ≈ 1,7–2,5 phút', () => {
+  let d = 0, t = 0; while(L.speedAt(d) < 22.95){ d += L.speedAt(d) / 60; t += 1 / 60; }
+  console.log('     đạt ~23 m/s sau', (t / 60).toFixed(2), 'phút,', Math.round(d), 'm');
+  assert.ok(t > 100 && t < 150);
 });
 ok('độ cao nhảy ≈ 2,8 m, nhảy đôi cao thêm, chạm nhanh nhảy thấp', () => {
   const g = blank(); let peak = 0;
@@ -78,7 +78,7 @@ ok('biến tần (thùng): nhảy lên mặt trên đứng được rồi rơi x
   const C = () => ({ type: 'crate', x: 20, w: 1.4, y0: 0, y1: 0.9, lane: 1 });
   const a = blank([C()]); run(a, 6); assert.ok(a.dead && a.cause === 'crate', 'đâm thẳng');
   const j = blank([C()]); let up = false, top = 0;
-  run(j, 6, (g) => { if(!up && g.onGround && g.dist > 18.8){ up = true; return { jump: true }; } if(g.onGround && g.y > 0.8) top++; return {}; });
+  run(j, 6, (g) => { if(!up && g.onGround && g.dist > 20.7 - L.HOP_T() * g.speed / 2){ up = true; return { jump: true }; } if(g.onGround && g.y > 0.8) top++; return {}; });
   assert.ok(!j.dead, 'nhảy ngắn lên mặt biến tần thì sống: ' + j.cause); assert.ok(top >= 1, 'có chạy trên mặt trên ' + top); assert.ok(j.y === 0 && j.onGround && j.dist > 30, 'xuống đất sau khi hết');
 });
 ok('xe đạp: tốc độ x2, điểm x2, tia nắng x2, va chạm làm hỏng xe thay vì thua, hết giờ trở lại bình thường', () => {
@@ -124,7 +124,7 @@ ok('chướng ngại mở khoá đúng theo quãng đường', () => {
   const t = L.createTrack(7); t.ensure(4000);
   const first = (ty) => Math.min(...t.hz.filter((h) => h.type === ty).map((h) => h.x));
   console.log('     lần đầu: thùng', first('crate'), ' nhà', first('building'), ' pin vỡ', first('panel'), ' dây', first('wire'), ' chim', first('bird'));
-  assert.ok(first('building') >= 80 && first('panel') >= 100 - 30 && first('wire') >= 250 - 30 && first('bird') >= 500 - 30);
+  assert.ok(first('building') >= 50 && first('panel') >= 60 - 30 && first('wire') >= 140 - 30 && first('bird') >= 260 - 30);
 });
 ok('sinh đường: các cụm không chồng nhau, luôn còn ≥ 1 làn không bị nhà chắn, nhà dài 10–26 m', () => {
   const t = L.createTrack(3); t.ensure(8000);
@@ -138,7 +138,7 @@ ok('sinh đường: các cụm không chồng nhau, luôn còn ≥ 1 làn không
   assert.ok(maxLanes <= 2);
   for(let i = 1; i < zs.length; i++){ if(zs[i][2].lane === zs[i - 1][2].lane || true){ /* so sánh theo cụm: z0 của cụm sau ≥ z1 lớn nhất của cụm trước */ } }
   const groups = []; for(const z of zs){ const g = groups[groups.length - 1]; if(g && z[0] < g.z1 + 1) { g.z1 = Math.max(g.z1, z[1]); } else groups.push({ z0: z[0], z1: z[1] }); }
-  for(let i = 1; i < groups.length; i++) assert.ok(groups[i].z0 - groups[i - 1].z1 >= 6, 'cụm sát nhau ' + (groups[i].z0 - groups[i - 1].z1));
+  for(let i = 1; i < groups.length; i++) assert.ok(groups[i].z0 - groups[i - 1].z1 >= 5, 'cụm sát nhau ' + (groups[i].z0 - groups[i - 1].z1));
 });
 
 // --- vượt qua được: người máy tối ưu chạy hàng nghìn đường, đủ tốc độ ---

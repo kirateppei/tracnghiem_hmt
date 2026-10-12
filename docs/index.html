@@ -222,6 +222,12 @@
   .hero-illus .hero-logo{ width:72px; height:72px; flex:none; border-radius:50%; background:#fff; padding:3px; box-shadow:0 2px 10px rgba(22,59,109,.25); }
   #quiz-play{ position:relative; }
   #quiz-play .progress-row{ padding-right:42px; }
+  /* làm bài / xem kết quả: giao diện riêng toàn màn hình, nút ✕ Thoát về màn chọn */
+  #view-quiz.qz-fs{ position:fixed !important; left:0; top:0; right:0; bottom:0; width:auto; max-width:none; margin:0; z-index:2147481000; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; display:block; padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 24px); background-color:var(--bg); background-image:linear-gradient(rgba(0,0,0,.22),rgba(0,0,0,.05)); animation:none; }
+  #view-quiz.qz-fs #quiz-play, #view-quiz.qz-fs #quiz-result{ max-width:640px; margin-left:auto; margin-right:auto; }
+  .qz-exit{ display:none; border:0; border-radius:999px; background:#d6291f; color:#fff; font:inherit; font-weight:800; font-size:.78rem; padding:6px 12px; cursor:pointer; margin-right:8px; flex:none; }
+  #view-quiz.qz-fs .qz-exit{ display:inline-block; }
+  #view-quiz.qz-fs #quiz-play .progress-row{ position:sticky; top:-2px; z-index:3; background:var(--card); padding-top:2px; padding-bottom:6px; }
   #quiz-play::before{ content:''; position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%; background:#fff url(logo.png) center/80% no-repeat; opacity:.85; box-shadow:0 1px 5px rgba(0,0,0,.2); pointer-events:none; }
   .hero-illus .hero-title{ font-family: var(--font-display); font-size:1.5rem; line-height:1.05; color: var(--card-ink); }
   .hero-illus .hero-sub{ font-size:0.8rem; color:#6b7268; margin-top:3px; }
@@ -356,7 +362,7 @@
   .form-hint{ font-size: 0.78rem; color:#8a9089; margin: 4px 0 0; }
   .form-actions{ margin-top: 20px; }
   .toast{
-    position: fixed; left:50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+    position: fixed; z-index: 2147483300; left:50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
     background: var(--card); color: var(--card-ink); padding: 11px 18px; border-radius: 10px;
     box-shadow: 0 10px 24px rgba(0,0,0,0.3); font-size: 0.88rem; font-weight:600;
     opacity:0; pointer-events:none; transition: opacity .25s ease, transform .25s ease;
@@ -397,7 +403,7 @@
 
   .modal-backdrop{
     position:fixed; inset:0; background: rgba(0,0,0,0.55);
-    display:none; align-items:flex-end; justify-content:center; z-index: 40;
+    display:none; align-items:flex-end; justify-content:center; z-index: 2147483000;
   }
   .modal-backdrop.show{ display:flex; }
   .modal{
@@ -724,7 +730,7 @@ nav.tabs button{ flex:1 0 auto; white-space:nowrap; padding-left:12px; padding-r
 
 /* ---------- Thanh thông báo bản cập nhật ---------- */
 .update-banner{
-  position:fixed; z-index:300; left:10px; right:10px; top:calc(10px + env(safe-area-inset-top)); max-width:460px; margin:0 auto;
+  position:fixed; z-index:2147483200; left:10px; right:10px; top:calc(10px + env(safe-area-inset-top)); max-width:460px; margin:0 auto;
   display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:14px;
   background:#FFF6DB; color:#4a3700; box-shadow:0 8px 24px rgba(0,0,0,0.35); font-size:0.85rem; line-height:1.35;
 }
@@ -1051,7 +1057,8 @@ html{ scroll-behavior:smooth; }
 
     <div id="quiz-play" class="card" style="display:none;">
       <div class="progress-row">
-        <span id="q-counter">Câu 1/1</span>
+        <button type="button" class="qz-exit" id="qz-exit" onclick="exitQuiz()">✕ Thoát</button>
+        <span id="q-counter" style="margin-right:auto">Câu 1/1</span>
         <span id="q-score-live">Điểm: 0</span>
       </div>
       <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill"></div></div>
@@ -1380,16 +1387,16 @@ html{ scroll-behavior:smooth; }
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=fd9c209271"></script>
-<script src="firebase-config.js?v=fd9c209271"></script>
-<script src="questions.js?v=fd9c209271"></script>
-<script src="music.js?v=fd9c209271"></script>
-<script src="inverters.js?v=fd9c209271"></script>
-<script src="drawings.js?v=fd9c209271"></script>
-<script src="games.js?v=fd9c209271"></script>
-<script src="app.js?v=fd9c209271"></script>
-<script src="leaderboard.js?v=fd9c209271"></script>
-<script src="auth.js?v=fd9c209271"></script>
-<script src="update.js?v=fd9c209271"></script>
+<script src="version.js?v=f7ec2ed8a0"></script>
+<script src="firebase-config.js?v=f7ec2ed8a0"></script>
+<script src="questions.js?v=f7ec2ed8a0"></script>
+<script src="music.js?v=f7ec2ed8a0"></script>
+<script src="inverters.js?v=f7ec2ed8a0"></script>
+<script src="drawings.js?v=f7ec2ed8a0"></script>
+<script src="games.js?v=f7ec2ed8a0"></script>
+<script src="app.js?v=f7ec2ed8a0"></script>
+<script src="leaderboard.js?v=f7ec2ed8a0"></script>
+<script src="auth.js?v=f7ec2ed8a0"></script>
+<script src="update.js?v=f7ec2ed8a0"></script>
 </body>
 </html>

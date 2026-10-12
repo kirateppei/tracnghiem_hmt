@@ -1,13 +1,13 @@
-/* Logic thuần của game "Chạy năng lượng" kiểu Subway Surfers: đường 3 làn, chạy về phía trước.
+/* Logic thuần của game "Run now: HMT" kiểu Subway Surfers: đường 3 làn, chạy về phía trước.
    Không đụng DOM/Three.js nên Node import được để kiểm thử.
    Đơn vị: mét, giây. `dist` = quãng đường người chơi đã chạy; vật trên đường có toạ độ x = mét kể từ vạch xuất phát.
    Làn: 0 (trái), 1 (giữa), 2 (phải). Các hằng số dễ chỉnh theo phản hồi người chơi nằm ở CFG ngay bên dưới. */
 
 export const CFG = {
   // --- tốc độ & độ khó ---
-  V0: 7.5,            // tốc độ lúc xuất phát (m/s)
-  VMAX: 17,           // tốc độ tối đa (m/s)
-  RAMP_DIST: 2400,    // quãng đường để đạt tốc độ tối đa (≈ 3,5 phút chạy)
+  V0: 9.5,            // tốc độ lúc xuất phát (m/s)
+  VMAX: 23,           // tốc độ tối đa (m/s)
+  RAMP_DIST: 1800,    // quãng đường để đạt tốc độ tối đa (≈ 3,5 phút chạy)
   // --- làn đường ---
   LANE_W: 2.0,        // bề rộng một làn (m)
   LANE_SPEED: 7,      // tốc độ đổi làn (làn/giây): 1 làn mất ≈ 0,14 s
@@ -30,11 +30,11 @@ export const CFG = {
   BIKE_T: 10, BIKE_SPEED: 2, BIKE_SCORE: 2,   // xe đạp: 10 s, tốc độ x2, mỗi mét ghi gấp đôi kWh và tia nắng nhặt được tính gấp đôi; va chạm làm hỏng xe thay vì thua
   // --- sinh đường ---
   REACT: 0.25,        // khoảng nghỉ tối thiểu giữa hai cụm chướng ngại (giây × tốc độ)
-  GAP_K: 0.6, GAP_ADD: 2,           // khoảng trống giữa hai cụm = GAP_K × tốc độ + GAP_ADD (đủ đổi tới 2 làn)
+  GAP_K: 0.46, GAP_ADD: 1.4,           // khoảng trống giữa hai cụm = GAP_K × tốc độ + GAP_ADD (đủ đổi tới 2 làn)
   BUILD_MIN: 10, BUILD_MAX: 26,     // chiều dài tòa nhà chắn đường (m)
   ROOF_TOL: 0.25,     // chân cao hơn mái từ mức này trở lên thì không đụng tường (nhảy bám mép mái vẫn lên được)
   ZAP_W: 1.2, ZAP_WARN: 15,         // tia sét: bề rộng (m); hiện cảnh báo trên đất, giáng xuống khi người chơi còn cách ZAP_WARN m
-  UNLOCK: { crate: 0, building: 80, panel: 100, zap: 150, tray: 120, wire: 250, bird: 500 },  // quãng đường (m) bắt đầu xuất hiện
+  UNLOCK: { crate: 0, building: 50, panel: 60, zap: 90, tray: 75, wire: 140, bird: 260 },  // quãng đường (m) bắt đầu xuất hiện
 };
 
 export const V_JUMP = () => Math.sqrt(2 * CFG.G * CFG.JUMP_H);
@@ -110,8 +110,8 @@ function genRow(T){
   const G = CFG.GAP_K * v + CFG.GAP_ADD;
   const z0min = T.prevZ1 + G;
   const roll = r();
-  const kind = T.rows++ === 0 ? 'haz' : T.prevZ1 < CFG.UNLOCK.building ? (roll < 0.3 ? 'coins' : 'haz') : (roll < 0.16 ? 'coins' : roll < 0.5 ? 'haz' : (roll < 0.8 || T.prevZ1 < CFG.UNLOCK.zap) ? 'build' : 'zap');
-  const kindF = (kind === 'haz' && T.prevZ1 >= CFG.UNLOCK.tray && r() < 0.16) ? 'tray' : kind;   // một phần cụm chướng ngại thường đổi thành máng cáp vắt ngang đường
+  const kind = T.rows++ === 0 ? 'haz' : T.prevZ1 < CFG.UNLOCK.building ? (roll < 0.3 ? 'coins' : 'haz') : (roll < 0.09 ? 'coins' : roll < 0.46 ? 'haz' : (roll < 0.72 || T.prevZ1 < CFG.UNLOCK.zap) ? 'build' : 'zap');
+  const kindF = (kind === 'haz' && T.prevZ1 >= CFG.UNLOCK.tray && r() < 0.24) ? 'tray' : kind;   // một phần cụm chướng ngại thường đổi thành máng cáp vắt ngang đường
   const coins = [];
   const addCoin = (x, lane, y) => coins.push({ x: r1(x), lane, y: r1(y), taken: false });
   const line = (x0, lane, n, step, y = 0.9) => { for(let i = 0; i < n; i++) addCoin(x0 + i * step, lane, y); };
@@ -123,7 +123,7 @@ function genRow(T){
     for(let i = 0; i < 4; i++) addCoin(x - 1.2 + i * 1.1, 1, 0.45);
     z0 = z0min; z1 = x + zoneRel('wire', w, v)[1];
   } else if(kind === 'haz'){
-    const k = r() < 0.45 ? 1 : (r() < 0.8 || diff < 0.2) ? 2 : 3;
+    const k = r() < 0.3 ? 1 : (r() < 0.7 || diff < 0.15) ? 2 : 3;
     const lanes = [0, 1, 2].sort(() => r() - 0.5).slice(0, k);
     const list = lanes.map((lane) => { const type = pickType(r, z0min); const sp = SPEC[type]; return { type, lane, w: r1(lerp(sp.w[0], sp.w[1], r())), y0: sp.y0, y1: sp.y1 }; });
     // căn tâm cụm tại c sao cho vùng bay/trượt bắt đầu đúng z0min

@@ -1,4 +1,4 @@
-# Tích hợp game "Chạy năng lượng"
+# Tích hợp game "Run now: HMT"
 
 Trạng thái: **module đã xong và kiểm thử riêng, CHƯA gắn vào trang chính.** Nhánh `game-chay-nang-luong` không sửa `docs/games.js`, `docs/index.html`, `docs/app.js`. Việc gắn vào menu Trò chơi làm sau khi duyệt, theo hướng dẫn dưới đây.
 
@@ -43,7 +43,7 @@ Các tên `beep`, `noise`, `buzz`, `views`, `clearTimers`, `disposeViews`, `rend
 **a) Thẻ menu** (trong `showMenu()`, cạnh các thẻ khác của `.gm-menu`):
 
 ```js
-<button class="gm-card" data-g="runner"><span class="ico">🏃</span><b>Chạy năng lượng</b><small>Chạy 3 làn giữa các tòa nhà điện mặt trời, nhặt tia nắng, phá kỷ lục kWh</small></button>
+<button class="gm-card" data-g="runner"><span class="ico">🏃</span><b>Run now: HMT</b><small>Chạy 3 làn giữa các tòa nhà điện mặt trời, nhặt tia nắng, phá kỷ lục kWh</small></button>
 ```
 
 Dòng ghi chú cuối menu ("kết quả không tính vào bảng xếp hạng") nên sửa lại cho đúng, vì game này có bảng xếp hạng riêng.
@@ -198,3 +198,12 @@ Nếu đổi `G`, `JUMP_H`, `SLIDE_T`, `LANE_SPEED`, `GAP_K` hoặc các thông 
 ## 9. Giao diện toàn màn hình
 
 `showRunner()` trong `docs/games.js` tạo lớp phủ `#gm-runner-full` (position:fixed, phủ kín cửa sổ, z-index rất cao), khóa cuộn trang và gọi Fullscreen API nếu trình duyệt cho phép; rời game (nút ← Thoát, đổi tab) thì `dispose` gỡ lớp phủ và thoát toàn màn hình.
+
+
+## 10. Cập nhật: bảng Top 100, hồi sinh, độ khó
+
+- **Bảng xếp hạng**: top 100 theo Tháng này / Năm nay / Tất cả, 10 trang × 10 dòng. Mỗi ván lọt top ghi **một tài liệu mới** (một người có thể nhiều dòng). Ba collection (tách để chỉ sắp theo một trường, không cần tạo chỉ mục): `runner_scores` (tất cả), `runner_y/{năm}/scores`, `runner_m/{năm-tháng}/scores`. Hợp đồng module: `loadBoard(period)` với period = `'month' | 'year' | 'all'`; `submitScore(rec)` trả `'skip'` nếu không lọt top (không phải lỗi). Luật Firestore đã đổi (create-only), **phải dán lại `firestore.rules`**.
+- **Hồi sinh**: `opt.getQuestion()` trả `{ q, options[], correct, explain }` (games.js lấy ngẫu nhiên từ `questions`, bỏ câu có ảnh/video). Chết lần đầu trong ván: hiện câu hỏi 20 giây; đúng thì chạy tiếp (bất khả xâm phạm 2,5 s, chướng ngại sát phía trước bị phá), sai hoặc hết giờ thì hết pin. Không truyền `getQuestion` thì không có hồi sinh.
+- **Độ khó** tăng: `V0` 9,5, `VMAX` 23, `RAMP_DIST` 1800; khoảng trống giữa cụm ngắn hơn (`GAP_K` 0,46, `GAP_ADD` 1,4); chướng ngại mở khóa sớm hơn (`UNLOCK`); nhiều cụm 2–3 làn và máng cáp hơn. Người máy tối ưu vẫn qua 3000 đường không thua.
+- **Skin**: mốc mở khóa x10 (600 / 1200 / 2000 / 3000 / 5000).
+- Khi đang đạp xe mà trượt, nhân vật cúi rạp trên xe.

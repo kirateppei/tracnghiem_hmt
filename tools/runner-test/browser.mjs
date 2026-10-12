@@ -22,11 +22,12 @@ window.supported = supported;
 const board = [];
 const names = ['Nguyễn Văn An','Trần Thị Bích','Lê Hoàng Long','Phạm Minh Tuấn','Hoàng Anh','Đỗ Thu Hà','Vũ Quang Huy','Bùi Thanh Tâm','Ngô Đức','Đặng Mai Linh','Phan Quốc Bảo','Lý Thị Hồng'];
 names.forEach((n,i)=>board.push({uid:'u'+i,name:n,photo:i%3===0?'https://lh3.googleusercontent.com/none.png':'',best:4000-i*213,kwh:3000,coins:900}));
-board.push({uid:'me',name:'Người chơi thử',photo:'',best:1530,kwh:1400,coins:260});
+board.push({uid:'me',name:'Người chơi thử',photo:'',best:3650,kwh:3300,coins:700}, {uid:'me',name:'Người chơi thử',photo:'',best:3100,kwh:2900,coins:400});
 window.submitted = [];
 window.api = runner(document.getElementById('c'), {
   sfx: { beep(){ window.__sfx = (window.__sfx||0)+1; }, noise(){}, buzz(){} },
-  loadBoard: () => new Promise(r => setTimeout(() => r(board.slice()), 60)),
+  loadBoard: (p) => { (window.periods = window.periods || []).push(p); return new Promise(r => setTimeout(() => r(board.slice()), 60)); },
+  getQuestion: () => ({ q: 'Hai cộng hai bằng mấy?', options: ['3', '4', '5', '6'], correct: 1, explain: 'Hai cộng hai là bốn.' }),
   submitScore: (rec) => { window.submitted.push(rec); return Promise.resolve(); },
   me: { uid: 'me', name: 'Người chơi thử', photo: '' }, onExit(){ window.exited = true; }, seed: 4242,
 });
@@ -68,16 +69,34 @@ await page.evaluate(() => { window.api.debug.dbg.phase = null; window.api.debug.
 await page.keyboard.press('p'); check(await page.evaluate(() => window.api.debug.screen) === 'pause', 'phím P tạm dừng');
 await page.keyboard.press('p'); check(await page.evaluate(() => window.api.debug.screen) === 'play', 'phím P tiếp tục');
 // thua: đứng yên chờ chạm chướng ngại / rơi
-await page.waitForFunction(() => window.api.debug.screen === 'over', null, { timeout: 30000 });
+await page.waitForFunction(() => ['over', 'revive'].includes(window.api.debug.screen), null, { timeout: 30000 });
+if(await page.evaluate(() => window.api.debug.screen) === 'revive'){ await page.click('.rn-ropt:nth-child(1)'); await page.waitForFunction(() => window.api.debug.screen === 'over', null, { timeout: 8000 }); }
 await page.waitForTimeout(300); await shot(page, '6-het-pin');
 const over = await page.evaluate(() => ({ k: document.querySelector('#rn-ok').textContent, c: document.querySelector('#rn-oc').textContent, s: document.querySelector('#rn-os').textContent, rec: !document.querySelector('#rn-newrec').hidden, best: localStorage.getItem('gm_runner_best'), sub: window.submitted.length }));
 console.log('     hết pin:', JSON.stringify(over));
 check(+over.s >= 0 && over.best != null || +over.s === 0, 'điểm cuối hiển thị & kỷ lục lưu cục bộ');
 await page.click('#rn-board2'); await page.waitForTimeout(500); await shot(page, '7-xep-hang');
 const rows = await page.evaluate(() => ({ n: document.querySelectorAll('.rn-row2').length, me: document.querySelectorAll('.rn-row2.me').length }));
-check(rows.n >= 13 && rows.me >= 1, 'bảng xếp hạng hiện dòng và đánh dấu dòng của mình ' + JSON.stringify(rows));
+check(rows.n === 10 && rows.me === 2, 'bảng chỉ hiện top 10; cùng một người xuất hiện nhiều dòng và đều được đánh dấu ' + JSON.stringify(rows));
+await page.click('#rn-tabs button[data-p="year"]'); await page.waitForTimeout(300); await page.click('#rn-tabs button[data-p="all"]'); await page.waitForTimeout(300);
+check(JSON.stringify(await page.evaluate(() => window.periods)) === JSON.stringify(['month', 'year', 'all']), 'ba tab Tháng này / Năm nay / Tất cả gọi đúng kỳ');
 await page.click('#rn-bclose'); await page.click('#rn-again'); await page.waitForTimeout(600);
 check(await page.evaluate(() => window.api.debug.screen) === 'play', 'Chơi lại');
+// hồi sinh bằng câu hỏi: đúng = chạy tiếp (chỉ một lần mỗi ván), lần chết thứ hai = hết pin
+await page.evaluate(() => { const g = window.api.debug.game; g.track.hz = []; g.dead = true; g.cause = 'crate'; g.deadT = 0; g.events.push('die'); });
+await page.waitForFunction(() => window.api.debug.screen === 'revive', null, { timeout: 8000 });
+check(await page.evaluate(() => document.querySelectorAll('.rn-ropt').length) === 4, 'chết lần đầu: hiện câu hỏi hồi sinh với 4 đáp án');
+await page.click('.rn-ropt:nth-child(2)'); await page.waitForFunction(() => window.api.debug.screen === 'play', null, { timeout: 5000 });
+check(await page.evaluate(() => window.api.debug.game.dead) === false, 'trả lời đúng: hồi sinh, chạy tiếp');
+await page.evaluate(() => { const g = window.api.debug.game; g.invuln = 0; g.track.hz = []; g.dead = true; g.cause = 'crate'; g.deadT = 0; g.events.push('die'); });
+await page.waitForFunction(() => window.api.debug.screen === 'over', null, { timeout: 8000 });
+check(true, 'chết lần hai trong cùng ván: không còn cơ hội hồi sinh, hết pin');
+await page.click('#rn-again'); await page.waitForTimeout(500);
+await page.evaluate(() => { const g = window.api.debug.game; g.track.hz = []; g.dead = true; g.cause = 'crate'; g.deadT = 0; g.events.push('die'); });
+await page.waitForFunction(() => window.api.debug.screen === 'revive', null, { timeout: 8000 });
+await page.click('.rn-ropt:nth-child(1)'); await page.waitForFunction(() => window.api.debug.screen === 'over', null, { timeout: 6000 });
+check(true, 'trả lời sai: hết pin');
+await page.click('#rn-again'); await page.waitForTimeout(500);
 // điều khiển cảm ứng: chạm = nhảy, vuốt trái/phải = đổi làn, vuốt xuống = trượt
 const box = await page.evaluate(() => { const r = document.querySelector('canvas').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
 await page.evaluate(() => { const g = window.api.debug.game; g.track.hz = g.track.hz.filter((h) => h.x < g.dist - 30); });   // đường trống để thử điều khiển không bị chướng ngại làm gián đoạn

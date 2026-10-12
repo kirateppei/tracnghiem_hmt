@@ -336,7 +336,7 @@
     if(on === fsOn) return; fsOn = on;
     root.classList.toggle('gm-fs', on); document.body.style.overflow = on ? 'hidden' : '';
     try{
-      if(on){ const rf = root.requestFullscreen || root.webkitRequestFullscreen; if(rf){ const p = rf.call(root, { navigationUI: 'hide' }); if(p && p.catch) p.catch(() => {}); } }
+      if(on){ const de = document.documentElement, rf = de.requestFullscreen || de.webkitRequestFullscreen; if(rf){ const p = rf.call(de, { navigationUI: 'hide' }); if(p && p.catch) p.catch(() => {}); } }
       else if(document.fullscreenElement && document.exitFullscreen){ document.exitFullscreen().catch(() => {}); }
       else if(document.webkitFullscreenElement && document.webkitExitFullscreen){ document.webkitExitFullscreen(); }
     }catch(e){}
@@ -356,29 +356,52 @@
         <button class="gm-card" data-g="dice"><span class="ico">🎲</span><b>Lắc xí ngầu</b><small>Lắc điện thoại hoặc bấm nút để gieo</small></button>
         <button class="gm-card" data-g="chicken"><span class="ico">🐓</span><b>Đá gà mini</b><small>Gà có chỉ số và tuyệt chiêu ẩn, xem con nào thắng</small></button>
         <button class="gm-card" data-g="wheel"><span class="ico">🎡</span><b>Vòng quay may mắn</b><small>Tự nhập các ô rồi quay</small></button>
-        <button class="gm-card" data-g="runner"><span class="ico">🏃</span><b>Chạy năng lượng</b><small>Chạy 3 làn giữa các tòa nhà điện mặt trời, nhặt tia nắng, phá kỷ lục kWh</small></button>
+        <button class="gm-card" data-g="runner"><span class="ico">🏃</span><b>Run now: HMT</b><small>Chạy 3 làn giữa các tòa nhà điện mặt trời, nhặt tia nắng, phá kỷ lục kWh</small></button>
       </div>
-      <p class="gm-hint">Chỉ để giải trí. Riêng "Chạy năng lượng" có bảng kỷ lục riêng, các game khác không tính vào bảng xếp hạng.</p>`);
+      <p class="gm-hint">Chỉ để giải trí. Riêng "Run now: HMT" có bảng kỷ lục riêng, các game khác không tính vào bảng xếp hạng.</p>`);
     root.querySelectorAll('.gm-card').forEach((b) => b.addEventListener('click', () => openGame(b.dataset.g)));
     $('gm-mute').addEventListener('click', () => { muted = !muted; store('mute', muted); showMenu(); });
     $('gm-3d').addEventListener('click', () => { store('g3d', !want3d()); showMenu(); });
   }
-  /* ---------- Chạy năng lượng (module riêng docs/runner.js) ---------- */
+  /* ---------- Run now: HMT (module riêng docs/runner.js) ---------- */
   let RN = null;
   function loadRunner(){
     if(!RN) RN = import('./runner.js?v=' + (window.APP_VERSION || '0')).catch(() => null);
     return RN;
   }
-  function runnerBoard(){
+  // Bảng kỷ lục: mỗi ván lọt top 100 là một dòng riêng (một người có thể có nhiều dòng). Ba bảng tách theo collection để chỉ cần
+  // sắp theo một trường (không phải tạo chỉ mục Firestore): tất cả = runner_scores, năm = runner_y/{năm}/scores, tháng = runner_m/{năm-tháng}/scores
+  function runnerRef(period){
+    const d = new Date(), y = String(d.getFullYear()), ym = y + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    if(period === 'year') return fbDb.collection('runner_y').doc(y).collection('scores');
+    if(period === 'month') return fbDb.collection('runner_m').doc(ym).collection('scores');
+    return fbDb.collection('runner_scores');
+  }
+  function runnerBoard(period){
     if(typeof fbDb === 'undefined' || !fbDb) return Promise.resolve([]);
-    return fbDb.collection('runner_scores').orderBy('best', 'desc').limit(20).get().then((snap) =>
+    return runnerRef(period || 'all').orderBy('best', 'desc').limit(100).get().then((snap) =>
       snap.docs.map((d) => { const x = d.data(); return { uid: x.uid || d.id, name: x.name, photo: x.photo || '', best: x.best | 0, kwh: x.kwh | 0, coins: x.coins | 0 }; }));
   }
-  function runnerSubmit(rec){
-    if(typeof fbDb === 'undefined' || !fbDb || typeof session === 'undefined' || !session) return Promise.reject(new Error('offline'));
+  async function runnerSubmit(rec){
+    if(typeof fbDb === 'undefined' || !fbDb || typeof session === 'undefined' || !session) throw new Error('offline');
     const doc = { uid: session.uid, name: String(session.name || 'Ẩn danh').slice(0, 80), best: rec.best | 0, kwh: rec.kwh | 0, coins: rec.coins | 0, ts: firebase.firestore.FieldValue.serverTimestamp() };
     if(session.photo && session.photo.length <= 300 && /^https:\/\/[a-z0-9.-]+\.googleusercontent\.com\//.test(session.photo)) doc.photo = session.photo;
-    return fbDb.collection('runner_scores').doc(session.uid).set(doc);
+    const periods = ['month', 'year', 'all'];
+    const lists = await Promise.all(periods.map((p) => runnerBoard(p)));
+    const targets = periods.filter((p, i) => lists[i].length < 100 || doc.best > lists[i][lists[i].length - 1].best);   // chỉ ghi bảng nào điểm này lọt top 100
+    if(!targets.length) return 'skip';
+    const batch = fbDb.batch();
+    targets.forEach((p) => batch.set(runnerRef(p).doc(), doc));
+    await batch.commit();
+    return 'ok';
+  }
+  // câu hỏi trắc nghiệm để hồi sinh: lấy ngẫu nhiên từ ngân hàng câu hỏi của phần Làm bài (bỏ câu có ảnh/video, câu quá dài)
+  function runnerQuestion(){
+    const all = (typeof questions !== 'undefined' && Array.isArray(questions)) ? questions : [];
+    const pool = all.filter((q) => q && q.question && q.question.length < 230 && Array.isArray(q.options) && q.options.length >= 2 && q.options.every((o) => String(o).length < 120) && Number.isInteger(q.correct) && q.correct >= 0 && q.correct < q.options.length && !q.mediaType);
+    if(!pool.length) return null;
+    const q = pool[Math.floor(Math.random() * pool.length)];
+    return { q: q.question, options: q.options.map(String), correct: q.correct, explain: q.explanation ? String(q.explanation).slice(0, 170) : '' };
   }
   function showRunner(){
     clearTimers(); screen = 'runner';
@@ -390,7 +413,7 @@
     const fs = document.createElement('style'); fs.textContent = '#gm-runner-full .rn-root{border-radius:0;min-height:0}'; full.appendChild(fs);
     full.appendChild(host); document.body.appendChild(full);
     const prevOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
-    try{ const rf = full.requestFullscreen || full.webkitRequestFullscreen; if(rf){ const pr = rf.call(full, { navigationUI: 'hide' }); if(pr && pr.catch) pr.catch(() => {}); } }catch(e){}
+    try{ const de = document.documentElement, rf = de.requestFullscreen || de.webkitRequestFullscreen; if(rf){ const pr = rf.call(de, { navigationUI: 'hide' }); if(pr && pr.catch) pr.catch(() => {}); } }catch(e){}
     const teardown = () => {
       try{ if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); else if(document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen(); }catch(e){}
       document.body.style.overflow = prevOverflow; if(full.parentNode) full.parentNode.removeChild(full);
@@ -405,6 +428,7 @@
         sfx: { beep, noise, buzz },
         loadBoard: runnerBoard,
         submitScore: runnerSubmit,
+        getQuestion: runnerQuestion,
         me: (typeof session !== 'undefined' && session) ? { uid: session.uid, name: session.name, photo: session.photo } : null,
         onExit: showMenu,
       });

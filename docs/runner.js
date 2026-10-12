@@ -1,4 +1,4 @@
-/* Mini game 3D "Chạy năng lượng": kỹ thuật viên điện mặt trời chạy vô tận trên các mái nhà (2.5D, góc nhìn ngang).
+/* Mini game 3D "Run now: HMT": kỹ thuật viên điện mặt trời chạy vô tận trên các mái nhà (2.5D, góc nhìn ngang).
    Module ES, tự đủ: games.js nạp bằng import('./runner.js?v=...') rồi gọi runner(container, opt). Không tự truy cập Firebase.
    Phần luật chơi/sinh đường nằm ở runner-logic.js (thuần, kiểm thử bằng Node). Xem INTEGRACION_RUNNER.md. */
 import * as THREE from './vendor/three.module.min.js';
@@ -22,11 +22,11 @@ const UI = {
 export const SKINS = {
   dongphuc: { name: 'Đồng phục vàng cam', need: 0, shirt: '#ff9a1f', shirt2: '#f08a10', pants: '#f58a12', helmet: '#ffd21a', band: '#dfe3e8', boots: '#3a2f2a', glove: '#3d3d44', belt: '#5a3a1e', skin: '#e6b08a' },
   dien:    { name: 'Điện lực cam đậm', need: 0, shirt: '#f2680c', shirt2: '#d9570a', pants: '#e8610b', helmet: '#f4f6f8', band: '#e8edf0', boots: '#2e2a28', glove: '#e9e9ea', belt: '#4a3018', skin: '#e6b08a' },
-  xanh:    { name: 'Kỹ thuật viên xanh HMT', need: 60, shirt: '#1d4f8f', shirt2: '#163B6D', pants: '#17407a', helmet: '#f4f6f8', band: '#F2B807', boots: '#1b1f2a', glove: '#F2B807', belt: '#2a2a2a', skin: '#e6b08a' },
-  nang:    { name: 'Chiến binh mặt trời', need: 120, shirt: '#ffd24d', shirt2: '#f2b705', pants: '#ff9a1f', helmet: '#ff7a00', band: '#ffffff', boots: '#5a3a1e', glove: '#ffffff', belt: '#7a3a00', skin: '#e6b08a' },
-  pin:     { name: 'Xanh lá pin sạc', need: 200, shirt: '#1e9e6b', shirt2: '#14805A', pants: '#0f6b4a', helmet: '#F2B807', band: '#dfffe9', boots: '#1f2a24', glove: '#F2B807', belt: '#33261a', skin: '#e6b08a' },
-  dem:     { name: 'Ca đêm phản quang', need: 300, shirt: '#2a2e38', shirt2: '#1f222a', pants: '#232630', helmet: '#3a3f4a', band: '#7dffd1', boots: '#111318', glove: '#7dffd1', belt: '#111318', skin: '#e6b08a' },
-  vang:    { name: 'Vàng kim huyền thoại', need: 500, shirt: '#f0c53a', shirt2: '#d9a91e', pants: '#d9a91e', helmet: '#fff0a0', band: '#8a5a00', boots: '#1a1a1a', glove: '#fff0a0', belt: '#1a1a1a', skin: '#e6b08a' },
+  xanh:    { name: 'Kỹ thuật viên xanh HMT', need: 600, shirt: '#1d4f8f', shirt2: '#163B6D', pants: '#17407a', helmet: '#f4f6f8', band: '#F2B807', boots: '#1b1f2a', glove: '#F2B807', belt: '#2a2a2a', skin: '#e6b08a' },
+  nang:    { name: 'Chiến binh mặt trời', need: 1200, shirt: '#ffd24d', shirt2: '#f2b705', pants: '#ff9a1f', helmet: '#ff7a00', band: '#ffffff', boots: '#5a3a1e', glove: '#ffffff', belt: '#7a3a00', skin: '#e6b08a' },
+  pin:     { name: 'Xanh lá pin sạc', need: 2000, shirt: '#1e9e6b', shirt2: '#14805A', pants: '#0f6b4a', helmet: '#F2B807', band: '#dfffe9', boots: '#1f2a24', glove: '#F2B807', belt: '#33261a', skin: '#e6b08a' },
+  dem:     { name: 'Ca đêm phản quang', need: 3000, shirt: '#2a2e38', shirt2: '#1f222a', pants: '#232630', helmet: '#3a3f4a', band: '#7dffd1', boots: '#111318', glove: '#7dffd1', belt: '#111318', skin: '#e6b08a' },
+  vang:    { name: 'Vàng kim huyền thoại', need: 5000, shirt: '#f0c53a', shirt2: '#d9a91e', pants: '#d9a91e', helmet: '#fff0a0', band: '#8a5a00', boots: '#1a1a1a', glove: '#fff0a0', belt: '#1a1a1a', skin: '#e6b08a' },
 };
 export const supported = () => { try{ const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); }catch(e){ return false; } };
 
@@ -763,7 +763,7 @@ export function runner(container, opt = {}){
       </div>
     </div>
     <div class="rn-scr rn-menu">
-      <div class="rn-title"><h2>⚡ Chạy năng lượng</h2><p>Vuốt trái/phải = đổi làn · vuốt lên = nhảy (vuốt lên lần nữa trên không = nhảy đôi; nhảy lên mái nhà, biến tần để chạy trên đó) · vuốt xuống = trượt · tránh tia sét giật</p></div>
+      <div class="rn-title"><h2>⚡ Run now: HMT</h2><p>Vuốt trái/phải = đổi làn · vuốt lên = nhảy (vuốt lên lần nữa trên không = nhảy đôi; nhảy lên mái nhà, biến tần để chạy trên đó) · vuốt xuống = trượt · tránh tia sét giật</p></div>
       <div class="rn-bottom">
         <div class="rn-chars" role="group" aria-label="Chọn nhân vật">
           <button class="rn-char" data-g="m">👷‍♂️ Nam</button><button class="rn-char" data-g="f">👷‍♀️ Nữ</button>
@@ -788,12 +788,22 @@ export function runner(container, opt = {}){
         <button class="rn-btn rn-pri" id="rn-again">↻ Chơi lại</button>
         <div class="rn-row"><button class="rn-btn" id="rn-board2">🏆 Xếp hạng</button><button class="rn-btn" id="rn-exit3" hidden>← Thoát</button></div></div>
     </div>
+    <div class="rn-scr rn-revive" hidden>
+      <div class="rn-card rn-revcard"><h3>🔋 Hết pin! Hồi sinh?</h3>
+        <div class="rn-note">Trả lời <b>đúng</b> câu hỏi này để chạy tiếp (chỉ một cơ hội mỗi ván). Sai là hết pin.</div>
+        <div class="rn-rtime"><i id="rn-rtimebar"></i></div>
+        <div class="rn-rq" id="rn-rq"></div>
+        <div class="rn-ropts" id="rn-ropts"></div>
+        <div class="rn-rres" id="rn-rres"></div></div>
+    </div>
     <div class="rn-scr rn-boardscr" hidden>
-      <div class="rn-card rn-boardcard"><div class="rn-bh"><h3>🏆 Xếp hạng — Top 20</h3><button class="rn-ibtn" id="rn-bclose" aria-label="Đóng">✕</button></div>
-        <div class="rn-list" id="rn-list"></div></div>
+      <div class="rn-card rn-boardcard"><div class="rn-bh"><h3>🏆 Top 100 điểm cao</h3><button class="rn-ibtn" id="rn-bclose" aria-label="Đóng">✕</button></div>
+        <div class="rn-tabs" id="rn-tabs" role="tablist"><button data-p="month">Tháng này</button><button data-p="year">Năm nay</button><button data-p="all">Tất cả</button></div>
+        <div class="rn-list" id="rn-list"></div>
+        <div class="rn-pager"><button id="rn-prev" aria-label="Trang trước">‹</button><span id="rn-pg">Trang 1/1</span><button id="rn-next" aria-label="Trang sau">›</button></div></div>
     </div>`);
   const $ = (id) => wrap.querySelector('#' + id);
-  const scr = { hud: wrap.querySelector('.rn-hud'), menu: wrap.querySelector('.rn-menu'), pause: wrap.querySelector('.rn-pausescr'), over: wrap.querySelector('.rn-over'), board: wrap.querySelector('.rn-boardscr') };
+  const scr = { hud: wrap.querySelector('.rn-hud'), menu: wrap.querySelector('.rn-menu'), pause: wrap.querySelector('.rn-pausescr'), over: wrap.querySelector('.rn-over'), revive: wrap.querySelector('.rn-revive'), board: wrap.querySelector('.rn-boardscr') };
   const showOnly = (...names) => { for(const k in scr) scr[k].hidden = !names.includes(k); };
   const hudEl = { kwh: $('rn-kwh'), coin: $('rn-coin'), best: $('rn-bestv'), chips: { magnet: $('rn-pw-magnet'), shield: $('rn-pw-shield'), boost: $('rn-pw-boost'), bike: $('rn-pw-bike') } };
   const hudCache = { kwh: -1, coin: -1, best: -1 };
@@ -817,7 +827,7 @@ export function runner(container, opt = {}){
 
   function startGame(){
     const seed = opt.seed ? (opt.seed | 0) : (Math.floor(Math.random() * 2147483000) + 1);
-    G = L.createGame(seed); rIdx = 0; deathShown = false; finalRes = null; shake = 0; hudCache.kwh = hudCache.coin = hudCache.best = -1;
+    G = L.createGame(seed); revived = false; clearTimeout(reviveTimer); rIdx = 0; deathShown = false; finalRes = null; shake = 0; hudCache.kwh = hudCache.coin = hudCache.best = -1;
     acc = 0; input.jump = input.slide = input.left = input.right = false; input.held = false; camX = 0; comboSfx = 0; paused = false; screen = 'play'; camTo = 0;
     Object.values(hudEl.chips).forEach((c) => { c.hidden = true; });
     showOnly('hud'); snd.beep(523, 0.08, 'triangle', 0.08); snd.beep(784, 0.12, 'triangle', 0.08, 0.08);
@@ -838,38 +848,48 @@ export function runner(container, opt = {}){
   $('rn-bclose').addEventListener('click', () => { screen = boardFrom; showOnly(boardFrom === 'over' ? 'over' : 'menu'); });
 
   /* ---------- Bảng xếp hạng ---------- */
-  async function openBoard(from){
-    boardFrom = from; screen = 'board'; showOnly('board');
-    const list = $('rn-list'); list.innerHTML = '<div class="rn-msg">Đang tải…</div>';
-    let rows = null, failed = false;
-    if(opt.loadBoard){ try{ rows = await opt.loadBoard(); }catch(e){ failed = true; } } else failed = true;
-    if(!alive || screen !== 'board') return;
-    rows = Array.isArray(rows) ? rows.filter((r) => r && r.best > 0).sort((a, b) => b.best - a.best) : [];
-    const top = rows.slice(0, 20), meId = opt.me && opt.me.uid;
-    let html = top.map((r, i) => rowHtml(i + 1, r, r.uid === meId)).join('');
-    if(!top.length) html = `<div class="rn-msg">${failed ? 'Chưa tải được bảng xếp hạng. Bạn vẫn chơi và lưu kỷ lục trên máy bình thường.' : 'Chưa có ai trên bảng. Hãy là người đầu tiên!'}</div>`;
-    if(best > 0 && !top.some((r) => r.uid === meId)){
+  let boardPeriod = 'month', boardRows = [], boardPage = 0, boardFailed = false;
+  const PAGE = 10, MAXROWS = 100;   // top 100, mỗi trang 10 dòng
+  function renderBoardPage(){
+    const list = $('rn-list'), meId = opt.me && opt.me.uid, pages = Math.max(1, Math.ceil(boardRows.length / PAGE));
+    boardPage = Math.min(Math.max(0, boardPage), pages - 1);
+    const from = boardPage * PAGE, slice = boardRows.slice(from, from + PAGE);
+    // một người có thể xuất hiện nhiều dòng; mọi dòng của mình được đánh dấu
+    let html = slice.map((r, i) => rowHtml(from + i + 1, r, r.uid === meId)).join('');
+    if(!boardRows.length) html = `<div class="rn-msg">${boardFailed ? 'Chưa tải được bảng xếp hạng. Bạn vẫn chơi và lưu kỷ lục trên máy bình thường.' : 'Chưa có ai trên bảng. Hãy là người đầu tiên!'}</div>`;
+    if(best > 0 && boardPeriod === 'all' && boardPage === pages - 1 && !boardRows.some((r) => r.uid === meId)){
       html += `<div class="rn-sep">Kỷ lục trên máy này</div>` + rowHtml('–', { name: (opt.me && opt.me.name) || 'Bạn', photo: opt.me && opt.me.photo, best }, true);
     }
-    list.innerHTML = html;
+    list.innerHTML = html; list.scrollTop = 0;
     list.querySelectorAll('img.rn-av').forEach((im) => im.addEventListener('error', () => { const s = doc.createElement('span'); s.className = 'rn-av'; s.textContent = im.dataset.i || '?'; im.replaceWith(s); }));
-    const mine = list.querySelector('.me'); if(mine && mine.scrollIntoView) { try{ mine.scrollIntoView({ block: 'nearest' }); }catch(e){} }
+    $('rn-pg').textContent = `Trang ${boardPage + 1}/${pages}`;
+    $('rn-prev').disabled = boardPage <= 0; $('rn-next').disabled = boardPage >= pages - 1;
   }
+  async function openBoard(from, period){
+    if(from) boardFrom = from;
+    if(period) boardPeriod = period;
+    boardPage = 0; screen = 'board'; showOnly('board');
+    wrap.querySelectorAll('#rn-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.p === boardPeriod));
+    $('rn-list').innerHTML = '<div class="rn-msg">Đang tải…</div>'; $('rn-pg').textContent = '…'; $('rn-prev').disabled = $('rn-next').disabled = true;
+    const want = boardPeriod;
+    let rows = null; boardFailed = false;
+    if(opt.loadBoard){ try{ rows = await opt.loadBoard(want); }catch(e){ boardFailed = true; } } else boardFailed = true;
+    if(!alive || screen !== 'board' || want !== boardPeriod) return;
+    boardRows = Array.isArray(rows) ? rows.filter((r) => r && r.best > 0).sort((a, b) => b.best - a.best).slice(0, MAXROWS) : [];
+    renderBoardPage();
+  }
+  wrap.querySelectorAll('#rn-tabs button').forEach((b) => b.addEventListener('click', () => { openBoard(null, b.dataset.p); snd.beep(660, 0.05, 'triangle', 0.06); }));
+  $('rn-prev').addEventListener('click', () => { boardPage--; renderBoardPage(); snd.beep(520, 0.04, 'triangle', 0.05); });
+  $('rn-next').addEventListener('click', () => { boardPage++; renderBoardPage(); snd.beep(520, 0.04, 'triangle', 0.05); });
   function rowHtml(rank, r, me){
     const nm = String(r.name || 'Ẩn danh'), ini = esc(nm.trim().charAt(0).toUpperCase() || '?');
     const okPhoto = r.photo && /^https:\/\/[a-z0-9.-]+\.googleusercontent\.com\//.test(r.photo);
     const av = okPhoto ? `<img class="rn-av" src="${esc(r.photo)}" data-i="${ini}" referrerpolicy="no-referrer" alt="" loading="lazy">` : `<span class="rn-av">${ini}</span>`;
     return `<div class="rn-row2${me ? ' me' : ''}"><span class="rn-rk">${rank}</span>${av}<span class="rn-nm">${esc(nm)}${me ? ' <em>(bạn)</em>' : ''}</span><b class="rn-sc">${esc(r.best)}</b></div>`;
   }
-  async function submitBest(rec){
+  async function submitBest(rec){      // mọi ván có điểm đều gửi; bên gắn game quyết định bảng nào (tháng/năm/tất cả) mà điểm lọt top 10
     if(!opt.submitScore || !opt.me || !opt.me.uid) return 'none';
-    try{ await opt.submitScore(rec); store(UI.KEY.synced, rec.best); return 'ok'; }catch(e){ return 'denied'; }
-  }
-  function syncPending(){      // lần mở menu: nếu kỷ lục máy này chưa gửi lên thì gửi lặng lẽ
-    if(!opt.submitScore || !opt.me || !opt.me.uid || best <= 0) return;
-    if((+store(UI.KEY.synced) || 0) >= best) return;
-    const r = store(UI.KEY.rec) || {};
-    submitBest({ best, kwh: +r.kwh || 0, coins: +r.coins || 0 });
+    try{ const r = await opt.submitScore(rec); return r === 'skip' ? 'skip' : 'ok'; }catch(e){ return 'denied'; }
   }
 
   /* ---------- Điều khiển ---------- */
@@ -1010,6 +1030,7 @@ export function runner(container, opt = {}){
       const pc = g.dist * 2.4;
       T_.legL = -1.05 + 0.45 * Math.sin(pc); T_.legR = -1.05 - 0.45 * Math.sin(pc); T_.shinL = 1.25 + 0.55 * Math.cos(pc); T_.shinR = 1.25 - 0.55 * Math.cos(pc);
       T_.armL = T_.armR = -1.2; T_.foreL = T_.foreR = -0.45; T_.lean = 0.42; T_.bob = 0; T_.flip = 0; T_.tail = 0.9;
+      if(g.sliding){ T_.lean = 1.15; T_.bob = -0.32; T_.legL = T_.legR = -1.35; T_.shinL = T_.shinR = 1.7; T_.armL = T_.armR = -1.55; T_.foreL = T_.foreR = -0.2; T_.tail = 1.2; }   // cúi rạp người trên xe khi trượt
     }
     const k = 1 - Math.exp(-dt * (g.dead ? 14 : (screen === 'menu' ? 8 : 24)));
     for(const n in T_) pose[n] += (T_[n] - pose[n]) * (n === 'flip' && g.spin > 0 ? 1 : k);
@@ -1066,8 +1087,46 @@ export function runner(container, opt = {}){
     }
     ev.length = 0;
   }
+  /* ---------- Hồi sinh bằng câu hỏi trắc nghiệm (1 cơ hội mỗi ván): đúng = chạy tiếp, sai = hết pin ---------- */
+  let revived = false, reviveTimer = 0, reviveRaf = 0;
+  const REVIVE_SECONDS = 20;
+  function showRevive(q){
+    screen = 'revive'; showOnly('revive');
+    $('rn-rq').textContent = q.q; $('rn-rres').textContent = ''; $('rn-rres').className = 'rn-rres';
+    const box = $('rn-ropts'); box.innerHTML = '';
+    let decided = false;
+    const t0 = performance.now(), bar = $('rn-rtimebar');
+    const tick = () => { const f = Math.max(0, 1 - (performance.now() - t0) / (REVIVE_SECONDS * 1000)); bar.style.width = (f * 100) + '%'; if(f > 0 && !decided && alive) reviveRaf = requestAnimationFrame(tick); else if(f <= 0 && !decided) choose(-1); };
+    const choose = (i) => {
+      if(decided) return; decided = true; cancelAnimationFrame(reviveRaf);
+      const ok = i === q.correct, btns = box.querySelectorAll('button');
+      btns.forEach((b, k) => { b.disabled = true; if(k === q.correct) b.classList.add('ok'); else if(k === i) b.classList.add('bad'); });
+      const res = $('rn-rres'); res.className = 'rn-rres ' + (ok ? 'ok' : 'bad');
+      res.textContent = ok ? '✅ Chính xác! Hồi sinh!' : (i < 0 ? '⏱ Hết giờ.' : '❌ Sai rồi.') + (q.explain ? ' ' + q.explain : '');
+      if(ok){ snd.beep(660, 0.1, 'triangle', 0.1); snd.beep(990, 0.12, 'triangle', 0.1, 0.1); snd.beep(1320, 0.2, 'triangle', 0.1, 0.22); }
+      else { snd.beep(180, 0.3, 'sawtooth', 0.12); snd.buzz([60, 40, 90]); }
+      reviveTimer = setTimeout(() => { if(!alive) return; if(ok) doRevive(); else finishGame(); }, ok ? 1000 : 2200);
+    };
+    q.options.forEach((o, k) => { const b = doc.createElement('button'); b.className = 'rn-ropt'; b.innerHTML = '<b>' + 'ABCDEF'[k] + '</b><span></span>'; b.querySelector('span').textContent = o; b.addEventListener('click', () => choose(k)); box.appendChild(b); });
+    reviveRaf = requestAnimationFrame(tick);
+  }
+  function doRevive(){   // chạy tiếp tại chỗ: dựng người dậy, phá chướng ngại sát phía trước, bất khả xâm phạm 2,5 s
+    G.dead = false; G.deadT = 0; G.cause = ''; G.invuln = 2.5; G.sliding = false; G.slideQ = false; G.vy = 0; G.bike = 0; G.shield = false;
+    for(const h of G.track.hz){ if(h.x < G.dist + 14 && h.x + h.w > G.dist - 6) h.broken = true; }
+    G.y = Math.max(0, L.floorAt(G, G.y + 0.3)); G.onGround = true;
+    deathShown = false; finalRes = null; shake = 0; screen = 'play'; paused = false; acc = 0; last = performance.now();
+    input.jump = input.slide = input.left = input.right = false; input.held = false;
+    showOnly('hud');
+  }
   function gameOver(){
     deathShown = true;
+    if(!revived && opt.getQuestion){
+      let q = null; try{ q = opt.getQuestion(); }catch(e){}
+      if(q && q.q && Array.isArray(q.options) && q.options.length >= 2 && Number.isInteger(q.correct)){ revived = true; showRevive(q); return; }
+    }
+    finishGame();
+  }
+  function finishGame(){
     const kwh = L.kwhOf(G), score = L.finalScore(kwh, G.coins), rec = L.isRecord(score, best);
     finalRes = { kwh, coins: G.coins, score, rec };
     $('rn-ok').textContent = kwh; $('rn-oc').textContent = G.coins; $('rn-os').textContent = score;
@@ -1078,13 +1137,13 @@ export function runner(container, opt = {}){
       if(got.length) $('rn-newrec').textContent = '🎉 Kỷ lục mới! 🎁 Mở khóa: ' + got.join(', '); else $('rn-newrec').textContent = '🎉 Kỷ lục mới!';
       best = score; store(UI.KEY.best, best); store(UI.KEY.rec, { kwh, coins: G.coins });
       snd.beep(784, 0.12, 'triangle', 0.1, 0.1); snd.beep(988, 0.12, 'triangle', 0.1, 0.22); snd.beep(1318, 0.25, 'triangle', 0.1, 0.34);
-      submitBest({ best: score, kwh, coins: G.coins }).then((r) => {
-        if(!alive || screen !== 'over') return;
-        const n = $('rn-onote');
-        if(r === 'ok') n.textContent = '✓ Đã lưu lên bảng xếp hạng';
-        else if(r === 'denied') n.textContent = 'Kỷ lục đã lưu trên máy này.';
-      });
     }
+    if(score > 0) submitBest({ best: score, kwh, coins: G.coins }).then((r) => {
+      if(!alive || screen !== 'over') return;
+      const n = $('rn-onote');
+      if(r === 'ok') n.textContent = '🏆 Điểm của bạn lọt top 100 bảng xếp hạng!';
+      else if(r === 'denied' && rec) n.textContent = 'Kỷ lục đã lưu trên máy này.';
+    });
   }
 
   /* ---------- Vòng lặp ---------- */
@@ -1141,7 +1200,7 @@ export function runner(container, opt = {}){
     wrap.remove();
   }
 
-  resize(); refreshMenu(); showOnly('menu'); syncPending();
+  resize(); refreshMenu(); showOnly('menu'); 
   last = performance.now(); raf = requestAnimationFrame(frame);
 
   return {
@@ -1206,6 +1265,17 @@ function injectCss(doc){
 .rn-note{font-size:.8rem;opacity:.8;min-height:1.1em;text-align:center}
 .rn-boardcard{max-height:86%;align-items:stretch;gap:8px}
 .rn-bh{display:flex;align-items:center;justify-content:space-between;gap:8px}.rn-bh h3{font-size:1.15rem}
+.rn-revive{align-items:center;justify-content:center;background:rgba(5,10,25,.7)}
+.rn-revcard{max-height:92%;overflow-y:auto;align-items:stretch;gap:10px}
+.rn-rq{font-weight:700;font-size:1rem;line-height:1.35}
+.rn-rtime{height:7px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden}.rn-rtime i{display:block;height:100%;width:100%;background:#ffb020}
+.rn-ropts{display:flex;flex-direction:column;gap:8px}
+.rn-ropt{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#fff;font:inherit;cursor:pointer}
+.rn-ropt b{width:26px;height:26px;border-radius:50%;background:#ff9a1f;color:#2a1600;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.rn-ropt.ok{background:rgba(46,200,110,.5);border-color:#5dff9d}.rn-ropt.bad{background:rgba(220,60,50,.5);border-color:#ff8a80}
+.rn-rres{min-height:1.4em;text-align:center;font-weight:800}.rn-rres.ok{color:#8dffb0}.rn-rres.bad{color:#ffb4ab}
+.rn-pager{display:flex;align-items:center;justify-content:center;gap:14px;font-weight:700}.rn-pager button{width:44px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.45);background:rgba(0,0,0,.4);color:#fff;font-size:1.3rem;font-weight:900;cursor:pointer}.rn-pager button:disabled{opacity:.3;cursor:default}
+.rn-tabs{display:flex;gap:6px}.rn-tabs button{flex:1;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;border-radius:999px;padding:7px 4px;font:inherit;font-weight:700;font-size:.85rem;cursor:pointer}.rn-tabs button.on{background:#ff9a1f;border-color:#fff;color:#2a1600}
 .rn-list{overflow-y:auto;overscroll-behavior:contain;flex:1;min-height:120px;max-height:62vh;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 .rn-row2{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px}
 .rn-row2:nth-child(odd){background:rgba(255,255,255,.05)}

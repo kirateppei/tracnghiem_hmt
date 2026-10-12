@@ -2108,3 +2108,31 @@ function initSetupControls(){
   updateSetupHint();
 }
 initSetupControls();
+
+
+/* ---------- Làm trắc nghiệm toàn màn hình ---------- */
+function exitQuiz(){
+  if(!confirm('Thoát bài làm? Bài đang làm dở được lưu để làm tiếp lần sau.')) return;
+  backToSetup();
+}
+(function quizFullscreen(){
+  const view = document.getElementById('view-quiz'), play = document.getElementById('quiz-play'), res = document.getElementById('quiz-result');
+  if(!view || !play || !res) return;
+  let on = false;
+  function sync(){
+    const want = view.classList.contains('active') && (play.style.display === 'block' || res.style.display === 'block');
+    if(want === on) return; on = want;
+    view.classList.toggle('qz-fs', on); document.body.style.overflow = on ? 'hidden' : '';
+    try{
+      if(on){ const de = document.documentElement, rf = de.requestFullscreen || de.webkitRequestFullscreen; if(rf){ const p = rf.call(de, { navigationUI: 'hide' }); if(p && p.catch) p.catch(() => {}); } }
+      else if(document.fullscreenElement && document.exitFullscreen){ document.exitFullscreen().catch(() => {}); }
+      else if(document.webkitFullscreenElement && document.webkitExitFullscreen){ document.webkitExitFullscreen(); }
+    }catch(e){}
+    view.scrollTop = 0;
+  }
+  const mo = new MutationObserver(sync);
+  mo.observe(play, { attributes: true, attributeFilter: ['style'] });
+  mo.observe(res, { attributes: true, attributeFilter: ['style'] });
+  mo.observe(view, { attributes: true, attributeFilter: ['class'] });
+  sync();
+})();

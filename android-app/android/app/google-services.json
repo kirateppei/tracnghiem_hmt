@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "146204894125",
+    "project_id": "hmt-trac-nghiem",
+    "storage_bucket": "hmt-trac-nghiem.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:146204894125:android:469b4d767276ac68d57724",
+        "android_client_info": {
+          "package_name": "com.hiepminhthinh.tracnghiem"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "146204894125-spft1agglkdepupj2gb6ppgrsebg50rp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hiepminhthinh.tracnghiem",
+            "certificate_hash": "480e613459f5e1a454791962b1dd52b95799b7c4"
+          }
+        },
+        {
+          "client_id": "146204894125-96blgs6riak9r3s59qj3njfroso8dhao.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9ywYdBhW1kkNP0dsOSsZyax-xMEzeFO4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "146204894125-96blgs6riak9r3s59qj3njfroso8dhao.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

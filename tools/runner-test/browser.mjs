@@ -80,12 +80,17 @@ await page.click('#rn-bclose'); await page.click('#rn-again'); await page.waitFo
 check(await page.evaluate(() => window.api.debug.screen) === 'play', 'Chơi lại');
 // điều khiển cảm ứng: chạm = nhảy, vuốt trái/phải = đổi làn, vuốt xuống = trượt
 const box = await page.evaluate(() => { const r = document.querySelector('canvas').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+await page.evaluate(() => { const g = window.api.debug.game; g.track.hz = g.track.hz.filter((h) => h.x < g.dist - 30); });   // đường trống để thử điều khiển không bị chướng ngại làm gián đoạn
 await page.waitForTimeout(150);
 await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.waitForTimeout(400);
-check(await page.evaluate(() => window.api.debug.game.y) > 0.05 || await page.evaluate(() => window.api.debug.game.jumps) > 0, 'chạm màn hình = nhảy'); await page.mouse.up(); await page.waitForTimeout(1200);
+check(await page.evaluate(() => window.api.debug.game.y) > 0.05 || await page.evaluate(() => window.api.debug.game.jumps) > 0, 'chạm màn hình = nhảy'); check(await page.evaluate(() => window.api.debug.game.jumps) === 1, 'một lần chạm = đúng một cú nhảy (không nhảy đôi)'); await page.mouse.up(); await page.waitForTimeout(1200);
 await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.move(box.x - 70, box.y, { steps: 4 }); await page.waitForTimeout(200); await page.mouse.up();
 check(await page.evaluate(() => window.api.debug.game.lane) === 0, 'vuốt trái = sang làn trái');
-await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.move(box.x + 70, box.y, { steps: 4 }); await page.mouse.move(box.x + 140, box.y, { steps: 4 }); await page.waitForTimeout(200); await page.mouse.up();
+for(let k = 0; k < 2; k++){ await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.move(box.x + 70, box.y, { steps: 4 }); await page.waitForTimeout(150); await page.mouse.up(); await page.waitForTimeout(300); }
+// một lần chạm chỉ một thao tác: kéo dài không đổi thêm làn, không nhảy kèm
+await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.move(box.x - 60, box.y, { steps: 3 }); await page.mouse.move(box.x - 140, box.y, { steps: 5 }); await page.waitForTimeout(200); await page.mouse.up();
+check(await page.evaluate(() => window.api.debug.game.lane) === 1 && await page.evaluate(() => window.api.debug.game.jumps) === 0, 'một lần vuốt dài chỉ đổi đúng một làn, không kèm nhảy'); await page.waitForTimeout(400);
+for(let k = 0; k < 1; k++){ await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.move(box.x + 70, box.y, { steps: 4 }); await page.waitForTimeout(150); await page.mouse.up(); await page.waitForTimeout(300); }
 check(await page.evaluate(() => window.api.debug.game.lane) === 2, 'vuốt phải hai lần = sang làn phải');
 await page.waitForTimeout(900);
 await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.move(box.x, box.y + 60, { steps: 4 }); await page.waitForTimeout(200);

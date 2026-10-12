@@ -8,12 +8,14 @@ const { CFG } = L;
 
 /* ================= Hằng số dễ chỉnh theo phản hồi người chơi (giao diện/điều khiển) ================= */
 const UI = {
-  SWIPE_PX: 24,          // vuốt ít nhất chừng này điểm ảnh thì tính là vuốt (trái/phải = đổi làn, xuống = trượt, lên = nhảy)
+  SWIPE_PX: 20,          // vuốt ít nhất chừng này điểm ảnh thì tính là vuốt (trái/phải = đổi làn, xuống = trượt, lên = nhảy)
   SWIPE_RATIO: 1.0,      // độ lệch theo hướng chính phải lớn hơn hướng kia × hệ số này
   CYCLE_M: 2000,         // chu kỳ đổi bầu trời: sáng → trưa → hoàng hôn → đêm (mét)
   START_PHASE: 0.02,     // pha bầu trời lúc xuất phát (0 = sáng sớm)
   VIS_W: 8.6,            // bề ngang cảnh nhìn thấy (m) tại chỗ nhân vật; nhỏ hơn = nhân vật to hơn
-  TAP_DELAY_MS: 55,      // chờ chừng này ms sau khi chạm để phân biệt chạm (nhảy) với vuốt
+  TAP_DELAY_MS: 70,      // chờ chừng này ms sau khi chạm để phân biệt chạm (nhảy) với vuốt
+  TAP_SLOP: 9,           // ngón xê dịch quá chừng này điểm ảnh trong thời gian chờ thì coi là đang vuốt, không nhảy
+  TAP_DEBOUNCE_MS: 110,  // hai lần chạm cách nhau ít hơn thế chỉ tính một (chống nảy ngón); nhảy đôi cần chạm lần hai chậm hơn
   DRAW_DIST: 105,        // nhìn xa bao nhiêu mét (vật ở xa hơn không được vẽ)
     MAX_DPR: 2,
   KEY: { best: 'gm_runner_best', rec: 'gm_runner_bestrec', char: 'gm_runner_char', skin: 'gm_runner_skin', synced: 'gm_runner_synced' },
@@ -758,26 +760,33 @@ export function runner(container, opt = {}){
   }
 
   /* ---------- Điều khiển ---------- */
-  let ptr = null;
+  let ptr = null, lastDown = 0, lastAct = 0;
+  const near = (p, e, r) => Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < r;
   canvas.addEventListener('pointerdown', (e) => {
     if(screen !== 'play' || paused) return;
     e.preventDefault(); try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
-    const p = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, jumped: false, timer: 0 };
-    // chạm = nhảy; chờ một chút để phân biệt với vuốt đổi làn/trượt
-    p.timer = setTimeout(() => { if(ptr === p && !p.moved && !p.jumped){ p.jumped = true; input.jump = true; input.held = true; } }, UI.TAP_DELAY_MS);
-    ptr = p;
+    const now = performance.now();
+    if(now - lastDown < UI.TAP_DEBOUNCE_MS) return;          // ngón tay nảy / hai sự kiện chạm liền nhau: chỉ tính một
+    lastDown = now;
+    const p = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, acted: false, timer: 0, t0: now };
+    // chạm = nhảy: chờ một chút (TAP_DELAY_MS) để biết có phải vuốt không; nếu ngón đã bắt đầu trượt thì không nhảy
+    ptr = p;   // quyết định "chạm = nhảy" nằm trong vòng lặp khung hình (tapCheck), sau khi mọi sự kiện kéo đã được xử lý
   });
   canvas.addEventListener('pointermove', (e) => {
-    if(!ptr || e.pointerId !== ptr.id || screen !== 'play') return;
-    const dx = e.clientX - ptr.x, dy = e.clientY - ptr.y, ax = Math.abs(dx), ay = Math.abs(dy), R = UI.SWIPE_RATIO;
-    if(ax > UI.SWIPE_PX && ax > ay * R){ ptr.moved = true; if(dx > 0) input.right = true; else input.left = true; ptr.x = e.clientX; ptr.y = e.clientY; }
-    else if(dy > UI.SWIPE_PX && dy > ax * R){ ptr.moved = true; input.slide = true; input.held = false; ptr.x = e.clientX; ptr.y = e.clientY; }
-    else if(dy < -UI.SWIPE_PX && ay > ax * R){ ptr.moved = true; if(!ptr.jumped){ ptr.jumped = true; input.jump = true; input.held = true; } ptr.x = e.clientX; ptr.y = e.clientY; }
+    if(!ptr || e.pointerId !== ptr.id || screen !== 'play' || ptr.acted) return;     // mỗi lần chạm chỉ một thao tác
+    ptr.x = e.clientX; ptr.y = e.clientY;
+    const dx = e.clientX - ptr.x0, dy = e.clientY - ptr.y0, ax = Math.abs(dx), ay = Math.abs(dy), R = UI.SWIPE_RATIO;
+    if(ax > UI.SWIPE_PX && ax > ay * R){ ptr.acted = true; lastAct = performance.now(); if(dx > 0) input.right = true; else input.left = true; }
+    else if(dy > UI.SWIPE_PX && dy > ax * R){ ptr.acted = true; lastAct = performance.now(); input.slide = true; input.held = false; }
+    else if(dy < -UI.SWIPE_PX && ay > ax * R){ ptr.acted = true; lastAct = performance.now(); input.jump = true; input.held = true; }
   });
+  function tapCheck(){
+    if(ptr && !ptr.acted && performance.now() - ptr.t0 >= UI.TAP_DELAY_MS && near(ptr, { clientX: ptr.x, clientY: ptr.y }, UI.TAP_SLOP)){ ptr.acted = true; lastAct = performance.now(); input.jump = true; input.held = true; }
+  }
   const up = (e) => {
     if(!ptr || e.pointerId !== ptr.id) return;
-    clearTimeout(ptr.timer);
-    if(!ptr.moved && !ptr.jumped) input.jump = true;           // chạm rất nhanh: nhảy thấp
+    // chạm rất nhanh (ngón nhấc lên trước khi hết thời gian chờ) và gần như không xê dịch: nhảy thấp
+    if(!ptr.acted && e.type === 'pointerup' && near(ptr, e, UI.SWIPE_PX) && performance.now() - lastAct > UI.TAP_DEBOUNCE_MS) input.jump = true;
     ptr = null; input.held = false;
   };
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
@@ -975,6 +984,7 @@ export function runner(container, opt = {}){
     tClock += dt;
     if(++frames > 30 && frames < 150){ slow += dt; if(frames === 149 && slow / 119 > 0.03 && dpr > 1){ dpr = 1; renderer.setPixelRatio(1); resize(); } }
     if(screen === 'play'){
+      tapCheck();
       if(dbg.autoplay){ dbg.bot.birdMode = dbg.bird; const a = L.botStep(G, dbg.bot); input.jump = a.jump; input.held = a.held; input.slide = a.slide; input.left = a.left; input.right = a.right; }
       let rest = dt;
       while(rest > 1e-6){

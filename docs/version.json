@@ -1,7 +1,7 @@
 {
-  "version": "4871eec7df",
-  "date": "2026-10-12T17:18:11Z",
-  "notes": "Chạy năng lượng: nhà thấp nhảy lên mái chạy được, thêm tia sét giật",
+  "version": "4d96867553",
+  "date": "2026-10-12T17:32:51Z",
+  "notes": "Game chạy: sửa điều khiển cảm ứng (không vừa vuốt vừa nhảy, không nhảy đôi ngoài ý muốn)",
   "apk": {
     "version": "",
     "url": "",

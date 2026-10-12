@@ -149,6 +149,7 @@ function backToSetup(){
   document.getElementById('quiz-setup').style.display='block';
   updateSetupHint();
   updateWrongButton();
+  updateTip();
   renderStatsPanel();
   stopExamTimer(); quizExam = false;
 }
@@ -309,6 +310,77 @@ function startCategoryPractice(cat){
   renderQuestion();
 }
 
+/* ---------- Lưu bài đang làm dở để tiếp tục khi mở lại ---------- */
+const RESUME_MAX_AGE = 12 * 3600 * 1000;
+function resumeKey(){ return 'hmt-resume-' + ((session && session.uid) || 'guest'); }
+function saveProgress(){
+  if(!quizOrder || !quizOrder.length) return;
+  try{ localStorage.setItem(resumeKey(), JSON.stringify({ ids: quizOrder.map((q) => q.id), answers, score, review: quizReview, exam: quizExam, deadline: examDeadline, anon: quizAnon, ts: Date.now() })); }catch(e){}
+}
+function clearProgress(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
+function loadProgress(){
+  try{
+    const p = JSON.parse(localStorage.getItem(resumeKey()) || 'null');
+    if(p && Array.isArray(p.ids) && Array.isArray(p.answers) && p.answers.length >= 1 && p.answers.length < p.ids.length && Date.now() - p.ts < RESUME_MAX_AGE) return p;
+  }catch(e){}
+  return null;
+}
+function updateResumeBanner(){
+  const row = document.getElementById('resume-row'); if(!row) return;
+  const p = loadProgress();
+  row.style.display = p ? 'block' : 'none';
+  if(p) document.getElementById('resume-btn').textContent = `▶ Tiếp tục bài đang làm (${p.answers.length}/${p.ids.length} câu${p.exam ? ' · thi thử' : ''})`;
+}
+function resumeQuiz(){
+  const p = loadProgress(); if(!p) return;
+  const byId = new Map(questions.map((q) => [String(q.id), q]));
+  const order = p.ids.map((id) => byId.get(String(id))).filter(Boolean);
+  if(order.length !== p.ids.length){ showToast('Một số câu hỏi đã bị xoá nên không tiếp tục được bài cũ.'); clearProgress(); updateResumeBanner(); return; }
+  quizOrder = order; answers = p.answers; score = p.score || 0;
+  quizReview = !!p.review; quizExam = !!p.exam; quizAnon = !!p.anon; currentIndex = answers.length;
+  document.getElementById('quiz-setup').style.display = 'none';
+  document.getElementById('quiz-empty').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-play').style.display = 'block';
+  if(quizExam){
+    examDeadline = p.deadline;
+    if(Date.now() >= examDeadline){ showResult(); return; }
+    stopExamTimer(); examInterval = setInterval(examTick, 1000);
+  }
+  renderQuestion(); if(quizExam) examTick();
+}
+
+/* ---------- Câu hỏi đánh dấu ⭐ ---------- */
+function starKey(){ return 'hmt-star-' + ((session && session.uid) || 'guest'); }
+function loadStars(){ try{ const a = JSON.parse(localStorage.getItem(starKey()) || '[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+function toggleStar(){
+  const q = quizOrder[currentIndex]; if(!q) return;
+  let ids = loadStars();
+  if(ids.includes(q.id)) ids = ids.filter((x) => x !== q.id); else ids.push(q.id);
+  try{ localStorage.setItem(starKey(), JSON.stringify(ids.slice(-300))); }catch(e){}
+  updateStarBtn(q);
+}
+function updateStarBtn(q){
+  const b = document.getElementById('q-star'); if(!b || !q) return;
+  const on = loadStars().includes(q.id);
+  b.textContent = on ? '★' : '☆'; b.classList.toggle('on', on);
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function starPool(){ const set = new Set(loadStars()); return questions.filter((q) => set.has(q.id)); }
+function startStarReview(){
+  const pool = starPool();
+  if(pool.length === 0){ showToast('Bạn chưa đánh dấu câu nào.'); updateWrongButton(); return; }
+  const count = parseInt(document.getElementById('setup-count').value, 10) || 20;
+  quizAnon = true; quizReview = true; quizExam = false;
+  quizOrder = pickQuestions(pool, Math.min(count, pool.length));
+  currentIndex = 0; score = 0; answers = [];
+  document.getElementById('quiz-setup').style.display = 'none';
+  document.getElementById('quiz-empty').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-play').style.display = 'block';
+  renderQuestion();
+}
+
 /* ---------- Ôn lại câu đã làm sai (lưu trên máy, theo từng tài khoản) ---------- */
 let quizReview = false;
 let quizExam = false;
@@ -360,6 +432,9 @@ function updateWrongButton(){
   const n = wrongPool().length;
   btn.style.display = n > 0 ? 'block' : 'none';
   btn.textContent = `🔁 Ôn lại câu đã sai (${n})`;
+  const sb = document.getElementById('btn-star-review');
+  if(sb){ const m = starPool().length; sb.style.display = m > 0 ? 'block' : 'none'; sb.textContent = `⭐ Ôn câu đã đánh dấu (${m})`; }
+  updateResumeBanner();
 }
 function startWrongReview(){
   const pool = wrongPool();
@@ -440,14 +515,34 @@ function updateTimerUI(){
   bar.style.width = `${Math.max(0,(timeLeft/timerDuration))*100}%`;
   bar.classList.toggle('warn', timeLeft <= 5);
 }
+const DOC_QUERY_BY_CAT = { 'Biến tần': 'biến tần', 'Pin lưu trữ': 'pin', 'An toàn điện': 'an toàn', 'Tấm pin quang điện': 'tấm pin', 'Lắp đặt': 'lắp đặt', 'Dụng cụ đo lường': 'đồng hồ', 'Tính toán hệ thống': 'công suất', 'Vận hành & bảo trì': 'bảo trì' };
+let relatedDocQ = '';
+function relatedDocQuery(q){
+  if(typeof docHits !== 'function') return '';
+  const cat = q.category || '';
+  for(const cand of [DOC_QUERY_BY_CAT[cat], cat.toLowerCase()]){
+    if(cand && docHits(cand).length > 0) return cand;
+  }
+  return '';
+}
+function openRelatedDoc(){
+  if(!relatedDocQ) return;
+  switchTab('guide');
+  const inp = document.getElementById('doc-search');
+  if(inp){ inp.value = relatedDocQ; docSearch(relatedDocQ); inp.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
 function showExplanationBox(q, isCorrect){
   const box = document.getElementById('q-explain-box');
   const text = document.getElementById('q-explain-text');
-  if(isCorrect || !q.explanation){ box.classList.remove('show'); text.textContent=''; return; }
+  const docBtn = document.getElementById('q-doc-btn');
+  if(isCorrect || !q.explanation){ box.classList.remove('show'); text.textContent=''; if(docBtn) docBtn.style.display = 'none'; return; }
   text.textContent = ' ' + q.explanation;
+  relatedDocQ = relatedDocQuery(q);
+  if(docBtn) docBtn.style.display = relatedDocQ ? 'inline-block' : 'none';
   box.classList.add('show');
 }
 
+let timeoutAdvance = null;
 function handleTimeout(){
   const q = quizOrder[currentIndex];
   const opts = document.querySelectorAll('#options .option');
@@ -458,11 +553,15 @@ function handleTimeout(){
     recordWrongAnswer(q.id, false); recordStat(q, false);
     showExplanationBox(q, false);
   }
-  // Hết giờ: tự động chuyển sang câu tiếp theo, chờ lâu hơn một chút để kịp đọc giải thích
-  setTimeout(()=>{ nextQuestion(); }, 2500);
+  // Hết giờ: bật nút "câu tiếp theo"; tự chuyển sau 8 giây nếu người dùng chưa bấm (để kịp đọc giải thích)
+  document.getElementById('next-btn').disabled = false;
+  try{ navigator.vibrate && navigator.vibrate(60); }catch(e){}
+  clearTimeout(timeoutAdvance); timeoutAdvance = setTimeout(()=>{ nextQuestion(); }, 8000);
+  saveProgress();
 }
 
 function renderQuestion(){
+  clearTimeout(timeoutAdvance);
   const q = quizOrder[currentIndex];
   const myIndex = currentIndex; // chụp lại để đối chiếu khi video kết thúc (tránh tính giờ nhầm câu)
   document.getElementById('q-explain-box').classList.remove('show');
@@ -477,6 +576,7 @@ function renderQuestion(){
   diffEl.textContent = dinfo[0];
   diffEl.className = 'diff-tag ' + dinfo[1];
   document.getElementById('q-text').textContent = q.question;
+  updateStarBtn(q);
 
   const mediaWrap = document.getElementById('q-media');
   mediaWrap.innerHTML = '';
@@ -531,7 +631,8 @@ function selectAnswer(idx){
   else{ opts[idx].classList.add(isCorrect ? 'correct' : 'wrong'); if(!isCorrect){ opts[q.correct].classList.add('correct'); } }
   if(isCorrect) score++;
   answers.push({ id: q.id, question: q.question, options: q.options, chosen: idx, correct: q.correct, isCorrect, explanation: q.explanation });
-  recordWrongAnswer(q.id, isCorrect); recordStat(q, isCorrect);
+  recordWrongAnswer(q.id, isCorrect); recordStat(q, isCorrect); saveProgress();
+  try{ navigator.vibrate && navigator.vibrate(isCorrect ? 20 : [40, 40, 40]); }catch(e){}
   document.getElementById('q-score-live').textContent = quizExam ? 'Thi thử' : `Điểm: ${score}`;
   document.getElementById('next-btn').disabled = false;
   if(quizExam){ document.getElementById('q-explain-box').classList.remove('show'); } else showExplanationBox(q, isCorrect);
@@ -539,7 +640,7 @@ function selectAnswer(idx){
 }
 
 function nextQuestion(){
-  stopTimer();
+  stopTimer(); clearTimeout(timeoutAdvance);
   currentIndex++;
   if(currentIndex >= quizOrder.length){ showResult(); }
   else { renderQuestion(); }
@@ -562,7 +663,30 @@ function finishEarly(){
   showResult();
 }
 
+let reviewAll = false;
+function renderReview(){
+  const wrap = document.getElementById('review-list');
+  const btn = document.getElementById('review-toggle');
+  wrap.innerHTML = '';
+  const list = reviewAll ? answers : answers.filter((a) => !a.isCorrect);
+  const hasCorrect = answers.some((a) => a.isCorrect);
+  if(btn){ btn.style.display = hasCorrect ? 'block' : 'none'; btn.textContent = reviewAll ? 'Chỉ xem câu sai' : 'Xem cả câu đúng'; }
+  const letters = ['A','B','C','D'];
+  list.forEach((a) => {
+    const div = document.createElement('div');
+    div.className = 'review-item' + (a.isCorrect ? ' ok' : '');
+    const chosenLine = a.isCorrect ? `<div class="a-correct">✓ Bạn chọn đúng: ${letters[a.correct]}. ${escapeHtml(a.options[a.correct])}</div>`
+      : (a.chosen === null ? `<div class="a-wrong">Hết giờ — bạn chưa chọn đáp án</div>` : `<div class="a-wrong">Bạn chọn: ${letters[a.chosen]}. ${escapeHtml(a.options[a.chosen])}</div>`)
+        + `<div class="a-correct">Đáp án đúng: ${letters[a.correct]}. ${escapeHtml(a.options[a.correct])}</div>`;
+    const explainLine = a.explanation ? `<div class="a-explain">💡 ${escapeHtml(a.explanation)}</div>` : '';
+    div.innerHTML = `<div class="q">${escapeHtml(a.question)} <button type="button" class="rp-link" data-qid="${escapeHtml(String(a.id))}" title="Báo câu hỏi này sai">⚑</button></div>${chosenLine}${explainLine}`;
+    wrap.appendChild(div);
+  });
+}
+function toggleReviewAll(){ reviewAll = !reviewAll; renderReview(); }
+
 function showResult(){
+  clearProgress();
   stopTimer(); const wasExam = quizExam; stopExamTimer();
   document.getElementById('quiz-play').style.display = 'none';
   document.getElementById('quiz-result').style.display = 'block';
@@ -588,27 +712,7 @@ function showResult(){
     ? `${pct >= EXAM_PASS ? '✅ ĐẠT' : '❌ CHƯA ĐẠT'} thi thử (yêu cầu ${EXAM_PASS}%) · ${score}/${total} câu${answers.length < total ? ` · bỏ trống ${total - answers.length}` : ''}`
     : `${msg} (${pct}%)`;
 
-  const reviewWrap = document.getElementById('review-list');
-  reviewWrap.innerHTML = '';
-  const wrongOnes = answers.filter(a=>!a.isCorrect);
-  if(wrongOnes.length > 0){
-    const letters = ['A','B','C','D'];
-    wrongOnes.forEach(a=>{
-      const div = document.createElement('div');
-      div.className = 'review-item';
-      const chosenLine = a.chosen === null
-        ? `<div class="a-wrong">Hết giờ — bạn chưa chọn đáp án</div>`
-        : `<div class="a-wrong">Bạn chọn: ${letters[a.chosen]}. ${escapeHtml(a.options[a.chosen])}</div>`;
-      const explainLine = a.explanation ? `<div class="a-explain">💡 ${escapeHtml(a.explanation)}</div>` : '';
-      div.innerHTML = `
-        <div class="q">${escapeHtml(a.question)} <button type="button" class="rp-link" data-qid="${escapeHtml(String(a.id))}" title="Báo câu hỏi này sai">⚑</button></div>
-        ${chosenLine}
-        <div class="a-correct">Đáp án đúng: ${letters[a.correct]}. ${escapeHtml(a.options[a.correct])}</div>
-        ${explainLine}
-      `;
-      reviewWrap.appendChild(div);
-    });
-  }
+  reviewAll = false; renderReview();
 
   if(quizReview){ showToast('Lượt ôn câu sai không tính vào bảng xếp hạng.'); }
   else submitLeaderboardEntry({
@@ -628,6 +732,27 @@ function showResult(){
 }
 
 function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+/* ---------- Phóng to ảnh câu hỏi ---------- */
+function openZoom(src){
+  const z = document.getElementById('img-zoom');
+  document.getElementById('img-zoom-img').src = src;
+  z.classList.remove('big'); z.classList.add('show');
+}
+function closeZoom(e){
+  const z = document.getElementById('img-zoom');
+  if(e && e.target && e.target.id === 'img-zoom-img'){ z.classList.toggle('big'); return; }   // chạm ảnh: phóng to/thu nhỏ
+  z.classList.remove('show', 'big');
+}
+document.getElementById('q-media').addEventListener('click', (e) => { const im = e.target.closest('img'); if(im) openZoom(im.src); });
+
+/* ---------- Thẻ hướng dẫn cho người mới ---------- */
+function updateTip(){
+  const t = document.getElementById('first-tip'); if(!t) return;
+  let seen = false; try{ seen = localStorage.getItem('hmt-tip-seen') === '1'; }catch(e){}
+  t.style.display = seen ? 'none' : 'block';
+}
+function dismissTip(){ try{ localStorage.setItem('hmt-tip-seen', '1'); }catch(e){} updateTip(); }
 
 /* ---------- Báo câu hỏi sai ---------- */
 const REPORT_EMAIL = 'kirateppei@gmail.com';   // nơi nhận báo lỗi dự phòng khi Firestore chưa cho ghi
@@ -1453,6 +1578,147 @@ function setDrawingZoom(z){
   document.getElementById('drawing-zoom-label').textContent = Math.round(drawingZoom * 100) + '%';
 }
 
+/* ---------- Công cụ tính nhanh ---------- */
+function numVal(id){ const v = parseFloat(String(document.getElementById(id).value).replace(',', '.')); return isFinite(v) ? v : NaN; }
+function fmtN(x, d){ return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toLocaleString('vi-VN'); }
+function calcString(){
+  const voc = numVal('cs-voc'), vmp = numVal('cs-vmp'), k = numVal('cs-k'), tmin = numVal('cs-tmin'), tmax = numVal('cs-tmax'), vmax = numVal('cs-vmax'), mppt = numVal('cs-mppt');
+  const out = document.getElementById('cs-out');
+  if([voc, vmp, k, tmin, tmax, vmax, mppt].some(isNaN)){ out.innerHTML = '<p class="form-hint">Nhập đủ các giá trị để tính.</p>'; return; }
+  const vocCold = voc * (1 + (k / 100) * (tmin - 25));
+  const vmpHot = vmp * (1 + (k / 100) * (tmax - 25));
+  const nMax = Math.floor(vmax / vocCold), nMin = Math.ceil(mppt / vmpHot);
+  const ok = nMin <= nMax && nMax >= 1;
+  out.innerHTML = `
+    <div class="calc-line">Voc ở nhiệt độ thấp nhất (${fmtN(tmin, 0)}°C): <b>${fmtN(vocCold, 1)} V</b> / tấm</div>
+    <div class="calc-line">Vmp ở nhiệt độ cao nhất (${fmtN(tmax, 0)}°C, ước tính): <b>${fmtN(vmpHot, 1)} V</b> / tấm</div>
+    <div class="calc-res ${ok ? 'ok' : 'bad'}">${ok ? `Số tấm mỗi chuỗi: từ <b>${nMin}</b> đến <b>${nMax}</b> tấm` : 'Không có số tấm phù hợp với giới hạn này, kiểm tra lại thông số.'}</div>
+    ${ok ? `<div class="calc-line">Với ${nMax} tấm: Voc lạnh ≈ ${fmtN(nMax * vocCold, 0)} V (giới hạn ${fmtN(vmax, 0)} V). Nên chừa dư thêm khoảng 2–3% và theo sách hướng dẫn của biến tần.</div>` : ''}`;
+}
+function calcDcAc(){
+  const n = numVal('cd-n'), wp = numVal('cd-wp'), ac = numVal('cd-ac');
+  const out = document.getElementById('cd-out');
+  if([n, wp, ac].some(isNaN) || ac <= 0){ out.innerHTML = '<p class="form-hint">Nhập đủ các giá trị để tính.</p>'; return; }
+  const dc = n * wp / 1000, r = dc / ac;
+  let note = r < 1 ? 'Thấp: biến tần chưa được tận dụng hết.' : r <= 1.1 ? 'Hợp lý, ít cắt đỉnh.' : r <= 1.3 ? 'Thường dùng: cắt đỉnh rất ít, tận dụng biến tần tốt.' : r <= 1.5 ? 'Cao: có cắt đỉnh (clipping) vào trưa nắng, kiểm tra giới hạn công suất DC tối đa của biến tần.' : 'Rất cao: thường vượt mức cho phép của biến tần, cần đối chiếu sách hướng dẫn.';
+  out.innerHTML = `<div class="calc-line">Công suất DC: <b>${fmtN(dc, 2)} kWp</b></div><div class="calc-res ${r >= 1 && r <= 1.3 ? 'ok' : 'warn'}">Tỉ lệ DC/AC = <b>${fmtN(r, 2)}</b></div><div class="calc-line">${note}</div>`;
+}
+const CB_STD = [6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630];
+const CABLE_STD = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300];
+function calcCable(){
+  const type = document.getElementById('cc-type').value, p = numVal('cc-p'), u = numVal('cc-u'), pf = numVal('cc-pf') || 1, len = numVal('cc-len'), s = numVal('cc-s'), lim = numVal('cc-lim');
+  const mat = document.getElementById('cc-mat').value, rho = mat === 'al' ? 0.036 : 0.0225;   // Ω·mm²/m ở khoảng 70°C
+  const out = document.getElementById('cc-out');
+  if([p, u, len, s, lim].some(isNaN) || p <= 0 || u <= 0 || len <= 0 || s <= 0){ out.innerHTML = '<p class="form-hint">Nhập đủ các giá trị để tính.</p>'; return; }
+  const three = type === '3p';
+  const cosf = type === 'dc' ? 1 : Math.min(1, Math.max(0.1, pf));
+  const I = three ? p * 1000 / (Math.sqrt(3) * u * cosf) : p * 1000 / (u * cosf);
+  const factor = three ? Math.sqrt(3) : 2;
+  const du = factor * rho * len * I / s, dup = du / u * 100;
+  const sMin = factor * rho * len * I / (lim / 100 * u);
+  const sSug = CABLE_STD.find((x) => x >= sMin) || '>' + CABLE_STD[CABLE_STD.length - 1];
+  const cb = CB_STD.find((x) => x >= 1.25 * I) || '>' + CB_STD[CB_STD.length - 1];
+  out.innerHTML = `
+    <div class="calc-line">Dòng điện: <b>${fmtN(I, 1)} A</b></div>
+    <div class="calc-line">CB gợi ý (≥ 1,25 × dòng): <b>${cb} A</b></div>
+    <div class="calc-res ${dup <= lim ? 'ok' : 'bad'}">Sụt áp với cáp ${fmtN(s, 1)} mm²: <b>${fmtN(du, 1)} V (${fmtN(dup, 2)}%)</b> ${dup <= lim ? '(đạt)' : '(vượt ' + fmtN(lim, 1) + '%)'}</div>
+    <div class="calc-line">Tiết diện tối thiểu theo sụt áp ${fmtN(lim, 1)}%: <b>≥ ${fmtN(sMin, 1)} mm²</b> → chọn ${sSug} mm²</div>
+    <p class="form-hint">Chỉ tính theo sụt áp. Cần kiểm tra thêm khả năng chịu dòng của cáp (cách lắp, nhiệt độ) và quy định điện lực. Chiều dài là một chiều.</p>`;
+}
+function ccTypeChange(){
+  const t = document.getElementById('cc-type').value, u = document.getElementById('cc-u');
+  u.value = t === '1p' ? 230 : t === '3p' ? 400 : 600;
+  document.getElementById('cc-lim').value = t === 'dc' ? 1 : 3;
+  document.getElementById('cc-pf-row').style.display = t === 'dc' ? 'none' : '';
+  calcCable();
+}
+function calcField(id, label, val, step){ return `<label class="calc-f"><span>${label}</span><input id="${id}" type="number" inputmode="decimal" step="${step || 'any'}" value="${val}"></label>`; }
+function toolsHtml(){
+  return `
+  <div class="card calc-card">
+    <div class="st-title" style="margin-top:0;">🔌 Số tấm pin tối đa / tối thiểu trên một chuỗi</div>
+    <div class="calc-grid" oninput="calcString()">
+      ${calcField('cs-voc', 'Voc tấm (V)', 49.5)}${calcField('cs-vmp', 'Vmp tấm (V)', 41.5)}
+      ${calcField('cs-k', 'Hệ số nhiệt Voc (%/°C)', -0.27)}${calcField('cs-tmin', 'Nhiệt độ thấp nhất (°C)', 15)}
+      ${calcField('cs-tmax', 'Nhiệt độ tế bào cao nhất (°C)', 70)}${calcField('cs-vmax', 'Vmax biến tần (V)', 1100)}
+      ${calcField('cs-mppt', 'Điện áp MPPT thấp nhất (V)', 200)}
+    </div>
+    <div id="cs-out" class="calc-out"></div>
+  </div>
+  <div class="card calc-card">
+    <div class="st-title" style="margin-top:0;">⚖️ Tỉ lệ công suất DC/AC</div>
+    <div class="calc-grid" oninput="calcDcAc()">${calcField('cd-n', 'Số tấm pin', 20)}${calcField('cd-wp', 'Công suất mỗi tấm (Wp)', 600)}${calcField('cd-ac', 'Biến tần AC (kW)', 10)}</div>
+    <div id="cd-out" class="calc-out"></div>
+  </div>
+  <div class="card calc-card">
+    <div class="st-title" style="margin-top:0;">🧵 Dòng điện, CB và sụt áp dây dẫn</div>
+    <div class="calc-grid" oninput="calcCable()">
+      <label class="calc-f"><span>Loại mạch</span><select id="cc-type" onchange="ccTypeChange()"><option value="1p">AC 1 pha</option><option value="3p">AC 3 pha</option><option value="dc">DC</option></select></label>
+      <label class="calc-f"><span>Chất liệu dây</span><select id="cc-mat"><option value="cu">Đồng</option><option value="al">Nhôm</option></select></label>
+      ${calcField('cc-p', 'Công suất (kW)', 5)}${calcField('cc-u', 'Điện áp (V)', 230)}
+      <span id="cc-pf-row" style="display:contents;">${calcField('cc-pf', 'Hệ số công suất', 1)}</span>
+      ${calcField('cc-len', 'Chiều dài một chiều (m)', 30)}
+      <label class="calc-f"><span>Tiết diện dây (mm²)</span><select id="cc-s">${CABLE_STD.map((x) => `<option value="${x}"${x === 6 ? ' selected' : ''}>${x}</option>`).join('')}</select></label>
+      ${calcField('cc-lim', 'Sụt áp cho phép (%)', 3)}
+    </div>
+    <div id="cc-out" class="calc-out"></div>
+  </div>
+  <p class="form-hint" style="color:var(--chalk-dim);">Công cụ chỉ để tham khảo nhanh. Luôn đối chiếu sách hướng dẫn của thiết bị, tiêu chuẩn và quy định điện lực địa phương.</p>`;
+}
+
+/* ---------- Danh sách kiểm tra lắp đặt (tích ô, lưu trên máy) ---------- */
+const CHECKLIST = [
+  { t: 'Trước khi lắp', items: ['Kiểm tra hàng: đúng model, số serial, không hư hỏng', 'Vị trí lắp biến tần thông thoáng, đúng yêu cầu bảo vệ (IP), chắc chắn', 'Đối chiếu Voc ở nhiệt độ thấp nhất nhỏ hơn điện áp tối đa của biến tần', 'Ngắt nguồn, khoá/gắn thẻ cách ly, đủ đồ bảo hộ và đai an toàn', 'Có người hỗ trợ khi làm việc trên mái'] },
+  { t: 'Đấu nối DC', items: ['Đúng cực tính từng chuỗi (+ và −)', 'Đo Voc từng chuỗi trước khi cắm vào biến tần, ghi lại', 'Dùng đúng đầu nối MC4 cùng hãng, bấm chắc, không để hở', 'Đo điện trở cách điện chuỗi so với đất', 'Dán nhãn từng chuỗi và từng đầu vào MPPT'] },
+  { t: 'Đấu nối AC và tiếp địa', items: ['CB AC riêng cho từng biến tần, đúng dòng định mức', 'Đúng thứ tự L1, L2, L3, N, PE theo chữ in trên đầu cốt', 'Siết đúng mô-men theo sách, cáp cắm ngập hết lõi', 'Tiếp địa khung pin, giá đỡ và vỏ biến tần', 'Lắp chống sét lan truyền (SPD) và RCD nếu yêu cầu'] },
+  { t: 'Cấu hình', items: ['Chọn đúng mã lưới (grid code) theo quy định', 'Đặt ngày giờ, múi giờ', 'Cài giới hạn công suất/zero export nếu cần (CT đúng chiều)', 'Kết nối giám sát, tạo nhà máy trên nền tảng của hãng', 'Đổi mật khẩu mặc định của installer'] },
+  { t: 'Nghiệm thu và bàn giao', items: ['Bật theo đúng thứ tự trong sách hướng dẫn của hãng', 'Kiểm tra không báo lỗi, công suất và điện áp hợp lý', 'Chụp ảnh tem máy, đấu nối, nhãn chuỗi', 'Hướng dẫn chủ nhà xem sản lượng và số liên hệ bảo hành', 'Lập biên bản nghiệm thu và bàn giao tài khoản'] },
+];
+const CHECK_KEY = 'hmt-checklist';
+function loadCheck(){ try{ const c = JSON.parse(localStorage.getItem(CHECK_KEY) || '{}'); return c && typeof c === 'object' ? c : {}; }catch(e){ return {}; } }
+function saveCheck(c){ try{ localStorage.setItem(CHECK_KEY, JSON.stringify(c)); }catch(e){} }
+function checklistHtml(){
+  const c = loadCheck(); const done = c.done || {};
+  return `<div class="card">
+    <label class="calc-f" style="margin-bottom:10px;"><span>Tên công trình</span><input id="ck-name" type="text" maxlength="80" placeholder="Ví dụ: Nhà anh Nam, 5kW" value="${escapeHtml(c.name || '')}" oninput="ckSaveName(this.value)"></label>
+    ${CHECKLIST.map((g, gi) => `<div class="st-title">${escapeHtml(g.t)}</div>${g.items.map((it, ii) => `<label class="ck-item"><input type="checkbox" ${done[gi + '-' + ii] ? 'checked' : ''} onchange="ckToggle('${gi}-${ii}', this.checked)"><span>${escapeHtml(it)}</span></label>`).join('')}`).join('')}
+    <div id="ck-progress" class="form-hint" style="margin-top:10px;"></div>
+    <div style="display:flex; gap:8px; margin-top:8px;"><button class="secondary" type="button" style="flex:1;" onclick="ckReset()">Bỏ chọn hết</button><button class="primary" type="button" style="flex:1;" onclick="ckShare()">Chia sẻ</button></div>
+    <p class="form-hint">Danh sách chung để tham khảo; theo sách hướng dẫn của từng model và quy định tại công trình.</p>
+  </div>`;
+}
+function ckCount(){ const done = loadCheck().done || {}; const total = CHECKLIST.reduce((n, g) => n + g.items.length, 0); return { n: Object.keys(done).filter((k) => done[k]).length, total }; }
+function ckUpdate(){ const el = document.getElementById('ck-progress'); if(el){ const { n, total } = ckCount(); el.textContent = `Đã hoàn thành ${n}/${total} mục`; } }
+function ckToggle(key, on){ const c = loadCheck(); c.done = c.done || {}; if(on) c.done[key] = 1; else delete c.done[key]; saveCheck(c); ckUpdate(); }
+function ckSaveName(v){ const c = loadCheck(); c.name = v.slice(0, 80); saveCheck(c); }
+function ckReset(){ const c = loadCheck(); c.done = {}; saveCheck(c); document.querySelectorAll('.ck-item input').forEach((i) => { i.checked = false; }); ckUpdate(); }
+function ckText(){
+  const c = loadCheck(), done = c.done || {};
+  const lines = [`Checklist lắp đặt${c.name ? ' · ' + c.name : ''}`];
+  CHECKLIST.forEach((g, gi) => { lines.push('', g.t); g.items.forEach((it, ii) => lines.push((done[gi + '-' + ii] ? '☑ ' : '☐ ') + it)); });
+  const { n, total } = ckCount(); lines.push('', `Hoàn thành ${n}/${total} mục`);
+  return lines.join('\n');
+}
+async function ckShare(){
+  const text = ckText();
+  if(navigator.share){ try{ await navigator.share({ title: 'Checklist lắp đặt', text }); return; }catch(e){ if(e && e.name === 'AbortError') return; } }
+  try{ await navigator.clipboard.writeText(text); showToast('Đã sao chép danh sách vào bộ nhớ tạm.'); }
+  catch(e){ showToast('Không chia sẻ được trên thiết bị này.'); }
+}
+
+/* ---------- Tải trước bản vẽ để xem khi mất mạng ---------- */
+async function predownloadDrawings(btn){
+  const files = GUIDE_DRAWINGS.map((d) => `banve/${d.file}.png`);
+  btn.disabled = true; let done = 0, fail = 0, idx = 0;
+  const upd = () => { btn.textContent = `Đang tải… ${done + fail}/${files.length}`; };
+  upd();
+  const worker = async () => { while(idx < files.length){ const f = files[idx++]; try{ const r = await fetch(f); if(!r.ok) throw 0; await r.blob(); done++; }catch(e){ fail++; } upd(); } };
+  await Promise.all([worker(), worker(), worker()]);
+  btn.disabled = false;
+  btn.textContent = fail ? `Đã tải ${done}/${files.length} (lỗi ${fail}), bấm để thử lại` : `✅ Đã tải ${done} bản vẽ, xem được khi mất mạng`;
+  showToast(fail ? 'Một số bản vẽ chưa tải được.' : 'Đã tải trước toàn bộ bản vẽ.');
+}
+
 const TOC_SECTIONS = [
   {
     id: 'wifi', title: 'Cấu hình WiFi', sub: '7 hãng biến tần · dongle/WiFi stick',
@@ -1499,9 +1765,18 @@ const TOC_SECTIONS = [
       ${inverterListHtml()}`
   },
   {
+    id: 'tools', title: 'Công cụ tính nhanh', sub: 'Số tấm mỗi chuỗi · tỉ lệ DC/AC · CB và sụt áp dây',
+    body: () => toolsHtml(),
+  },
+  {
+    id: 'checklist', title: 'Checklist lắp đặt', sub: 'Tích từng bước · lưu trên máy · chia sẻ',
+    body: () => checklistHtml(),
+  },
+  {
     id: 'drawings', title: 'Bản vẽ NLMT', sub: `${GUIDE_DRAWINGS.length} bản vẽ · phân vùng inverter, sơ đồ mái pin`,
     body: () => `
       <input type="search" id="drawing-search" class="drawing-search" placeholder="Tìm bản vẽ theo tên (ví dụ: Hoàng Viên, 999)" oninput="filterDrawings(this.value)" autocomplete="off">
+      <button class="secondary" type="button" style="width:100%; margin-bottom:10px; color:var(--chalk); border-color:var(--board-line); background:var(--glass);" onclick="predownloadDrawings(this)">⬇ Tải trước tất cả bản vẽ (xem khi mất mạng)</button>
       <p class="drawing-count" id="drawing-count"></p>
       <div class="drawing-grid" id="drawing-grid">${GUIDE_DRAWINGS.map((d, i) => `
         <div class="drawing-item" data-q="${escapeHtml(drawingKey(d))}">
@@ -1549,6 +1824,8 @@ function toggleTocSection(id){
       inner.innerHTML = section.body();
       inner.dataset.rendered = '1';
       if(id === 'drawings') filterDrawings('');
+      if(id === 'tools'){ calcString(); calcDcAc(); calcCable(); }
+      if(id === 'checklist') ckUpdate();
     }
     const body = document.getElementById('toc-body-' + id);
     body.style.maxHeight = 'none';
@@ -1576,6 +1853,10 @@ function buildDocIndex(){
     if(t.check) Object.values(t.check).forEach(l => parts.push(l.join(' ')));
     add({ sec: 'inverters', dom: 'inv-' + b.id, type: ti, title: 'Cài đặt biến tần · ' + b.name + ' · ' + label.replace(/^\S+\s/, ''), text: parts.join(' ') });
   }));
+  add({ sec: 'tools', title: 'Công cụ · Số tấm pin trên một chuỗi (Voc lạnh)', text: 'tính số tấm tối đa tối thiểu chuỗi voc nhiệt độ thấp vmax mppt' });
+  add({ sec: 'tools', title: 'Công cụ · Tỉ lệ DC/AC', text: 'tỉ lệ công suất dc ac clipping cắt đỉnh' });
+  add({ sec: 'tools', title: 'Công cụ · Dòng điện, CB và sụt áp dây', text: 'tính dòng điện cb aptomat tiết diện dây sụt áp cáp đồng nhôm' });
+  add({ sec: 'checklist', title: 'Checklist lắp đặt', text: 'danh sách kiểm tra lắp đặt nghiệm thu bàn giao trước khi lắp đấu nối dc ac tiếp địa cấu hình' });
   GUIDE_BASICS.forEach(g => add({ sec: 'basics', term: g.term, title: 'Kiến thức · ' + g.term, text: g.def }));
   GUIDE_SAFETY.forEach(g => add({ sec: 'safety', term: g.term, title: 'An toàn · ' + g.term, text: g.def }));
   if(typeof GUIDE_DRAWINGS !== 'undefined') GUIDE_DRAWINGS.forEach(d => add({ sec: 'drawings', term: d.title, title: 'Bản vẽ · ' + d.title, text: d.note || '' }));
@@ -1590,6 +1871,12 @@ function dsSnippet(e, terms){
   const from = Math.max(0, pos - 40), to = Math.min(plain.length, pos + 90);
   let s = escapeHtml(plain.slice(from, to));
   return (from > 0 ? '…' : '') + s + (to < plain.length ? '…' : '');
+}
+function docHits(q){
+  const terms = dsNorm(q).split(/\s+/).filter(t => t.length >= 2);
+  if(!terms.length) return [];
+  if(!docIndex) docIndex = buildDocIndex();
+  return docIndex.filter(e => terms.every(t => e.norm.includes(t)));
 }
 function docSearch(q){
   const box = document.getElementById('doc-search-results');

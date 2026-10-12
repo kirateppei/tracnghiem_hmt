@@ -5,6 +5,7 @@
 let lbRange = 'week';          // 'day' | 'week' | 'month' | 'year'
 let lbAnchor = Date.now();     // một thời điểm nằm trong kỳ đang xem
 let lbLevel = 'all';          // 'all' | 'de' | 'tb' | 'kho' | 'cuckho' | 'xuatsac' | 'mix'
+const LB_MIN_GAMES = 3;        // cần tối thiểu từng này bài trong kỳ mới được xếp hạng theo điểm
 let lbSort = 'avg';            // 'avg' | 'best' | 'n'
 let lbRows = [];               // các lượt làm bài của kỳ đang xem
 let lbUnsub = null;
@@ -237,17 +238,31 @@ function drawLeaderboard(){
   const wrap = document.getElementById('lb-list');
   const emptyEl = document.getElementById('lb-empty');
   const rows = lbFiltered();
-  const list = aggregateResults(rows, lbSort);
+  let list = aggregateResults(rows, lbSort);
+  if(lbSort !== 'n'){   // xếp theo điểm: người chưa đủ số bài đứng sau, không đánh số hạng
+    list = list.filter((a) => a.n >= LB_MIN_GAMES).concat(list.filter((a) => a.n < LB_MIN_GAMES));
+  }
   const { start, end } = periodRange(lbRange, lbAnchor);
   const isCurrent = Date.now() >= start && Date.now() < end;
   note.textContent = `${rows.length} lượt làm bài · ${list.length} người` +
     (lbLevel !== 'all' ? ` · độ khó: ${LEVEL_NAMES[lbLevel]}` : '') +
+    (lbSort !== 'n' ? ` · xếp hạng từ ${LB_MIN_GAMES} bài` : '') +
     (lbLive ? ' · cập nhật trực tiếp' : (isCurrent ? ' · bấm lại nút kỳ để làm mới' : ''));
   wrap.innerHTML = '';
   if(list.length === 0){ emptyEl.style.display = 'block'; return; }
   emptyEl.style.display = 'none';
   const me = session && session.uid;
-  list.forEach((a, idx) => {
+  let rank = 0, shownDivider = false;
+  list.forEach((a, idx0) => {
+    const unranked = lbSort !== 'n' && a.n < LB_MIN_GAMES;
+    if(unranked && !shownDivider){
+      shownDivider = true;
+      const d = document.createElement('div'); d.className = 'lb-divider';
+      d.textContent = `Chưa đủ ${LB_MIN_GAMES} bài trong kỳ (chưa xếp hạng)`;
+      wrap.appendChild(d);
+    }
+    if(!unranked) rank++;
+    const idx = unranked ? 99 : rank - 1;
     const isMe = a.uid === me;
     const canOpen = !!session && (session.role === 'admin' || isMe);
     const row = document.createElement('div');
@@ -255,7 +270,7 @@ function drawLeaderboard(){
       (isMe ? ' me' : '') + (canOpen ? ' clickable' : '');
     row.dataset.key = a.key;
     row.innerHTML = `
-      <div class="lb-rank">${idx + 1}</div>
+      <div class="lb-rank">${unranked ? '·' : rank}</div>
       ${avatarHtml(a.name === ANON_NAME ? '?' : a.name, a.name === ANON_NAME ? '' : a.photo, 38)}
       <div class="lb-info">
         <div class="lb-name">${escapeHtml(a.name)}${isMe ? ' (bạn)' : ''}</div>

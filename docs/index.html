@@ -888,6 +888,36 @@ footer.credit{ font-size:0.72rem; opacity:0.6; margin-top:22px; padding-bottom:1
 .rp-q{ font-weight:700; margin-bottom:3px; } .rp-note{ color:#3c463f; margin-bottom:4px; }
 .rp-meta{ font-size:0.74rem; color:#7a867f; } .rp-del{ float:right; background:none; border:1px solid var(--line); border-radius:999px; padding:2px 10px; cursor:pointer; font-size:0.72rem; }
 
+/* Làm bài: sao đánh dấu, phóng to ảnh, thẻ hướng dẫn */
+.star-btn{ float:right; background:none; border:none; font-size:1.5rem; line-height:1; cursor:pointer; color:#b8bfb8; padding:0 2px; }
+.star-btn.on{ color:#F2B807; }
+.q-media img{ cursor:zoom-in; }
+.tip-card{ background: color-mix(in srgb, var(--accent) 16%, #fff); border-radius:14px; padding:10px 12px; font-size:0.8rem; line-height:1.5; margin-bottom:12px; }
+.tip-card .ghost{ display:block; margin-top:4px; color:#5c6a63; }
+.review-item.ok{ border-left:4px solid var(--good); }
+#img-zoom{ position:fixed; inset:0; z-index:90; background:rgba(0,0,0,0.92); display:none; }
+#img-zoom.show{ display:block; }
+#img-zoom .zm-scroll{ position:absolute; inset:0; overflow:auto; -webkit-overflow-scrolling:touch; display:flex; align-items:center; justify-content:center; }
+#img-zoom img{ max-width:100%; max-height:100%; cursor:zoom-in; background:#fff; border-radius:6px; }
+#img-zoom.big .zm-scroll{ display:block; }
+#img-zoom.big img{ max-width:none; max-height:none; width:220%; cursor:zoom-out; }
+#img-zoom .zm-close{ position:fixed; top:max(12px, env(safe-area-inset-top)); right:14px; width:42px; height:42px; border-radius:50%; border:none; background:rgba(255,255,255,0.18); color:#fff; font-size:1.2rem; cursor:pointer; z-index:2; }
+#img-zoom .zm-hint{ position:fixed; bottom:18px; left:0; right:0; text-align:center; color:#cfd6cf; font-size:0.75rem; pointer-events:none; }
+
+.lb-divider{ color: var(--chalk-dim); font-size:0.75rem; font-weight:700; text-align:center; margin:12px 0 8px; letter-spacing:0.02em; opacity:0.85; }
+
+/* Công cụ tính nhanh, checklist */
+.calc-card{ margin-bottom:12px; }
+.calc-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.calc-f{ display:flex; flex-direction:column; gap:4px; font-size:0.72rem; font-weight:700; color:#7a867f; }
+.calc-f input,.calc-f select{ width:100%; border:1.5px solid var(--line); border-radius:12px; padding:10px 11px; font-size:0.95rem; font-family:var(--font-body); background:#fff; color:var(--card-ink); }
+.calc-out{ margin-top:12px; font-size:0.86rem; line-height:1.5; }
+.calc-line{ margin:4px 0; color:#3c463f; }
+.calc-res{ margin:8px 0; padding:10px 12px; border-radius:12px; font-size:0.92rem; background:#eef3ef; }
+.calc-res.ok{ background:var(--good-bg); } .calc-res.bad{ background:var(--bad-bg); } .calc-res.warn{ background:#FFF3D6; }
+.ck-item{ display:flex; gap:10px; align-items:flex-start; padding:7px 0; font-size:0.88rem; line-height:1.45; cursor:pointer; }
+.ck-item input{ width:20px; height:20px; margin-top:1px; flex:none; accent-color: var(--brand-green); }
+
 /* Cuộn mượt và tôn trọng "giảm chuyển động" */
 html{ scroll-behavior:smooth; }
 @media (prefers-reduced-motion: reduce){
@@ -1009,8 +1039,11 @@ html{ scroll-behavior:smooth; }
       <div class="setup-field">
         <label class="toggle"><input type="checkbox" id="setup-anon"><span class="switch"></span><span>Làm bài ẩn danh<small>Tên của bạn không hiện trên bảng xếp hạng</small></span></label>
       </div>
+      <div id="first-tip" class="tip-card" style="display:none;">👋 <b>Mới dùng?</b> <b>Làm bài</b> để luyện và tích điểm · <b>Xếp hạng</b> so với đồng nghiệp · <b>Tài liệu</b> có hướng dẫn biến tần, bản vẽ và công cụ tính nhanh · <b>Chơi</b> để giải trí.<button type="button" class="ghost" onclick="dismissTip()">Đã hiểu</button></div>
+      <div id="resume-row" style="display:none; margin-bottom:10px;"><button class="primary" id="resume-btn" style="width:100%;" onclick="resumeQuiz()">▶ Tiếp tục bài đang làm</button></div>
       <button class="primary" style="width:100%;" onclick="startQuiz()">Bắt đầu làm bài</button>
       <button id="btn-exam" class="secondary" style="width:100%; margin-top:8px;" onclick="startExam()">🎓 Thi thử (40 câu · 45 phút)</button>
+      <button id="btn-star-review" class="secondary" style="width:100%; margin-top:8px; display:none;" onclick="startStarReview()">⭐ Ôn câu đã đánh dấu</button>
       <button id="btn-review-wrong" class="secondary" style="width:100%; margin-top:8px; display:none;" onclick="startWrongReview()">🔁 Ôn lại câu đã sai</button>
       <p class="setup-hint" id="setup-total-hint"></p>
       <details class="stats-panel" id="stats-panel"><summary>📈 Tiến độ của bạn</summary><div id="stats-body"></div></details>
@@ -1032,11 +1065,11 @@ html{ scroll-behavior:smooth; }
         <div class="timer-bar"><div class="timer-bar-fill" id="timer-bar-fill"></div></div>
         <span id="q-timer">⏱ 20s</span>
       </div>
-      <div class="q-cat-tag" id="q-cat-tag">Chủ đề</div><span class="diff-tag" id="q-diff-tag">Độ khó</span>
+      <div class="q-cat-tag" id="q-cat-tag">Chủ đề</div><span class="diff-tag" id="q-diff-tag">Độ khó</span><button type="button" id="q-star" class="star-btn" onclick="toggleStar()" aria-label="Đánh dấu câu này để ôn lại">☆</button>
       <div class="q-media" id="q-media"></div>
       <div class="q-text" id="q-text"></div>
       <div class="options" id="options"></div>
-      <div class="q-explain-box" id="q-explain-box"><b>💡 Giải thích:</b><span id="q-explain-text"></span></div>
+      <div class="q-explain-box" id="q-explain-box"><b>💡 Giải thích:</b><span id="q-explain-text"></span><button type="button" class="ghost" id="q-doc-btn" style="display:none; margin-top:6px;" onclick="openRelatedDoc()">📚 Xem tài liệu liên quan</button></div>
       <div class="quiz-footer">
         <button class="ghost" onclick="confirmFinishEarly()">Kết thúc sớm</button>
         <button class="ghost" id="report-btn" style="display:none" onclick="openReport(quizOrder[currentIndex])">⚑ Báo lỗi</button>
@@ -1063,6 +1096,7 @@ html{ scroll-behavior:smooth; }
         </div>
         <div class="label" id="result-msg">Kết quả của bạn</div>
       </div>
+      <button type="button" id="review-toggle" class="secondary" style="display:none; width:100%; margin-bottom:10px;" onclick="toggleReviewAll()">Xem cả câu đúng</button>
       <div id="review-list"></div>
       <div class="result-actions">
         <button class="secondary" onclick="backToSetup()">Chọn lại chủ đề</button>
@@ -1265,6 +1299,8 @@ html{ scroll-behavior:smooth; }
 <button id="music-toggle" onclick="toggleMusic()" title="Bật/tắt nhạc nền">🔇</button>
 <audio id="bg-music" loop preload="none"></audio>
 
+<div id="img-zoom" onclick="closeZoom(event)"><div class="zm-scroll"><img id="img-zoom-img" alt="Ảnh câu hỏi phóng to"></div><button type="button" class="zm-close" aria-label="Đóng">✕</button><span class="zm-hint">Chạm vào ảnh để phóng to / thu nhỏ</span></div>
+
 <div class="modal-backdrop" id="report-backdrop">
   <div class="modal">
     <h3 style="margin:0 0 6px;">⚑ Báo câu hỏi sai</h3>
@@ -1350,16 +1386,16 @@ html{ scroll-behavior:smooth; }
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=9053912f9e"></script>
-<script src="firebase-config.js?v=9053912f9e"></script>
-<script src="questions.js?v=9053912f9e"></script>
-<script src="music.js?v=9053912f9e"></script>
-<script src="inverters.js?v=9053912f9e"></script>
-<script src="drawings.js?v=9053912f9e"></script>
-<script src="games.js?v=9053912f9e"></script>
-<script src="app.js?v=9053912f9e"></script>
-<script src="leaderboard.js?v=9053912f9e"></script>
-<script src="auth.js?v=9053912f9e"></script>
-<script src="update.js?v=9053912f9e"></script>
+<script src="version.js?v=6340bb4ef7"></script>
+<script src="firebase-config.js?v=6340bb4ef7"></script>
+<script src="questions.js?v=6340bb4ef7"></script>
+<script src="music.js?v=6340bb4ef7"></script>
+<script src="inverters.js?v=6340bb4ef7"></script>
+<script src="drawings.js?v=6340bb4ef7"></script>
+<script src="games.js?v=6340bb4ef7"></script>
+<script src="app.js?v=6340bb4ef7"></script>
+<script src="leaderboard.js?v=6340bb4ef7"></script>
+<script src="auth.js?v=6340bb4ef7"></script>
+<script src="update.js?v=6340bb4ef7"></script>
 </body>
 </html>

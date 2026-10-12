@@ -109,7 +109,7 @@
   #view-games .gm-status.lose{ color:#ff8a80; font-size:1.1rem; }
   #view-games .gm-hint{ text-align:center; font-size:.78rem; opacity:.8; margin-top:6px; }
   /* cá sấu (giao diện nền nước, miệng há to) */
-  #view-games .gm-water{ position:relative; border-radius:18px; padding:14px 10px 16px; background:linear-gradient(#6fc3ee 0%,#2f8fd0 40%,#163B6D 100%); box-shadow:inset 0 0 40px rgba(0,0,0,.25); overflow:hidden; }
+  #view-games .gm-water{ position:relative; border-radius:18px; padding:14px 10px 16px; background:linear-gradient(rgba(14,52,110,.55),rgba(6,24,56,.78)),url(hmt-bg.jpg) center 30%/cover; box-shadow:inset 0 0 40px rgba(0,0,0,.25); overflow:hidden; }
   #view-games .gm-gear{ position:absolute; right:10px; top:10px; width:42px; height:42px; border-radius:50%; border:0; background:linear-gradient(#ffb347,#e67e22); color:#fff; font-size:1.4rem; cursor:pointer; box-shadow:0 3px 8px rgba(0,0,0,.35); z-index:3; }
   #view-games .gm-banner{ margin:44px -10px 8px; padding:10px 8px; text-align:center; background:rgba(5,25,45,.78); color:#e6ff4a; font-weight:900; font-size:.95rem; letter-spacing:.02em; text-transform:uppercase; min-height:2.4em; display:flex; align-items:center; justify-content:center; }
   #view-games .gm-banner.lose{ color:#ff8a80; }
@@ -137,7 +137,7 @@
   #view-games .gm-modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:150; display:flex; align-items:center; justify-content:center; padding:16px; }
   #view-games .gm-modal .gm-panel{ width:100%; max-width:380px; margin:0; max-height:90vh; overflow:auto; }
   /* thùng hải tặc (cảnh bãi biển, thùng gỗ xoay được, hải tặc nhảy ra) */
-  #view-games .gm-beach{ position:relative; border-radius:18px; padding:12px 8px 14px; overflow:hidden; background:linear-gradient(#ffcc66 0%,#ff9a5a 14%,#7fcdf2 38%,#3a9fdd 52%,#b8bec6 53%,#8e959e 100%); box-shadow:inset 0 0 40px rgba(0,0,0,.2); }
+  #view-games .gm-beach{ position:relative; border-radius:18px; padding:12px 8px 14px; overflow:hidden; background:linear-gradient(rgba(14,52,110,.55),rgba(6,24,56,.78)),url(hmt-bg.jpg) center 35%/cover; box-shadow:inset 0 0 40px rgba(0,0,0,.2); }
   #view-games .gm-beach .deco{ position:absolute; font-size:3rem; line-height:1; pointer-events:none; }
   #view-games .gm-restart{ position:absolute; right:10px; top:10px; width:42px; height:42px; border-radius:8px; border:2px solid #4b2e12; background:linear-gradient(#a8742f,#7a4d1b); color:#fff; font-size:1.3rem; cursor:pointer; z-index:5; }
   #view-games .gm-pbarrel{ position:relative; width:260px; max-width:92%; aspect-ratio:260/330; margin:46px auto 0; touch-action:pan-y; user-select:none; -webkit-user-select:none; }
@@ -231,7 +231,7 @@
   #view-games .gm-stat b{ width:26px; text-align:right; flex:none; }
   #view-games .gm-secret{ font-size:.7rem; color:#7a5c00; font-weight:800; margin-top:3px; }
   #view-games .gm-chk .re{ border:0; background:#eef3ef; border-radius:10px; width:36px; height:36px; font-size:1.1rem; cursor:pointer; flex:none; }
-  #view-games .gm-arena{ position:relative; border-radius:18px; padding:14px 8px 10px; background:linear-gradient(rgba(8,16,28,.74),rgba(8,16,28,.46)),url(hmt-bg.jpg) center 35%/cover; display:flex; align-items:flex-end; justify-content:space-between; min-height:250px; overflow:hidden; box-shadow:inset 0 0 40px rgba(0,0,0,.5); }
+  #view-games .gm-arena{ position:relative; border-radius:18px; padding:14px 8px 10px; background:linear-gradient(rgba(14,52,110,.55),rgba(6,24,56,.78)),url(hmt-bg.jpg) center 35%/cover; display:flex; align-items:flex-end; justify-content:space-between; min-height:250px; overflow:hidden; box-shadow:inset 0 0 40px rgba(0,0,0,.5); }
   #view-games .gm-arena::before{ content:''; position:absolute; left:6%; right:6%; bottom:14px; height:60px; border-radius:50%; background:radial-gradient(ellipse,rgba(0,0,0,.25),transparent 70%); }
   #view-games .gm-cside{ position:relative; width:42%; text-align:center; z-index:1; }
   #view-games .gm-cside .nm{ color:#fff; font-weight:900; font-size:.82rem; text-shadow:0 2px 3px #000; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

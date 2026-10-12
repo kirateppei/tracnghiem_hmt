@@ -165,10 +165,6 @@ export function dice(container, opt = {}){
   tableShadow.rotation.x = -Math.PI / 2; tableShadow.position.y = 0.004; tableShadow.receiveShadow = true; scene.add(tableShadow);
   const rim = new THREE.Mesh(new THREE.TorusGeometry(6.25, 0.32, 16, 80), new THREE.MeshStandardMaterial({ color: 0xE8710A, roughness: 0.45, metalness: 0.2 }));
   rim.rotation.x = Math.PI / 2; rim.position.y = 0.05; rim.receiveShadow = true; scene.add(rim);
-  if(logoImg){   // logo công ty in giữa mặt bàn
-    const decal = new THREE.Mesh(new THREE.CircleGeometry(2.1, 48), new THREE.MeshStandardMaterial({ map: badgeTex(512, '#F2B807'), transparent: true, opacity: 0.55, roughness: 0.9 }));
-    decal.rotation.x = -Math.PI / 2; decal.position.y = 0.012; decal.receiveShadow = true; scene.add(decal);
-  }
 
   let skin = DICE_SKINS[opt.skin] || DICE_SKINS.navy, count = opt.count || 2;
   let items = [], rollT = null;
@@ -645,11 +641,7 @@ export function arena(container, opt = {}){
   addEnv(S); lights(S, { x: 3, y: 9, z: 7, hemi: 0.95, sun: 2.4, shadowSize: 9 });
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.38 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
   const skins = opt.skins, els = opt.els, arenaEl = opt.arenaEl;
-  let decal = null;
-  if(logoImg){
-    decal = new THREE.Mesh(new THREE.CircleGeometry(1.5, 40), new THREE.MeshBasicMaterial({ map: badgeTex(256, '#F2B807'), transparent: true, opacity: 0.5, depthWrite: false }));
-    decal.rotation.x = -Math.PI / 2; decal.position.y = 0.01; scene.add(decal);
-  }
+  const decal = null;   // bỏ logo to giữa sân (yêu cầu): chỉ giữ logo nhỏ ở góc
   const cs = skins.map((p, k) => { const c = buildChicken(p); c.dir = k === 0 ? 1 : -1; c.root.scale.x = c.dir; scene.add(c.root); c.prev = {}; c.t0 = {}; return c; });
   const ray = new THREE.Raycaster(), pl = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), v3 = new THREE.Vector3(), ndc = new THREE.Vector2();
   const CLS = ['atk', 'hurt', 'heal', 'flurry', 'phantom', 'steel', 'thunder', 'stunned', 'crow', 'dead', 'win'];

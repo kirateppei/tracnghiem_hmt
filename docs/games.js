@@ -341,11 +341,45 @@
         <button class="gm-card" data-g="dice"><span class="ico">🎲</span><b>Lắc xí ngầu</b><small>Lắc điện thoại hoặc bấm nút để gieo</small></button>
         <button class="gm-card" data-g="chicken"><span class="ico">🐓</span><b>Đá gà mini</b><small>Gà có chỉ số và tuyệt chiêu ẩn, xem con nào thắng</small></button>
         <button class="gm-card" data-g="wheel"><span class="ico">🎡</span><b>Vòng quay may mắn</b><small>Tự nhập các ô rồi quay</small></button>
+        <button class="gm-card" data-g="runner"><span class="ico">🏃</span><b>Chạy năng lượng</b><small>Chạy 3 làn giữa các tòa nhà điện mặt trời, nhặt tia nắng, phá kỷ lục kWh</small></button>
       </div>
-      <p class="gm-hint">Chỉ để giải trí, kết quả không tính vào bảng xếp hạng.</p>`);
+      <p class="gm-hint">Chỉ để giải trí. Riêng "Chạy năng lượng" có bảng kỷ lục riêng, các game khác không tính vào bảng xếp hạng.</p>`);
     root.querySelectorAll('.gm-card').forEach((b) => b.addEventListener('click', () => openGame(b.dataset.g)));
     $('gm-mute').addEventListener('click', () => { muted = !muted; store('mute', muted); showMenu(); });
     $('gm-3d').addEventListener('click', () => { store('g3d', !want3d()); showMenu(); });
+  }
+  /* ---------- Chạy năng lượng (module riêng docs/runner.js) ---------- */
+  let RN = null;
+  function loadRunner(){
+    if(!RN) RN = import('./runner.js?v=' + (window.APP_VERSION || '0')).catch(() => null);
+    return RN;
+  }
+  function runnerBoard(){
+    if(typeof fbDb === 'undefined' || !fbDb) return Promise.resolve([]);
+    return fbDb.collection('runner_scores').orderBy('best', 'desc').limit(20).get().then((snap) =>
+      snap.docs.map((d) => { const x = d.data(); return { uid: x.uid || d.id, name: x.name, photo: x.photo || '', best: x.best | 0, kwh: x.kwh | 0, coins: x.coins | 0 }; }));
+  }
+  function runnerSubmit(rec){
+    if(typeof fbDb === 'undefined' || !fbDb || typeof session === 'undefined' || !session) return Promise.reject(new Error('offline'));
+    const doc = { uid: session.uid, name: String(session.name || 'Ẩn danh').slice(0, 80), best: rec.best | 0, kwh: rec.kwh | 0, coins: rec.coins | 0, ts: firebase.firestore.FieldValue.serverTimestamp() };
+    if(session.photo && session.photo.length <= 300 && /^https:\/\/[a-z0-9.-]+\.googleusercontent\.com\//.test(session.photo)) doc.photo = session.photo;
+    return fbDb.collection('runner_scores').doc(session.uid).set(doc);
+  }
+  function showRunner(){
+    clearTimers(); screen = 'runner';
+    render('<div id="gm-runner" style="height:calc(100dvh - 150px);min-height:420px"></div>');
+    loadRunner().then((m) => {
+      if(screen !== 'runner') return;
+      if(!m){ const h = $('gm-runner'); if(h) h.innerHTML = '<p style="text-align:center;padding:30px 10px">Không tải được game. Kiểm tra mạng rồi thử lại.</p>'; return; }
+      const v = m.runner($('gm-runner'), {
+        sfx: { beep, noise, buzz },
+        loadBoard: runnerBoard,
+        submitScore: runnerSubmit,
+        me: (typeof session !== 'undefined' && session) ? { uid: session.uid, name: session.name, photo: session.photo } : null,
+        onExit: showMenu,
+      });
+      views.push(v);
+    });
   }
   function openGame(g){
     clearTimers();
@@ -353,6 +387,7 @@
     if(g === 'dice') return showDice();
     if(g === 'wheel') return showWheel();
     if(g === 'chicken') return showChickens();
+    if(g === 'runner') return showRunner();
   }
   function topBar(title){
     return `<div class="gm-top"><button class="gm-mini" id="gm-back">← Menu</button><h2>${title}</h2><span></span></div>`;

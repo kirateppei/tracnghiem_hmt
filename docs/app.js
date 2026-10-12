@@ -1491,9 +1491,9 @@ function launchConfetti(){
 }
 
 /* ---------- Background music (5 bài, chọn được) ---------- */
-const MUSIC_ICONS = { soi_dong:'🔥', bolero_nhe:'🌙', edm_manh:'⚡', lofi_thu_gian:'☕', dan_gian_dien_tu:'🥁' };
+const MUSIC_ICONS = { quiz_master:'🏆', quiz_countdown:'⏳', thinking_timer:'🤔', flash_quiz:'⚡', thinking_news:'📰' };
 let musicOn = false;
-let currentTrackId = (function(){ try{ return localStorage.getItem('quiz-app-music-track'); }catch(e){ return null; } })() || 'soi_dong';
+let currentTrackId = (function(){ try{ return localStorage.getItem('quiz-app-music-track'); }catch(e){ return null; } })() || 'quiz_master';
 
 function getTrackById(id){ return MUSIC_TRACKS.find(t => t.id === id) || MUSIC_TRACKS[0]; }
 

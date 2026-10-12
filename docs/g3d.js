@@ -10,6 +10,25 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const rnd = (a, b) => a + Math.random() * (b - a);
 
+/* Logo công ty (docs/logo.png): nạp một lần, dùng làm huy hiệu tròn trên các cảnh 3D */
+let logoImg = null, logoP = null;
+export function loadLogo(){
+  if(!logoP) logoP = new Promise((res) => { const i = new Image(); i.onload = () => { logoImg = i; res(i); }; i.onerror = () => res(null); i.src = 'logo.png'; });
+  return logoP;
+}
+// vẽ huy hiệu logo (nền trắng, viền) vào ctx tại (cx,cy) bán kính r; sx,sy co giãn để bù méo khi dán lên mặt cong
+function drawBadge(c, cx, cy, r, ring, sx = 1, sy = 1){
+  if(!logoImg) return;
+  c.save(); c.translate(cx, cy); c.scale(sx, sy);
+  c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fillStyle = '#ffffff'; c.fill();
+  c.lineWidth = Math.max(2, r * 0.07); c.strokeStyle = ring || '#F2B807'; c.stroke();
+  const k = r * 1.62; c.drawImage(logoImg, -k / 2, -k / 2 - r * 0.04, k, k * (logoImg.height / logoImg.width));
+  c.restore();
+}
+function badgeTex(size, ring){
+  return canvasTex(size, size, (c, w, h) => { drawBadge(c, w / 2, h / 2, w * 0.47, ring); });
+}
+
 function disposeScene(scene){
   scene.traverse((o) => {
     if(o.geometry) o.geometry.dispose();
@@ -79,11 +98,11 @@ function lights(S, o = {}){
 }
 
 /* ================= Xúc xắc ================= */
-const DICE_SKINS = {
-  navy:   { base: '#1c2f86', ring: '#e8b04a', glyph: '#ffffff', num: '#ffffff' },
-  gold:   { base: '#1a1208', ring: '#d9ac52', glyph: '#e6c06a', num: '#f1cf7a' },
-  violet: { base: '#5a3fc0', ring: '#ffffff', glyph: '#ffffff', num: '#ffffff' },
-  royal:  { base: '#0b2560', ring: '#2f86f0', glyph: '#f2c14e', num: '#f7cf55' },
+const DICE_SKINS = {   // tên id giữ nguyên để tương thích; màu theo thương hiệu Hiệp Minh Thịnh
+  navy:   { base: '#163B6D', ring: '#F2B807', glyph: '#F2B807', num: '#ffffff' },   // Xanh HMT
+  gold:   { base: '#F2A900', ring: '#7a3a00', glyph: '#7a3a00', num: '#3a1c00' },   // Vàng nắng
+  violet: { base: '#E8710A', ring: '#ffffff', glyph: '#fff3cf', num: '#ffffff' },   // Cam điện lực
+  royal:  { base: '#14805A', ring: '#F2B807', glyph: '#F7E08A', num: '#ffffff' },   // Xanh pin
 };
 const ZOD = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
 
@@ -108,8 +127,11 @@ function diceFaceTex(k, v){
     c.fillStyle = sh; c.fillRect(0, 0, w, h);
     c.strokeStyle = k.ring; c.lineWidth = 6; c.beginPath(); c.arc(w / 2, h / 2, w * 0.43, 0, Math.PI * 2); c.stroke();
     c.lineWidth = 2; c.beginPath(); c.arc(w / 2, h / 2, w * 0.31, 0, Math.PI * 2); c.stroke();
-    c.fillStyle = k.glyph; c.font = '700 22px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
-    ZOD.forEach((z, i) => { const a = (i / 12) * Math.PI * 2 - Math.PI / 2; c.fillText(z, w / 2 + Math.cos(a) * w * 0.37, h / 2 + Math.sin(a) * w * 0.37); });
+    c.fillStyle = k.glyph; c.strokeStyle = k.glyph; c.lineCap = 'round';
+    for(let i = 0; i < 12; i++){   // vòng tia nắng
+      const a = (i / 12) * Math.PI * 2 - Math.PI / 2, r1 = w * 0.325, r2 = w * (i % 2 ? 0.385 : 0.41);
+      c.lineWidth = i % 2 ? 4 : 6; c.beginPath(); c.moveTo(w / 2 + Math.cos(a) * r1, h / 2 + Math.sin(a) * r1); c.lineTo(w / 2 + Math.cos(a) * r2, h / 2 + Math.sin(a) * r2); c.stroke();
+    }
     c.fillStyle = k.num; c.font = '900 120px "Trebuchet MS",Arial,sans-serif';
     c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 8; c.fillText(String(v), w / 2, h / 2 + 6);
   });
@@ -129,14 +151,18 @@ export function dice(container, opt = {}){
   lights(S, { x: 3, y: 9, z: 4, hemi: 0.9, sun: 2.8, shadowSize: 8 });
   // bàn nỉ xanh có viền gỗ
   const felt = canvasTex(512, 512, (c, w, h) => {
-    const g = c.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w * 0.55); g.addColorStop(0, '#2f8a57'); g.addColorStop(1, '#14452c');
+    const g = c.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w * 0.55); g.addColorStop(0, '#1d5a9e'); g.addColorStop(1, '#0c2850');
     c.fillStyle = g; c.fillRect(0, 0, w, h);
     for(let i = 0; i < 2600; i++){ c.fillStyle = `rgba(255,255,255,${Math.random() * 0.05})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
   });
   const table = new THREE.Mesh(new THREE.CircleGeometry(6.2, 64), new THREE.MeshStandardMaterial({ map: felt, roughness: 0.95 }));
   table.rotation.x = -Math.PI / 2; table.receiveShadow = true; scene.add(table);
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(6.25, 0.32, 16, 80), new THREE.MeshStandardMaterial({ color: 0x6b3f1d, roughness: 0.5, metalness: 0.1 }));
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(6.25, 0.32, 16, 80), new THREE.MeshStandardMaterial({ color: 0xE8710A, roughness: 0.45, metalness: 0.2 }));
   rim.rotation.x = Math.PI / 2; rim.position.y = 0.05; rim.receiveShadow = true; scene.add(rim);
+  if(logoImg){   // logo công ty in giữa mặt bàn
+    const decal = new THREE.Mesh(new THREE.CircleGeometry(2.1, 48), new THREE.MeshStandardMaterial({ map: badgeTex(512, '#F2B807'), transparent: true, opacity: 0.55, roughness: 0.9 }));
+    decal.rotation.x = -Math.PI / 2; decal.position.y = 0.012; decal.receiveShadow = true; scene.add(decal);
+  }
 
   let skin = DICE_SKINS[opt.skin] || DICE_SKINS.navy, count = opt.count || 2;
   let items = [], rollT = null;
@@ -225,7 +251,7 @@ export function wheel(container){
   camera.position.set(0, 0.6, 15.5); camera.lookAt(0, 0.1, 0);
   addEnv(S); lights(S, { x: 2, y: 5, z: 8, hemi: 0.8, sun: 2.2 });
   const R = 3.2, group = new THREE.Group(); group.rotation.x = -0.4; scene.add(group);
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.3, R + 0.3, 0.6, 72), new THREE.MeshStandardMaterial({ color: 0x5a3410, metalness: 0.4, roughness: 0.4 }));
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.3, R + 0.3, 0.6, 72), new THREE.MeshStandardMaterial({ color: 0x163B6D, metalness: 0.5, roughness: 0.35 }));
   body.rotation.x = Math.PI / 2; body.position.z = -0.32; group.add(body);
   const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 3.2, 24), new THREE.MeshStandardMaterial({ color: 0x4a2c0c, metalness: 0.3, roughness: 0.5 }));
   stand.position.set(0, -R - 1.2, -0.6); group.add(stand);
@@ -242,7 +268,7 @@ export function wheel(container){
     m.position.set(Math.cos(a) * (R + 0.32), Math.sin(a) * (R + 0.32), 0.1); group.add(m); bulbs.push(m);
   }
   const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.62, 0.34, 40), goldMat(0.2)); hub.rotation.x = Math.PI / 2; hub.position.z = 0.2; group.add(hub);
-  const star = new THREE.Mesh(new THREE.CircleGeometry(0.42, 32), new THREE.MeshBasicMaterial({ map: canvasTex(128, 128, (c, w, h) => { c.fillStyle = '#f7d36a'; c.fillRect(0, 0, w, h); c.fillStyle = '#7a1f1f'; c.font = '700 96px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('★', w / 2, h / 2 + 6); }) }));
+  const star = new THREE.Mesh(new THREE.CircleGeometry(0.46, 40), new THREE.MeshBasicMaterial({ map: logoImg ? badgeTex(256, '#F2B807') : canvasTex(128, 128, (c, w, h) => { c.fillStyle = '#f7d36a'; c.fillRect(0, 0, w, h); c.fillStyle = '#7a1f1f'; c.font = '700 96px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('★', w / 2, h / 2 + 6); }), transparent: true }));
   star.position.z = 0.385; group.add(star);
   const ptr = new THREE.Group(); ptr.position.set(0, R + 0.5, 0.55); group.add(ptr);
   const cone = new THREE.Mesh(new THREE.ConeGeometry(0.34, 1.05, 20), new THREE.MeshStandardMaterial({ color: 0xd32f2f, metalness: 0.5, roughness: 0.3 }));
@@ -292,6 +318,9 @@ function woodTex(base, dark){
       c.strokeStyle = dark; c.lineWidth = 3; c.beginPath(); c.moveTo(i * pw, 0); c.lineTo(i * pw, h); c.stroke();
       for(let k = 0; k < 7; k++){ c.strokeStyle = 'rgba(60,30,8,.18)'; c.lineWidth = 1.2; const x = i * pw + Math.random() * pw; c.beginPath(); c.moveTo(x, 0); c.bezierCurveTo(x + 4, h * 0.3, x - 4, h * 0.6, x + 2, h); c.stroke(); }
     }
+    // logo công ty in trên thùng, hai chỗ đối diện, phía trên hàng khe (bù méo vì vòng thùng dài hơn chiều cao)
+    drawBadge(c, w * 0.25, h * 0.27, 26, '#F2B807', 0.64, 1);
+    drawBadge(c, w * 0.75, h * 0.27, 26, '#F2B807', 0.64, 1);
   });
 }
 function pirateMan(){
@@ -440,9 +469,16 @@ export function croc(container, opt = {}){
     const eye = new THREE.Mesh(new THREE.SphereGeometry(0.36, 20, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })); eye.position.set(sx * 1.25, 1.85, 0.42); upper.add(eye);
     const pup = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2 })); pup.position.set(sx * 1.25, 1.88, 0.72); upper.add(pup);
   });
+  // mũ bảo hộ vàng cam có logo công ty
+  const hatM = new THREE.MeshStandardMaterial({ color: 0xF59A00, roughness: 0.35, metalness: 0.1 });
+  const hat = new THREE.Group(); hat.position.set(0, 1.78, 0.35); hat.rotation.x = 0.12; upper.add(hat);
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.95, 32, 18, 0, Math.PI * 2, 0, Math.PI / 2), hatM); dome.scale.set(1, 0.85, 1.1); dome.castShadow = true; hat.add(dome);
+  const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 1.9), hatM); ridge.position.y = 0.78; hat.add(ridge);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.98, 1.05, 0.07, 32, 1, false, -0.9, 1.8 * Math.PI / 1), hatM); brim.position.set(0, 0.02, 0.35); brim.scale.set(1.05, 1, 1.25); hat.add(brim);
+  if(logoImg){ const plate = new THREE.Mesh(new THREE.CircleGeometry(0.34, 32), new THREE.MeshBasicMaterial({ map: badgeTex(256, '#163B6D'), transparent: true })); plate.position.set(0, 0.42, 1.03); plate.rotation.x = -0.35; hat.add(plate); }
   const nose = new THREE.Mesh(new THREE.SphereGeometry(0.8, 24, 16), skinM); nose.scale.set(1.5, 0.7, 1); nose.position.set(0, 0.95, 2.55); nose.castShadow = true; upper.add(nose);
   [-0.42, 0.42].forEach((sx) => { const n = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshStandardMaterial({ color: C.skin3 })); n.position.set(sx, 1.18, 3.05); n.scale.set(1, 0.6, 0.6); upper.add(n); });
-  for(let k = 0; k < 5; k++){ const b = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 8), skin2M); b.position.set(0, 1.95 - k * 0.12, 0.2 - k * 0.55); b.rotation.x = -0.2; upper.add(b); }
+  for(let k = 1; k < 5; k++){ const b = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 8), skin2M); b.position.set(0, 1.9 - k * 0.2, 0.2 - k * 0.5); b.rotation.x = -0.2; upper.add(b); }
   const OPEN = 1.05;
   let ang = OPEN, angV = 0, mode = 'open', shake = 0, t = 0;
   hinge.rotation.x = -ang;
@@ -563,6 +599,11 @@ export function arena(container, opt = {}){
   addEnv(S); lights(S, { x: 3, y: 9, z: 7, hemi: 0.95, sun: 2.4, shadowSize: 9 });
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.38 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
   const skins = opt.skins, els = opt.els, arenaEl = opt.arenaEl;
+  let decal = null;
+  if(logoImg){
+    decal = new THREE.Mesh(new THREE.CircleGeometry(1.5, 40), new THREE.MeshBasicMaterial({ map: badgeTex(256, '#F2B807'), transparent: true, opacity: 0.5, depthWrite: false }));
+    decal.rotation.x = -Math.PI / 2; decal.position.y = 0.01; scene.add(decal);
+  }
   const cs = skins.map((p, k) => { const c = buildChicken(p); c.dir = k === 0 ? 1 : -1; c.root.scale.x = c.dir; scene.add(c.root); c.prev = {}; c.t0 = {}; return c; });
   const ray = new THREE.Raycaster(), pl = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), v3 = new THREE.Vector3(), ndc = new THREE.Vector2();
   const CLS = ['atk', 'hurt', 'heal', 'flurry', 'phantom', 'steel', 'thunder', 'stunned', 'crow', 'dead', 'win'];
@@ -574,6 +615,7 @@ export function arena(container, opt = {}){
     ndc.set(((r.left + r.width / 2 - a.left) / a.width) * 2 - 1, -(((r.bottom - 4) - a.top) / a.height) * 2 + 1);
     ray.setFromCamera(ndc, camera); if(!ray.ray.intersectPlane(pl, v3)) return;
     c.base = c.base || new THREE.Vector3(); c.base.copy(v3);
+    if(decal && c.dir === 1){ decal.position.set(0, 0.01, v3.z); decal.scale.setScalar(clamp((r.height * 0.74) / 150, 0.8, 2)); }
     const top = new THREE.Vector3(v3.x, 3.3, v3.z).project(camera), bot = new THREE.Vector3(v3.x, 0, v3.z).project(camera);
     const px = Math.abs(top.y - bot.y) * a.height / 2;
     c.sc = clamp((r.height * 0.74) / Math.max(px, 1), 0.3, 3);
@@ -620,4 +662,4 @@ export function arena(container, opt = {}){
   return { dispose: S.dispose };
 }
 
-export default { supported, stage, dice, wheel, barrel, croc, arena };
+export default { supported, stage, dice, wheel, barrel, croc, arena, loadLogo };

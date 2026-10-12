@@ -94,7 +94,7 @@
   #view-games .gm-status.lose{ color:#ff8a80; font-size:1.1rem; }
   #view-games .gm-hint{ text-align:center; font-size:.78rem; opacity:.8; margin-top:6px; }
   /* cá sấu (giao diện nền nước, miệng há to) */
-  #view-games .gm-water{ position:relative; border-radius:18px; padding:14px 10px 16px; background:linear-gradient(#1aa3c9 0%,#0d6e9c 35%,#0a3d66 100%); box-shadow:inset 0 0 40px rgba(0,0,0,.25); overflow:hidden; }
+  #view-games .gm-water{ position:relative; border-radius:18px; padding:14px 10px 16px; background:linear-gradient(#6fc3ee 0%,#2f8fd0 40%,#163B6D 100%); box-shadow:inset 0 0 40px rgba(0,0,0,.25); overflow:hidden; }
   #view-games .gm-gear{ position:absolute; right:10px; top:10px; width:42px; height:42px; border-radius:50%; border:0; background:linear-gradient(#ffb347,#e67e22); color:#fff; font-size:1.4rem; cursor:pointer; box-shadow:0 3px 8px rgba(0,0,0,.35); z-index:3; }
   #view-games .gm-banner{ margin:44px -10px 8px; padding:10px 8px; text-align:center; background:rgba(5,25,45,.78); color:#e6ff4a; font-weight:900; font-size:.95rem; letter-spacing:.02em; text-transform:uppercase; min-height:2.4em; display:flex; align-items:center; justify-content:center; }
   #view-games .gm-banner.lose{ color:#ff8a80; }
@@ -122,7 +122,7 @@
   #view-games .gm-modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:150; display:flex; align-items:center; justify-content:center; padding:16px; }
   #view-games .gm-modal .gm-panel{ width:100%; max-width:380px; margin:0; max-height:90vh; overflow:auto; }
   /* thùng hải tặc (cảnh bãi biển, thùng gỗ xoay được, hải tặc nhảy ra) */
-  #view-games .gm-beach{ position:relative; border-radius:18px; padding:12px 8px 14px; overflow:hidden; background:linear-gradient(#ffb74d 0%,#ff8a65 14%,#6ec6f0 38%,#2aa7dd 52%,#ecc980 53%,#d8a65a 100%); box-shadow:inset 0 0 40px rgba(0,0,0,.2); }
+  #view-games .gm-beach{ position:relative; border-radius:18px; padding:12px 8px 14px; overflow:hidden; background:linear-gradient(#ffcc66 0%,#ff9a5a 14%,#7fcdf2 38%,#3a9fdd 52%,#b8bec6 53%,#8e959e 100%); box-shadow:inset 0 0 40px rgba(0,0,0,.2); }
   #view-games .gm-beach .deco{ position:absolute; font-size:3rem; line-height:1; pointer-events:none; }
   #view-games .gm-restart{ position:absolute; right:10px; top:10px; width:42px; height:42px; border-radius:8px; border:2px solid #4b2e12; background:linear-gradient(#a8742f,#7a4d1b); color:#fff; font-size:1.3rem; cursor:pointer; z-index:5; }
   #view-games .gm-pbarrel{ position:relative; width:260px; max-width:92%; aspect-ratio:260/330; margin:46px auto 0; touch-action:pan-y; user-select:none; -webkit-user-select:none; }
@@ -139,7 +139,7 @@
   #view-games .gm-rot{ display:flex; justify-content:center; gap:16px; margin-top:8px; }
   #view-games .gm-rot button{ width:48px; height:40px; border-radius:20px; border:2px solid #4b2e12; background:linear-gradient(#e7b562,#b9812f); font-size:1.3rem; font-weight:900; color:#3b2410; cursor:pointer; }
   /* xí ngầu 3D */
-  #view-games .gm-dicestage{ border-radius:18px; padding:14px 8px 10px; background:radial-gradient(circle at 50% 30%,#3b2a9a,#1a1050 70%); box-shadow:inset 0 0 40px rgba(0,0,0,.35); }
+  #view-games .gm-dicestage{ border-radius:18px; padding:14px 8px 10px; background:radial-gradient(circle at 50% 30%,#2a6ab4,#0f2f5c 72%); box-shadow:inset 0 0 40px rgba(0,0,0,.35); }
   #view-games .gm-arena.arena3d{ min-height:330px; background:linear-gradient(#1c1209 0%,#3b2a18 52%,#7a5630 53%,#a97c45 100%); }
   #view-games .gm-arena.arena3d .gm-cside .chick{ width:140px; height:160px; animation:none !important; transform:none !important; }
   #view-games .gm-arena.arena3d .gm-cside .chick svg{ visibility:hidden; animation:none !important; }
@@ -154,6 +154,13 @@
   #view-games .gm-pbarrel.pirate3d .gm-pslot, #view-games .gm-pbarrel.pirate3d .gm-pknife{ visibility:hidden; pointer-events:none; }
   #view-games .gm-pbarrel.pirate3d.boom{ animation:none; }
   #view-games .gm-b3d{ position:absolute; inset:0; }
+  /* logo công ty làm dấu mờ ở góc các sân chơi + dải đầu menu */
+  #view-games .gm-water::after, #view-games .gm-beach::after, #view-games .gm-dicestage::after, #view-games .gm-wheelstage::after, #view-games .gm-arena::after{ content:''; position:absolute; right:8px; bottom:8px; width:44px; height:44px; border-radius:50%; background:#fff url(logo.png) center/78% no-repeat; opacity:.72; pointer-events:none; z-index:3; box-shadow:0 2px 8px rgba(0,0,0,.35); }
+  #view-games .gm-dicestage{ position:relative; }
+  #view-games .gm-brand{ display:flex; align-items:center; gap:10px; margin:0 0 12px; padding:10px 12px; border-radius:16px; background:linear-gradient(120deg,rgba(22,59,109,.92),rgba(30,158,107,.85)); color:#fff; }
+  #view-games .gm-brand img{ width:42px; height:42px; border-radius:50%; background:#fff; padding:3px; flex:none; }
+  #view-games .gm-brand b{ display:block; font-size:.95rem; letter-spacing:.02em; }
+  #view-games .gm-brand small{ display:block; opacity:.9; font-size:.74rem; }
   #view-games .gm-wheel3d{ height:340px; margin:0 auto; max-width:420px; }
   #view-games .gm-dice3d{ height:300px; border-radius:14px; overflow:hidden; }
   #view-games .gm-dice{ display:flex; flex-wrap:wrap; gap:26px 22px; justify-content:center; margin:6px 0 4px; min-height:150px; align-items:center; }
@@ -181,7 +188,7 @@
   #view-games .gm-sum{ text-align:center; font-size:1.3rem; font-weight:800; }
   #view-games .gm-hist{ text-align:center; font-size:.82rem; opacity:.85; margin-top:6px; }
   /* vòng quay */
-  #view-games .gm-wheelstage{ position:relative; border-radius:18px; padding:26px 8px 10px; background:radial-gradient(circle at 50% 25%,#7a3bd0 0%,#35176f 45%,#150836 100%); box-shadow:inset 0 0 50px rgba(0,0,0,.4); overflow:hidden; }
+  #view-games .gm-wheelstage{ position:relative; border-radius:18px; padding:26px 8px 10px; background:radial-gradient(circle at 50% 25%,#2d6fb5 0%,#163B6D 48%,#0a2040 100%); box-shadow:inset 0 0 50px rgba(0,0,0,.4); overflow:hidden; }
   #view-games .gm-wheelstage::before{ content:''; position:absolute; left:50%; top:-40px; width:340px; height:340px; margin-left:-170px; background:radial-gradient(circle,rgba(255,236,160,.35),transparent 65%); pointer-events:none; }
   #view-games .gm-wheelbox{ position:relative; width:310px; max-width:100%; margin:4px auto; }
   #view-games .gm-wheelbox canvas{ width:100%; height:auto; display:block; filter:drop-shadow(0 10px 14px rgba(0,0,0,.55)); }
@@ -209,7 +216,7 @@
   #view-games .gm-stat b{ width:26px; text-align:right; flex:none; }
   #view-games .gm-secret{ font-size:.7rem; color:#7a5c00; font-weight:800; margin-top:3px; }
   #view-games .gm-chk .re{ border:0; background:#eef3ef; border-radius:10px; width:36px; height:36px; font-size:1.1rem; cursor:pointer; flex:none; }
-  #view-games .gm-arena{ position:relative; border-radius:18px; padding:14px 8px 10px; background:linear-gradient(#2b1d12 0%,#4a3320 55%,#8a6236 56%,#a97c45 100%); display:flex; align-items:flex-end; justify-content:space-between; min-height:250px; overflow:hidden; box-shadow:inset 0 0 40px rgba(0,0,0,.5); }
+  #view-games .gm-arena{ position:relative; border-radius:18px; padding:14px 8px 10px; background:linear-gradient(rgba(8,16,28,.74),rgba(8,16,28,.46)),url(hmt-bg.jpg) center 35%/cover; display:flex; align-items:flex-end; justify-content:space-between; min-height:250px; overflow:hidden; box-shadow:inset 0 0 40px rgba(0,0,0,.5); }
   #view-games .gm-arena::before{ content:''; position:absolute; left:6%; right:6%; bottom:14px; height:60px; border-radius:50%; background:radial-gradient(ellipse,rgba(0,0,0,.25),transparent 70%); }
   #view-games .gm-cside{ position:relative; width:42%; text-align:center; z-index:1; }
   #view-games .gm-cside .nm{ color:#fff; font-weight:900; font-size:.82rem; text-shadow:0 2px 3px #000; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -308,8 +315,10 @@
   }
   // dựng một khung 3D: gọi build(api) khi module sẵn sàng; chỉ giữ nếu màn hình hiện tại còn đúng
   function mount3d(scr, build){
-    load3d().then((api) => {
-      if(!api || screen !== scr) return;
+    load3d().then(async (api) => {
+      if(!api) return;
+      try{ if(api.loadLogo) await api.loadLogo(); }catch(e){}
+      if(screen !== scr) return;
       try{ const v = build(api); if(v){ views.push(v); } }catch(e){ console.warn('3D lỗi, dùng bản 2D', e); }
     });
   }
@@ -324,6 +333,7 @@
   function showMenu(){
     clearTimers(); screen = 'menu';
     render(`
+      <div class="gm-brand"><img src="logo.png" alt="Hiệp Minh Thịnh"><div><b>HIỆP MINH THỊNH</b><small>Năng lượng mặt trời · giải trí cuối ngày ☀️</small></div></div>
       <div class="gm-top"><h2>🎮 Trò chơi</h2><span style="display:flex;gap:6px"><button class="gm-mini" id="gm-3d">${want3d() ? '🧊 3D: Bật' : '🧊 3D: Tắt'}</button><button class="gm-mini" id="gm-mute">${muted ? '🔇 Tắt tiếng' : '🔊 Có tiếng'}</button></span></div>
       <div class="gm-menu">
         <button class="gm-card" data-g="croc"><span class="ico">🐊</span><b>Khám răng cá sấu</b><small>Bấm răng, ai bấm trúng răng đau thì bị cạp</small></button>
@@ -565,7 +575,7 @@
     let rot = 0, barrelV = null;
     render(`${topBar('🏴‍☠️ Thùng gỗ cướp biển')}
       <div class="gm-beach">
-        <span class="deco" style="left:4px;top:78px">🌴</span><span class="deco" style="right:6px;top:92px;font-size:2.4rem">🌴</span>
+        <span class="deco" style="left:4px;top:78px">☀️</span><span class="deco" style="right:6px;top:92px;font-size:2.4rem">🔆</span>
         <button class="gm-restart" id="gm-again2" aria-label="Chơi lại">⟲</button>
         <div class="gm-banner" id="gm-status" style="margin-top:44px">${players.count > 1 ? 'Lượt của ' + esc(nameOf(0)) + ' · rút dao vào một khe' : 'Nhét dao vào một khe bất kỳ'}</div>
         <div class="gm-pbarrel" id="gm-barrel">${PIRATE_BG}<div class="pirate">${PIRATE_MAN}</div>${PIRATE_FRONT}<div id="gm-pslots"></div></div>
@@ -663,12 +673,12 @@
 
   /* ---------- Lắc xí ngầu (khối 3D) ---------- */
   const SKINS = [
-    { id: 'navy',   name: 'Xanh hoàng đạo', bg: 'radial-gradient(circle at 50% 40%,#25388f,#0d1650 75%)', ring: '#e8b04a', glow: 'rgba(232,176,74,.55)', glyph: '#fff', num: '#fff' },
-    { id: 'gold',   name: 'Vàng đen',       bg: 'radial-gradient(circle at 50% 40%,#2a1c0c,#0c0703 80%)', ring: '#d9ac52', glow: 'rgba(217,172,82,.5)', glyph: '#e6c06a', num: '#f1cf7a' },
-    { id: 'violet', name: 'Tím phát sáng',  bg: 'radial-gradient(circle at 50% 40%,#6a4bd0,#3a2790 80%)', ring: '#ffffff', glow: 'rgba(255,255,255,.7)', glyph: '#fff', num: '#fff' },
-    { id: 'royal',  name: 'Xanh vàng',      bg: 'radial-gradient(circle at 50% 40%,#103070,#050f2e 80%)', ring: '#2f86f0', glow: 'rgba(47,134,240,.7)', glyph: '#f2c14e', num: '#f7cf55' }
+    { id: 'navy',   name: 'Xanh HMT',      bg: 'radial-gradient(circle at 50% 40%,#2a5aa0,#163B6D 75%)', ring: '#F2B807', glow: 'rgba(242,184,7,.55)', glyph: '#F2B807', num: '#fff' },
+    { id: 'gold',   name: 'Vàng nắng',     bg: 'radial-gradient(circle at 50% 40%,#ffd24d,#F2A900 80%)', ring: '#7a3a00', glow: 'rgba(242,169,0,.6)', glyph: '#7a3a00', num: '#3a1c00' },
+    { id: 'violet', name: 'Cam điện lực',  bg: 'radial-gradient(circle at 50% 40%,#ff9a3c,#E8710A 80%)', ring: '#ffffff', glow: 'rgba(255,255,255,.7)', glyph: '#fff3cf', num: '#fff' },
+    { id: 'royal',  name: 'Xanh pin',      bg: 'radial-gradient(circle at 50% 40%,#22b07a,#14805A 80%)', ring: '#F2B807', glow: 'rgba(242,184,7,.6)', glyph: '#F7E08A', num: '#fff' }
   ];
-  const ZODIAC = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+  const ZODIAC = Array(12).fill('✹');   // vòng tia nắng (bản 2D)
   // mặt trên = 1, đáy = 6, trước = 2, sau = 5, phải = 3, trái = 4. Phép xoay đưa mặt có giá trị v lên trên:
   const TOP_ROT = { 1: [0, 0, 0], 2: [90, 0, 0], 5: [-90, 0, 0], 6: [180, 0, 0], 3: [0, 0, -90], 4: [0, 0, 90] };
   let diceCount = +store('dice') || 2;
@@ -778,8 +788,8 @@
   }
 
   /* ---------- Vòng quay may mắn ---------- */
-  const WHEEL_DEFAULT = ['Giải nhất 🎁', 'Chúc may mắn', 'Hát một bài 🎤', 'Kể chuyện cười 😄', 'Chống đẩy 5 cái 💪', 'Được miễn bài 🙌', 'Đãi trà sữa 🧋', 'Quay lại lượt nữa'];
-  const WHEEL_COLORS = ['#f2b705', '#e76f51', '#2a9d8f', '#457b9d', '#9b5de5', '#f15bb5', '#43aa8b', '#f8961e', '#577590', '#90be6d', '#d62828', '#6d6875'];
+  const WHEEL_DEFAULT = ['Giải nhất 🎁', 'Chúc may mắn', 'Giải thích MPPT 30 giây ☀️', 'Đọc 1 quy tắc an toàn điện ⚡', 'Kể một sự cố đã xử lý 🛠️', 'Được miễn bài 🙌', 'Đãi trà sữa 🧋', 'Quay lại lượt nữa'];
+  const WHEEL_COLORS = ['#163B6D', '#E8A100', '#14805A', '#E8710A', '#2E7DD1', '#C98A00', '#1E9E6B', '#C75B00', '#24539A', '#8FA31E', '#0F6B4A', '#B34700'];   // xanh dương, vàng nắng, xanh lá, cam (thương hiệu)
   let wheelItems = (function(){ const w = store('wheel'); return (Array.isArray(w) && w.length >= 2) ? w : WHEEL_DEFAULT.slice(); })();
   let wheelV = null, wheelAngle = 0, wheelRaf = 0, wheelSpinning = false, removeWinner = !!store('wheelRemove');
 

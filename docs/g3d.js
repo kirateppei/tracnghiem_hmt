@@ -323,7 +323,7 @@ function woodTex(base, dark){
 function pirateMan(){
   // nhân viên năng lượng mặt trời: đồng phục vàng cam có dải phản quang, mũ bảo hộ, kính, găng tay
   const g = new THREE.Group();
-  const uni = new THREE.MeshStandardMaterial({ color: 0xF59A00, roughness: 0.7 });
+  const uni = new THREE.MeshStandardMaterial({ color: 0xF2680C, roughness: 0.75 });
   const skin = new THREE.MeshStandardMaterial({ color: 0xf1b98a, roughness: 0.7 });
   const refl = new THREE.MeshStandardMaterial({ color: 0xe8edf0, metalness: 0.6, roughness: 0.25 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3 });
@@ -334,12 +334,12 @@ function pirateMan(){
   [-0.17, 0.17].forEach((x) => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), dark); e.position.set(x, 1.66, 0.45); g.add(e); });
   const gl = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.15, 0.1), new THREE.MeshStandardMaterial({ color: 0x66c4ff, transparent: true, opacity: 0.55, roughness: 0.1 })); gl.position.set(0, 1.67, 0.47); g.add(gl);
   const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.025, 8, 16, Math.PI), dark); mouth.position.set(0, 1.46, 0.47); mouth.rotation.z = Math.PI; g.add(mouth);
-  const hatM = new THREE.MeshStandardMaterial({ color: 0xF2B807, roughness: 0.35, metalness: 0.1 });
+  const hatM = new THREE.MeshStandardMaterial({ color: 0xf4f6f8, roughness: 0.35, metalness: 0.1 });
   const dome = new THREE.Mesh(new THREE.SphereGeometry(0.56, 28, 16, 0, Math.PI * 2, 0, Math.PI / 2), hatM); dome.position.y = 1.85; dome.scale.set(1, 0.95, 1); dome.castShadow = true; g.add(dome);
   const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 1.0), hatM); ridge.position.y = 2.38; g.add(ridge);
   const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.66, 0.06, 28), hatM); brim.position.set(0, 1.84, 0.1); brim.scale.set(1, 1, 1.2); g.add(brim);
   if(logoImg){ const pl = new THREE.Mesh(new THREE.CircleGeometry(0.17, 24), new THREE.MeshBasicMaterial({ map: badgeTex(256, '#163B6D'), transparent: true })); pl.position.set(0, 2.1, 0.55); pl.rotation.x = -0.35; g.add(pl); }
-  const arm = (sx) => { const a = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.9, 12), uni); a.position.set(sx * 0.85, 1.05, 0); a.rotation.z = -sx * 0.9; a.castShadow = true; g.add(a); const h = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.8 })); h.position.set(sx * 1.25, 1.42, 0); g.add(h); };
+  const arm = (sx) => { const a = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.9, 12), uni); a.position.set(sx * 0.85, 1.05, 0); a.rotation.z = -sx * 0.9; a.castShadow = true; g.add(a); const band = new THREE.Mesh(new THREE.CylinderGeometry(0.148, 0.148, 0.09, 12), refl); band.position.copy(a.position); band.rotation.z = a.rotation.z; g.add(band); const h = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), new THREE.MeshStandardMaterial({ color: 0xe9d8c4, roughness: 0.8 })); h.position.set(sx * 1.25, 1.42, 0); g.add(h); };
   arm(1); arm(-1);
   return g;
 }

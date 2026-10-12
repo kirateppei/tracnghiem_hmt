@@ -133,7 +133,7 @@ function diceFaceTex(k, v){
       c.lineWidth = i % 2 ? 4 : 6; c.beginPath(); c.moveTo(w / 2 + Math.cos(a) * r1, h / 2 + Math.sin(a) * r1); c.lineTo(w / 2 + Math.cos(a) * r2, h / 2 + Math.sin(a) * r2); c.stroke();
     }
     c.fillStyle = k.num; c.font = '900 120px "Trebuchet MS",Arial,sans-serif';
-    c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 8; c.fillText(String(v), w / 2, h / 2 + 6);
+    c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 8; c.fillText(String(v), w / 2, h / 2 + 120 * 0.35);
   });
 }
 // thứ tự mặt của BoxGeometry: +x, -x, +y, -y, +z, -z  →  3, 4, 1, 6, 2, 5 (hai mặt đối nhau cộng bằng 7)
@@ -318,27 +318,28 @@ function woodTex(base, dark){
       c.strokeStyle = dark; c.lineWidth = 3; c.beginPath(); c.moveTo(i * pw, 0); c.lineTo(i * pw, h); c.stroke();
       for(let k = 0; k < 7; k++){ c.strokeStyle = 'rgba(60,30,8,.18)'; c.lineWidth = 1.2; const x = i * pw + Math.random() * pw; c.beginPath(); c.moveTo(x, 0); c.bezierCurveTo(x + 4, h * 0.3, x - 4, h * 0.6, x + 2, h); c.stroke(); }
     }
-    // logo công ty in trên thùng, hai chỗ đối diện, phía trên hàng khe (bù méo vì vòng thùng dài hơn chiều cao)
-    drawBadge(c, w * 0.25, h * 0.27, 26, '#F2B807', 0.64, 1);
-    drawBadge(c, w * 0.75, h * 0.27, 26, '#F2B807', 0.64, 1);
   });
 }
 function pirateMan(){
+  // nhân viên năng lượng mặt trời: đồng phục vàng cam có dải phản quang, mũ bảo hộ, kính, găng tay
   const g = new THREE.Group();
-  const stripe = canvasTex(128, 128, (c, w, h) => { for(let i = 0; i < 8; i++){ c.fillStyle = i % 2 ? '#f4f1e6' : '#c62828'; c.fillRect(0, i * h / 8, w, h / 8); } });
-  stripe.wrapS = stripe.wrapT = THREE.RepeatWrapping;
+  const uni = new THREE.MeshStandardMaterial({ color: 0xF59A00, roughness: 0.7 });
   const skin = new THREE.MeshStandardMaterial({ color: 0xf1b98a, roughness: 0.7 });
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.7, 1.3, 20), new THREE.MeshStandardMaterial({ map: stripe, roughness: 0.8 })); body.position.y = 0.65; body.castShadow = true; g.add(body);
+  const refl = new THREE.MeshStandardMaterial({ color: 0xe8edf0, metalness: 0.6, roughness: 0.25 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.7, 1.3, 20), uni); body.position.y = 0.65; body.castShadow = true; g.add(body);
+  [0.5, 0.78].forEach((y) => { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.665 + (0.5 - y) * 0.1, 0.665 + (0.5 - y) * 0.1 + 0.02, 0.09, 20), refl); r.position.y = y; g.add(r); });
+  if(logoImg){ const pl = new THREE.Mesh(new THREE.CircleGeometry(0.2, 24), new THREE.MeshBasicMaterial({ map: badgeTex(256, '#163B6D'), transparent: true })); pl.position.set(0.22, 1.0, 0.6); pl.rotation.y = 0.35; g.add(pl); }
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 18), skin); head.position.y = 1.62; head.castShadow = true; g.add(head);
-  const eyeM = new THREE.MeshStandardMaterial({ color: 0x111111 });
-  [-0.17, 0.17].forEach((x) => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), eyeM); e.position.set(x, 1.68, 0.45); g.add(e); });
-  const patch = new THREE.Mesh(new THREE.CircleGeometry(0.15, 20), eyeM); patch.position.set(0.17, 1.68, 0.5); g.add(patch);
-  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.025, 8, 16, Math.PI), eyeM); mouth.position.set(0, 1.45, 0.47); mouth.rotation.z = Math.PI; g.add(mouth);
-  const hatM = new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.6 });
-  const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.56, 0.4, 24), hatM); hat.position.y = 2.0; g.add(hat);
-  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.78, 0.07, 28), hatM); brim.position.y = 1.83; g.add(brim);
-  const skull = new THREE.Mesh(new THREE.CircleGeometry(0.15, 20), new THREE.MeshBasicMaterial({ color: 0xf5f5f5 })); skull.position.set(0, 2.0, 0.57); skull.rotation.x = -0.12; g.add(skull);
-  const arm = (sx) => { const a = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.9, 12), new THREE.MeshStandardMaterial({ map: stripe, roughness: 0.8 })); a.position.set(sx * 0.85, 1.05, 0); a.rotation.z = -sx * 0.9; a.castShadow = true; g.add(a); const h = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), skin); h.position.set(sx * 1.25, 1.42, 0); g.add(h); };
+  [-0.17, 0.17].forEach((x) => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), dark); e.position.set(x, 1.66, 0.45); g.add(e); });
+  const gl = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.15, 0.1), new THREE.MeshStandardMaterial({ color: 0x66c4ff, transparent: true, opacity: 0.55, roughness: 0.1 })); gl.position.set(0, 1.67, 0.47); g.add(gl);
+  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.025, 8, 16, Math.PI), dark); mouth.position.set(0, 1.46, 0.47); mouth.rotation.z = Math.PI; g.add(mouth);
+  const hatM = new THREE.MeshStandardMaterial({ color: 0xF2B807, roughness: 0.35, metalness: 0.1 });
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.56, 28, 16, 0, Math.PI * 2, 0, Math.PI / 2), hatM); dome.position.y = 1.85; dome.scale.set(1, 0.95, 1); dome.castShadow = true; g.add(dome);
+  const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 1.0), hatM); ridge.position.y = 2.38; g.add(ridge);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.66, 0.06, 28), hatM); brim.position.set(0, 1.84, 0.1); brim.scale.set(1, 1, 1.2); g.add(brim);
+  if(logoImg){ const pl = new THREE.Mesh(new THREE.CircleGeometry(0.17, 24), new THREE.MeshBasicMaterial({ map: badgeTex(256, '#163B6D'), transparent: true })); pl.position.set(0, 2.1, 0.55); pl.rotation.x = -0.35; g.add(pl); }
+  const arm = (sx) => { const a = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.9, 12), uni); a.position.set(sx * 0.85, 1.05, 0); a.rotation.z = -sx * 0.9; a.castShadow = true; g.add(a); const h = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.8 })); h.position.set(sx * 1.25, 1.42, 0); g.add(h); };
   arm(1); arm(-1);
   return g;
 }
@@ -429,7 +430,7 @@ export function barrel(container, opt = {}){
 
 /* ================= Khám răng cá sấu ================= */
 export function croc(container, opt = {}){
-  const N = opt.N || 6, C = Object.assign({ skin: '#4caf50', skin2: '#388e3c', skin3: '#1b5e20', in1: '#5d1111', in2: '#b71c1c' }, opt.colors || {});
+  const N = opt.N || 6, kind = opt.kind || 'croc', hippo = kind === 'hippo', shark = kind === 'shark', C = Object.assign({ skin: '#4caf50', skin2: '#388e3c', skin3: '#1b5e20', in1: '#5d1111', in2: '#b71c1c' }, opt.colors || {});
   const S = stage(container, { fov: 36, shadows: true, exposure: 1.05 });
   const { scene, camera } = S;
   camera.position.set(0, 5.6, 9.8); camera.lookAt(0, 0.8, 0.2);
@@ -437,11 +438,13 @@ export function croc(container, opt = {}){
   const skinM = new THREE.MeshStandardMaterial({ color: C.skin, roughness: 0.55, metalness: 0.05 });
   const skin2M = new THREE.MeshStandardMaterial({ color: C.skin2, roughness: 0.6 });
   const inM = new THREE.MeshStandardMaterial({ color: C.in2, roughness: 0.5, side: THREE.DoubleSide });
-  const toothM = () => new THREE.MeshStandardMaterial({ color: 0xf4f6f7, roughness: 0.3 });
+  const toothM = () => new THREE.MeshStandardMaterial({ color: hippo ? 0xf2ead2 : 0xf4f6f7, roughness: 0.3 });
+  const bellyM = shark ? new THREE.MeshStandardMaterial({ color: 0xe9f1f7, roughness: 0.5 }) : hippo ? new THREE.MeshStandardMaterial({ color: 0xd9b8c4, roughness: 0.6 }) : skinM;
+  const toothGeo = (h) => hippo ? new THREE.BoxGeometry(0.38, h * 0.8, 0.3) : shark ? new THREE.ConeGeometry(0.13, h * 1.15, 12) : new THREE.ConeGeometry(0.2, h, 16);
   const root = new THREE.Group(); root.position.y = -0.6; scene.add(root);
   // hàm dưới: vỏ ngoài + lòng miệng đỏ
   const lower = new THREE.Group(); root.add(lower);
-  const shellL = new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 24, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), skinM); shellL.scale.set(1, 0.7, 1.15); shellL.castShadow = true; shellL.receiveShadow = true; lower.add(shellL);
+  const shellL = new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 24, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), bellyM); shellL.scale.set(hippo ? 1.12 : shark ? 0.95 : 1, hippo ? 0.8 : shark ? 0.6 : 0.7, hippo ? 1.0 : 1.15); shellL.castShadow = true; shellL.receiveShadow = true; lower.add(shellL);
   const inner = new THREE.Mesh(new THREE.SphereGeometry(2.38, 48, 24, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), inM); inner.scale.set(1, 0.62, 0.86); inner.position.y = 0.05; lower.add(inner);
   const tongue = new THREE.Mesh(new THREE.SphereGeometry(1.05, 24, 16), new THREE.MeshStandardMaterial({ color: 0xd8324a, roughness: 0.6 })); tongue.scale.set(1.1, 0.35, 1.25); tongue.position.set(0, -0.36, 0.1); lower.add(tongue);
   const lip = new THREE.Mesh(new THREE.TorusGeometry(2.46, 0.14, 12, 64, Math.PI), skin2M); lip.rotation.x = Math.PI / 2; lip.rotation.z = Math.PI; lip.scale.set(1, 0.9, 1); lip.position.y = 0.04; lower.add(lip);
@@ -450,7 +453,7 @@ export function croc(container, opt = {}){
   for(let i = 0; i < N; i++){
     const f = N === 1 ? 0.5 : i / (N - 1), phi = (f - 0.5) * 2.5;
     const g = new THREE.Group(); g.position.set(Math.sin(phi) * R, 0.05, Math.cos(phi) * Rz); g.rotation.y = phi * 0.35;
-    const m = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.62, 16), toothM()); m.position.y = 0.3; m.castShadow = true; g.add(m);
+    const m = new THREE.Mesh(toothGeo(0.62), toothM()); m.position.y = 0.3; m.castShadow = true; g.add(m);
     const gum = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.12, 14), new THREE.MeshStandardMaterial({ color: 0xe0687a, roughness: 0.6 })); gum.position.y = 0.02; g.add(gum);
     const hit = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), hitMat); hit.position.y = 0.25; hit.userData.i = i; g.add(hit);
     lower.add(g); teeth.push({ g, m, hit, down: 0, target: 0, bad: false });
@@ -458,13 +461,33 @@ export function croc(container, opt = {}){
   // hàm trên: bản lề phía sau
   const hinge = new THREE.Group(); hinge.position.set(0, 0.1, -1.9); root.add(hinge);
   const upper = new THREE.Group(); upper.position.set(0, 0, 1.9); hinge.add(upper);
-  const shellU = new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), skinM); shellU.scale.set(1, 0.8, 1.15); shellU.castShadow = true; upper.add(shellU);
+  const shellU = new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), skinM); shellU.scale.set(hippo ? 1.12 : shark ? 0.95 : 1, hippo ? 0.98 : shark ? 0.7 : 0.8, hippo ? 1.0 : 1.15); shellU.castShadow = true; upper.add(shellU);
   const innerU = new THREE.Mesh(new THREE.SphereGeometry(2.38, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), inM); innerU.scale.set(1, 0.72, 0.86); innerU.position.y = -0.04; upper.add(innerU);
-  for(let i = 0; i < 9; i++){
-    const f = i / 8, phi = (f - 0.5) * 2.4, g = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.58, 16), toothM());
+  const nU = hippo ? 7 : shark ? 13 : 9;
+  for(let i = 0; i < nU; i++){
+    const f = i / (nU - 1), phi = (f - 0.5) * 2.4, g = new THREE.Mesh(toothGeo(0.58), toothM());
     g.rotation.x = Math.PI; g.position.set(Math.sin(phi) * 2.0, -0.28, Math.cos(phi) * 1.85); g.castShadow = true; upper.add(g);
   }
-  [-1, 1].forEach((sx) => {
+  if(shark){
+    [-1, 1].forEach((sx) => {
+      const ew = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })); ew.position.set(sx * 1.78, 0.9, 1.2); upper.add(ew);
+      const ep = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1 })); ep.position.set(sx * 1.9, 0.9, 1.28); upper.add(ep);
+      for(let k = 0; k < 3; k++){ const gl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.62, 0.06), new THREE.MeshStandardMaterial({ color: C.skin3 })); gl.position.set(sx * (2.16 - k * 0.03), 0.62, 0.1 - k * 0.3); gl.rotation.z = sx * 0.12; gl.rotation.y = sx * 0.35; upper.add(gl); }
+    });
+    const fin = new THREE.Mesh(new THREE.ConeGeometry(0.85, 2.0, 4), skin2M); fin.scale.set(1, 1, 0.14); fin.position.set(0, 2.05, -0.95); fin.rotation.x = -0.45; fin.castShadow = true; upper.add(fin);
+    [-1, 1].forEach((sx) => { const pf = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.7, 4), skin2M); pf.scale.set(1, 1, 0.12); pf.position.set(sx * 2.45, -0.05, 0.4); pf.rotation.z = sx * 1.25; pf.rotation.y = sx * 0.4; lower.add(pf); });
+  }
+  if(hippo){
+    [-1, 1].forEach((sx) => {
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 12), skin2M); ear.scale.set(0.7, 1, 0.5); ear.position.set(sx * 2.05, 2.05, -0.55); upper.add(ear);
+      const ei = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), new THREE.MeshStandardMaterial({ color: 0xf2a6b8, roughness: 0.6 })); ei.scale.set(0.5, 0.85, 0.4); ei.position.set(sx * 2.05, 2.03, -0.4); upper.add(ei);
+      const eb = new THREE.Mesh(new THREE.SphereGeometry(0.46, 20, 16), skin2M); eb.position.set(sx * 1.45, 1.55, 0.35); upper.add(eb);
+      const ew = new THREE.Mesh(new THREE.SphereGeometry(0.31, 20, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })); ew.position.set(sx * 1.45, 1.66, 0.58); upper.add(ew);
+      const ep = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2 })); ep.position.set(sx * 1.45, 1.68, 0.85); upper.add(ep);
+      const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.2, 1.0, 12), toothM()); tusk.position.set(sx * 1.55, 0.35, 1.95); tusk.rotation.set(0.25, 0, sx * -0.28); lower.add(tusk);
+    });
+  }
+  if(!shark && !hippo) [-1, 1].forEach((sx) => {
     const eyeBase = new THREE.Mesh(new THREE.SphereGeometry(0.48, 20, 16), skin2M); eyeBase.position.set(sx * 1.25, 1.75, 0.2); upper.add(eyeBase);
     const eye = new THREE.Mesh(new THREE.SphereGeometry(0.36, 20, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })); eye.position.set(sx * 1.25, 1.85, 0.42); upper.add(eye);
     const pup = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2 })); pup.position.set(sx * 1.25, 1.88, 0.72); upper.add(pup);
@@ -476,9 +499,18 @@ export function croc(container, opt = {}){
   const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 1.9), hatM); ridge.position.y = 0.78; hat.add(ridge);
   const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.98, 1.05, 0.07, 32, 1, false, -0.9, 1.8 * Math.PI / 1), hatM); brim.position.set(0, 0.02, 0.35); brim.scale.set(1.05, 1, 1.25); hat.add(brim);
   if(logoImg){ const plate = new THREE.Mesh(new THREE.CircleGeometry(0.34, 32), new THREE.MeshBasicMaterial({ map: badgeTex(256, '#163B6D'), transparent: true })); plate.position.set(0, 0.42, 1.03); plate.rotation.x = -0.35; hat.add(plate); }
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.8, 24, 16), skinM); nose.scale.set(1.5, 0.7, 1); nose.position.set(0, 0.95, 2.55); nose.castShadow = true; upper.add(nose);
-  [-0.42, 0.42].forEach((sx) => { const n = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshStandardMaterial({ color: C.skin3 })); n.position.set(sx, 1.18, 3.05); n.scale.set(1, 0.6, 0.6); upper.add(n); });
-  for(let k = 1; k < 5; k++){ const b = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 8), skin2M); b.position.set(0, 1.9 - k * 0.2, 0.2 - k * 0.5); b.rotation.x = -0.2; upper.add(b); }
+  let nose;
+  if(shark){
+    nose = new THREE.Mesh(new THREE.ConeGeometry(1.45, 2.3, 32), skinM); nose.rotation.x = Math.PI / 2; nose.scale.set(1, 1, 0.5); nose.position.set(0, 0.45, 2.55); nose.castShadow = true; upper.add(nose);
+    [-0.3, 0.3].forEach((sx) => { const n = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshStandardMaterial({ color: C.skin3 })); n.position.set(sx, 0.78, 3.15); upper.add(n); });
+  }else if(hippo){
+    nose = new THREE.Mesh(new THREE.SphereGeometry(1.15, 28, 18), skinM); nose.scale.set(1.7, 0.78, 1.0); nose.position.set(0, 0.9, 2.35); nose.castShadow = true; upper.add(nose);
+    [-0.7, 0.7].forEach((sx) => { const n = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), skin2M); n.position.set(sx, 1.55, 2.6); n.scale.set(1, 0.7, 1); upper.add(n); const h = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshStandardMaterial({ color: C.skin3 })); h.position.set(sx, 1.66, 2.7); h.scale.set(1, 0.5, 1); upper.add(h); });
+  }else{
+    nose = new THREE.Mesh(new THREE.SphereGeometry(0.8, 24, 16), skinM); nose.scale.set(1.5, 0.7, 1); nose.position.set(0, 0.95, 2.55); nose.castShadow = true; upper.add(nose);
+    [-0.42, 0.42].forEach((sx) => { const n = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshStandardMaterial({ color: C.skin3 })); n.position.set(sx, 1.18, 3.05); n.scale.set(1, 0.6, 0.6); upper.add(n); });
+  }
+  if(!shark && !hippo) for(let k = 1; k < 5; k++){ const b = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 8), skin2M); b.position.set(0, 1.9 - k * 0.2, 0.2 - k * 0.5); b.rotation.x = -0.2; upper.add(b); }
   const OPEN = 1.05;
   let ang = OPEN, angV = 0, mode = 'open', shake = 0, t = 0;
   hinge.rotation.x = -ang;

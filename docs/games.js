@@ -1,4 +1,4 @@
-/* Tab "Trò chơi": 4 mini game giải trí (khám răng cá sấu, thùng gỗ cướp biển, lắc xí ngầu, vòng quay may mắn, đá gà mini).
+/* Tab "Trò chơi": 4 mini game giải trí (khám răng cá sấu, thùng gỗ, lắc xí ngầu, vòng quay may mắn, đá gà mini).
    Chạy hoàn toàn trên máy, không ghi gì lên Firebase. Dựng giao diện vào #view-games khi mở tab lần đầu. */
 (function(){
   'use strict';
@@ -337,7 +337,7 @@
       <div class="gm-top"><h2>🎮 Trò chơi</h2><span style="display:flex;gap:6px"><button class="gm-mini" id="gm-3d">${want3d() ? '🧊 3D: Bật' : '🧊 3D: Tắt'}</button><button class="gm-mini" id="gm-mute">${muted ? '🔇 Tắt tiếng' : '🔊 Có tiếng'}</button></span></div>
       <div class="gm-menu">
         <button class="gm-card" data-g="croc"><span class="ico">🐊</span><b>Khám răng cá sấu</b><small>Bấm răng, ai bấm trúng răng đau thì bị cạp</small></button>
-        <button class="gm-card" data-g="pirate"><span class="ico">🏴‍☠️</span><b>Thùng gỗ cướp biển</b><small>Nhét dao vào khe, coi chừng hải tặc bật ra</small></button>
+        <button class="gm-card" data-g="pirate"><span class="ico">🪵</span><b>Thùng gỗ</b><small>Nhét dao vào khe, coi chừng nhân viên bật ra</small></button>
         <button class="gm-card" data-g="dice"><span class="ico">🎲</span><b>Lắc xí ngầu</b><small>Lắc điện thoại hoặc bấm nút để gieo</small></button>
         <button class="gm-card" data-g="chicken"><span class="ico">🐓</span><b>Đá gà mini</b><small>Gà có chỉ số và tuyệt chiêu ẩn, xem con nào thắng</small></button>
         <button class="gm-card" data-g="wheel"><span class="ico">🎡</span><b>Vòng quay may mắn</b><small>Tự nhập các ô rồi quay</small></button>
@@ -359,13 +359,13 @@
   }
   function bindBack(){ const b = $('gm-back'); if(b) b.addEventListener('click', showMenu); }
 
-  /* ---------- Chọn người chơi (cá sấu, hải tặc) ---------- */
+  /* ---------- Chọn người chơi (cá sấu, thùng gỗ) ---------- */
   function showSetup(kind){
     screen = 'setup-' + kind;
-    const title = kind === 'croc' ? '🐊 Khám răng cá sấu' : '🏴‍☠️ Thùng gỗ cướp biển';
+    const title = kind === 'croc' ? '🐊 Khám răng cá sấu' : '🪵 Thùng gỗ';
     const rule = kind === 'croc'
       ? 'Một số chiếc răng "đau" (răng phạt) được chọn ngẫu nhiên. Lần lượt mỗi người chạm một chiếc răng, ai chạm trúng răng phạt thì bị cạp và thua. Bạn chọn nhân vật, số răng và số răng phạt (tối đa là toàn bộ răng) ở bên dưới.'
-      : 'Thùng có một khe bí mật được chọn ngẫu nhiên. Vuốt thùng để xoay, lần lượt mỗi người nhét một con dao vào một khe, ai nhét trúng khe bí mật thì hải tặc bật ra và người đó thua.';
+      : 'Thùng có một khe bí mật được chọn ngẫu nhiên. Vuốt thùng để xoay, lần lượt mỗi người nhét một con dao vào một khe, ai nhét trúng khe bí mật thì nhân viên bật ra và người đó thua.';
     render(`${topBar(title)}
       <div class="gm-panel">
         <p style="margin:0 0 10px;font-size:.85rem;line-height:1.5">${rule}</p>
@@ -421,8 +421,8 @@
   /* ---------- Khám răng cá sấu ---------- */
   const CHARS = {
     croc:  { icon: '🐊', name: 'Cá sấu', skin: '#4caf50', skin2: '#388e3c', skin3: '#1b5e20', in1: '#5d1111', in2: '#b71c1c' },
-    hippo: { icon: '🦛', name: 'Hà mã', skin: '#9c7b6c', skin2: '#795548', skin3: '#3e2723', in1: '#5a0f35', in2: '#c2185b' },
-    shark: { icon: '🦈', name: 'Cá mập', skin: '#5b9bd5', skin2: '#3b7bb5', skin3: '#1a4a7a', in1: '#5d1111', in2: '#d32f2f' }
+    hippo: { icon: '🦛', name: 'Hà mã', skin: '#a98a9a', skin2: '#8a6676', skin3: '#4a2c3a', in1: '#5a0f35', in2: '#c2185b' },
+    shark: { icon: '🦈', name: 'Cá mập', skin: '#6f8ea6', skin2: '#566f85', skin3: '#2c3f50', in1: '#5d1111', in2: '#d32f2f' }
   };
   const CHAR_KEYS = Object.keys(CHARS);
   let crocCfg = Object.assign({ char: 'croc', teeth: 6, penalty: 1 }, store('croc') || {});
@@ -511,7 +511,7 @@
     let crocV = null;
     mount3d('croc', (api) => {
       const holder = document.createElement('div'); holder.className = 'gm-c3d'; mouth.appendChild(holder); mouth.classList.add('croc3d');
-      crocV = api.croc(holder, { N, colors: ch, onPick: (i) => { const el = root.querySelector(`.gm-tooth[data-i="${i}"]`); if(el) el.click(); } });
+      crocV = api.croc(holder, { N, kind: crocCfg.char, colors: ch, onPick: (i) => { const el = root.querySelector(`.gm-tooth[data-i="${i}"]`); if(el) el.click(); } });
       g.used.forEach((u) => crocV.toothDown(u));
       return { ctl: crocV, dispose(){ if(crocV){ crocV.dispose(); crocV = null; } } };
     });
@@ -537,7 +537,7 @@
     $('gm-again').addEventListener('click', startCroc);
   }
 
-  /* ---------- Thùng gỗ cướp biển ---------- */
+  /* ---------- Thùng gỗ ---------- */
   let pirateCfg = Object.assign({ slots: 12 }, store('pirate') || {});
   const normPirate = () => { pirateCfg.slots = Math.min(16, Math.max(6, parseInt(pirateCfg.slots, 10) || 12)); };
   function pirateSettingsHtml(){
@@ -573,7 +573,7 @@
     const N = pirateCfg.slots;
     const g = makeTurnGame(N); g.total = N;
     let rot = 0, barrelV = null;
-    render(`${topBar('🏴‍☠️ Thùng gỗ cướp biển')}
+    render(`${topBar('🪵 Thùng gỗ')}
       <div class="gm-beach">
         <span class="deco" style="left:4px;top:78px">☀️</span><span class="deco" style="right:6px;top:92px;font-size:2.4rem">🔆</span>
         <button class="gm-restart" id="gm-again2" aria-label="Chơi lại">⟲</button>
@@ -638,7 +638,7 @@
       }, () => {
         pos[i].b.classList.add('used'); if(barrelV) { barrelV.knife(i); barrelV.boom(); } layout();
         barrel.classList.add('boom'); noise(0.3, 0.2); beep(660, 0.12, 'square', 0.15); beep(220, 0.5, 'sawtooth', 0.15, 0.1); buzz([40, 30, 40, 30, 150]);
-        st.classList.add('lose'); st.innerHTML = '🏴‍☠️ Hải tặc bật ra! ' + endText(g).replace('💥 ', '');
+        st.classList.add('lose'); st.innerHTML = '👷 Nhân viên bật ra! ' + endText(g).replace('💥 ', '');
         $('gm-again').style.display = 'block';
       });
     }

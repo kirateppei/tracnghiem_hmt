@@ -551,13 +551,17 @@
   }
   const PIRATE_BG = `<svg class="layer" viewBox="0 0 260 330" aria-hidden="true"><ellipse cx="130" cy="112" rx="92" ry="26" fill="#2b1608" stroke="#4b2e12" stroke-width="5"/></svg>`;
   const PIRATE_MAN = `<svg viewBox="0 0 260 330" aria-hidden="true">
-      <ellipse cx="130" cy="150" rx="46" ry="30" fill="#2a5db0"/>
-      <circle cx="130" cy="96" r="38" fill="#c98b5a" stroke="#7a4a25" stroke-width="3"/>
-      <path d="M92 90 Q130 40 168 90 Q150 70 130 70 Q110 70 92 90Z" fill="#ec407a" stroke="#ad1457" stroke-width="2.5"/>
-      <path d="M162 84 L196 70 L176 100Z" fill="#ec407a" stroke="#ad1457" stroke-width="2.5"/>
-      <circle cx="146" cy="98" r="8" fill="#fff"/><circle cx="148" cy="99" r="4" fill="#1b1b1b"/>
-      <ellipse cx="112" cy="97" rx="12" ry="10" fill="#1b1b1b"/><path d="M98 88 L146 80" stroke="#1b1b1b" stroke-width="3"/>
-      <path d="M110 118 Q130 134 152 118" fill="none" stroke="#4a2511" stroke-width="4" stroke-linecap="round"/>
+      <ellipse cx="130" cy="152" rx="48" ry="31" fill="#F2680C"/>
+      <path d="M84 150 Q130 168 176 150" fill="none" stroke="#e8edf0" stroke-width="7"/>
+      <circle cx="130" cy="98" r="36" fill="#f1b98a" stroke="#b9854f" stroke-width="3"/>
+      <rect x="104" y="92" width="52" height="13" rx="6" fill="#66c4ff" fill-opacity=".6" stroke="#2b7bb0" stroke-width="2"/>
+      <circle cx="118" cy="98" r="3.5" fill="#1b1b1b"/><circle cx="142" cy="98" r="3.5" fill="#1b1b1b"/>
+      <path d="M116 116 Q130 128 144 116" fill="none" stroke="#4a2511" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M92 82 Q92 46 130 46 Q168 46 168 82Z" fill="#f4f6f8" stroke="#b8c0c8" stroke-width="2.5"/>
+      <rect x="84" y="78" width="92" height="8" rx="4" fill="#f4f6f8" stroke="#b8c0c8" stroke-width="2.5"/>
+      <rect x="124" y="42" width="12" height="8" rx="3" fill="#e4e8ec"/>
+      <circle cx="130" cy="66" r="9" fill="#fff" stroke="#163B6D" stroke-width="1.5"/><image href="logo.png" x="122" y="58" width="16" height="16"/>
+      <circle cx="82" cy="132" r="11" fill="#f5f5f5"/><circle cx="178" cy="132" r="11" fill="#f5f5f5"/>
     </svg>`;
   const PIRATE_FRONT = `<svg class="layer" viewBox="0 0 260 330" aria-hidden="true">
       <defs><pattern id="gmStave" width="26" height="10" patternUnits="userSpaceOnUse"><rect width="26" height="10" fill="#a2672b"/><rect width="3" height="10" fill="#6b4119"/><rect x="13" width="1.2" height="10" fill="#c58a4a"/></pattern>
@@ -565,7 +569,6 @@
       <path id="gmBody" d="M38 112 Q130 158 222 112 Q256 205 222 292 Q130 322 38 292 Q4 205 38 112Z" fill="url(#gmStave)" stroke="#4b2e12" stroke-width="5"/>
       <path d="M38 112 Q130 158 222 112 Q256 205 222 292 Q130 322 38 292 Q4 205 38 112Z" fill="url(#gmShade)"/>
       <path d="M26 160 Q130 204 234 160" fill="none" stroke="#3a2a1a" stroke-width="9"/><path d="M12 250 Q130 296 248 250" fill="none" stroke="#3a2a1a" stroke-width="9"/>
-      <circle cx="130" cy="214" r="21" fill="#f3e5c8" stroke="#4b2e12" stroke-width="3"/><text x="130" y="224" text-anchor="middle" font-size="26" fill="#1b1b1b">☠</text>
       <path d="M38 112 Q130 158 222 112" fill="none" stroke="#d29a55" stroke-width="4"/>
     </svg>`;
   function startPirate(){

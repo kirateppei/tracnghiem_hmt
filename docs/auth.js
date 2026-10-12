@@ -158,6 +158,20 @@ function initFirebase(){
   fbAuth.onAuthStateChanged(handleAuthChange);
 }
 
+/* ---------- Nhớ quyền lần trước để dùng khi mất mạng ---------- */
+const ACCESS_CACHE_KEY = 'hmt-access-cache';
+let offlineMode = false;
+function saveAccessCache(uid, res){
+  try{ localStorage.setItem(ACCESS_CACHE_KEY, JSON.stringify({ uid, role: res.role, name: res.name })); }catch(e){}
+}
+function loadAccessCache(uid){
+  try{
+    const c = JSON.parse(localStorage.getItem(ACCESS_CACHE_KEY) || 'null');
+    if(c && c.uid === uid && (c.role === 'admin' || c.role === 'member') && typeof c.name === 'string') return { role: c.role, name: c.name };
+  }catch(e){}
+  return null;
+}
+
 /* ---------- Kiểm tra quyền truy cập ---------- */
 async function resolveAccess(user){
   const email = (user.email || '').toLowerCase();
@@ -198,10 +212,18 @@ async function handleAuthChange(user){
   let res;
   try{
     res = await resolveAccess(user);
+    if(res.ok) saveAccessCache(user.uid, res);
   }catch(e){
     if(seq !== accessSeq) return;
-    showLoginState('denied', accessErrorText(e));
-    return;
+    // Mất mạng: dùng quyền đã lưu lần trước của chính tài khoản này để vẫn làm bài được (điểm sẽ tự gửi lại khi có mạng)
+    const cached = (e && (e.code === 'unavailable' || e.code === 'failed-precondition' || !navigator.onLine)) ? loadAccessCache(user.uid) : null;
+    if(!cached){
+      showLoginState('denied', accessErrorText(e));
+      return;
+    }
+    res = Object.assign({ ok: true }, cached);
+    offlineMode = true;
+    showToast('Đang offline: vẫn làm bài được, điểm sẽ gửi khi có mạng.');
   }
   if(seq !== accessSeq) return;
   if(!res.ok){ showLoginState('denied', res.message); return; }

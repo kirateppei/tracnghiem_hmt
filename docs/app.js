@@ -148,6 +148,7 @@ function backToSetup(){
   populateCategorySelects();
   document.getElementById('quiz-setup').style.display='block';
   updateSetupHint();
+  updateWrongButton();
 }
 document.getElementById('setup-difficulty').addEventListener('change', updateSetupHint);
 function updateSetupHint(){
@@ -236,11 +237,53 @@ function pickWeightedByDifficulty(basePool, count){
   return shuffle(combined).slice(0, Math.min(count, basePool.length));
 }
 
+/* ---------- Ôn lại câu đã làm sai (lưu trên máy, theo từng tài khoản) ---------- */
+let quizReview = false;
+const WRONG_MAX = 300;
+function wrongKey(){ return 'hmt-wrong-' + ((session && session.uid) || 'guest'); }
+function loadWrongIds(){
+  try{ const a = JSON.parse(localStorage.getItem(wrongKey()) || '[]'); return Array.isArray(a) ? a.filter((x) => typeof x === 'string' || typeof x === 'number') : []; }
+  catch(e){ return []; }
+}
+function saveWrongIds(ids){ try{ localStorage.setItem(wrongKey(), JSON.stringify(ids.slice(-WRONG_MAX))); }catch(e){} }
+function recordWrongAnswer(id, isCorrect){
+  if(id === undefined || id === null) return;
+  let ids = loadWrongIds();
+  const has = ids.includes(id);
+  if(isCorrect && has){ ids = ids.filter((x) => x !== id); saveWrongIds(ids); }
+  else if(!isCorrect && !has){ ids.push(id); saveWrongIds(ids); }
+}
+function wrongPool(){
+  const set = new Set(loadWrongIds());
+  return questions.filter((q) => set.has(q.id));
+}
+function updateWrongButton(){
+  const btn = document.getElementById('btn-review-wrong');
+  if(!btn) return;
+  const n = wrongPool().length;
+  btn.style.display = n > 0 ? 'block' : 'none';
+  btn.textContent = `🔁 Ôn lại câu đã sai (${n})`;
+}
+function startWrongReview(){
+  const pool = wrongPool();
+  if(pool.length === 0){ showToast('Bạn chưa có câu sai nào cần ôn.'); updateWrongButton(); return; }
+  const count = parseInt(document.getElementById('setup-count').value, 10) || 20;
+  quizAnon = true; quizReview = true;
+  quizOrder = pickQuestions(pool, Math.min(count, pool.length));
+  currentIndex = 0; score = 0; answers = [];
+  document.getElementById('quiz-setup').style.display='none';
+  document.getElementById('quiz-empty').style.display='none';
+  document.getElementById('quiz-result').style.display='none';
+  document.getElementById('quiz-play').style.display='block';
+  renderQuestion();
+}
+
 function startQuiz(){
   if(questions.length === 0){ backToSetup(); return; }
   const diff = document.getElementById('setup-difficulty').value;
   const count = parseInt(document.getElementById('setup-count').value, 10);
   quizAnon = !!document.getElementById('setup-anon').checked;
+  quizReview = false;
   let basePool = questions;
   if(basePool.length === 0){ showToast('Không có câu hỏi phù hợp với lựa chọn này.'); return; }
 
@@ -313,7 +356,8 @@ function handleTimeout(){
   if(opts.length && !opts[0].disabled){
     opts.forEach(o=> o.disabled = true);
     opts[q.correct].classList.add('correct');
-    answers.push({ question: q.question, options: q.options, chosen: null, correct: q.correct, isCorrect: false, explanation: q.explanation });
+    answers.push({ id: q.id, question: q.question, options: q.options, chosen: null, correct: q.correct, isCorrect: false, explanation: q.explanation });
+    recordWrongAnswer(q.id, false);
     showExplanationBox(q, false);
   }
   // Hết giờ: tự động chuyển sang câu tiếp theo, chờ lâu hơn một chút để kịp đọc giải thích
@@ -387,7 +431,8 @@ function selectAnswer(idx){
   opts[idx].classList.add(isCorrect ? 'correct' : 'wrong');
   if(!isCorrect){ opts[q.correct].classList.add('correct'); }
   if(isCorrect) score++;
-  answers.push({ question: q.question, options: q.options, chosen: idx, correct: q.correct, isCorrect, explanation: q.explanation });
+  answers.push({ id: q.id, question: q.question, options: q.options, chosen: idx, correct: q.correct, isCorrect, explanation: q.explanation });
+  recordWrongAnswer(q.id, isCorrect);
   document.getElementById('q-score-live').textContent = `Điểm: ${score}`;
   document.getElementById('next-btn').disabled = false;
   showExplanationBox(q, isCorrect);
@@ -463,7 +508,8 @@ function showResult(){
     });
   }
 
-  submitLeaderboardEntry({
+  if(quizReview){ showToast('Lượt ôn câu sai không tính vào bảng xếp hạng.'); }
+  else submitLeaderboardEntry({
     name: session.name,
     anon: quizAnon,
     role: session.role,
@@ -1343,6 +1389,78 @@ function toggleTocSection(id){
 }
 renderTOC();
 
+/* ---------- Tìm kiếm trong tab Tài liệu ---------- */
+let docIndex = null;
+function dsNorm(s){
+  return String(s || '').replace(/<[^>]*>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+}
+function dsPlain(s){ return String(s || '').replace(/<[^>]*>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim(); }
+function buildDocIndex(){
+  const out = [];
+  const add = (e) => { e.plain = dsPlain(e.text); e.norm = dsNorm(e.title + ' ' + e.text); out.push(e); };
+  GUIDE_BRANDS.forEach(b => add({ sec: 'wifi', dom: 'wifi-' + b.id, title: 'WiFi · ' + b.name, text: [b.app].concat(b.steps, [b.note]).join(' ') }));
+  GUIDE_LOGGER_BRANDS.forEach(b => add({ sec: 'logger', dom: 'logger-' + b.id, title: 'Smart Logger · ' + b.name, text: [b.app].concat(b.steps, [b.note]).join(' ') }));
+  GUIDE_INVERTERS.forEach(b => INV_TYPES.forEach(([k, label], ti) => {
+    const t = b.types[k]; if(!t) return;
+    const parts = [t.model].concat(t.steps.map(s => s[0]), t.tips || []);
+    (t.tables || []).forEach(tb => { parts.push(tb.t); tb.r.forEach(r => parts.push(r.join(' '))); });
+    (t.errors || []).forEach(e => parts.push(e.c + ' ' + e.m + ' ' + e.x));
+    if(t.check) Object.values(t.check).forEach(l => parts.push(l.join(' ')));
+    add({ sec: 'inverters', dom: 'inv-' + b.id, type: ti, title: 'Cài đặt biến tần · ' + b.name + ' · ' + label.replace(/^\S+\s/, ''), text: parts.join(' ') });
+  }));
+  GUIDE_BASICS.forEach(g => add({ sec: 'basics', term: g.term, title: 'Kiến thức · ' + g.term, text: g.def }));
+  GUIDE_SAFETY.forEach(g => add({ sec: 'safety', term: g.term, title: 'An toàn · ' + g.term, text: g.def }));
+  if(typeof GUIDE_DRAWINGS !== 'undefined') GUIDE_DRAWINGS.forEach(d => add({ sec: 'drawings', term: d.title, title: 'Bản vẽ · ' + d.title, text: d.note || '' }));
+  return out;
+}
+function dsSnippet(e, terms){
+  const low = dsNorm(e.plain); // dsNorm giữ nguyên độ dài (chỉ bỏ dấu thanh/đổi chữ), dùng để định vị
+  let pos = -1;
+  for(const t of terms){ const p = low.indexOf(t); if(p >= 0 && (pos < 0 || p < pos)) pos = p; }
+  const plain = e.plain;
+  if(pos < 0) return escapeHtml(plain.slice(0, 110)) + (plain.length > 110 ? '…' : '');
+  const from = Math.max(0, pos - 40), to = Math.min(plain.length, pos + 90);
+  let s = escapeHtml(plain.slice(from, to));
+  return (from > 0 ? '…' : '') + s + (to < plain.length ? '…' : '');
+}
+function docSearch(q){
+  const box = document.getElementById('doc-search-results');
+  const terms = dsNorm(q).split(/\s+/).filter(t => t.length >= 2);
+  if(!terms.length){ box.innerHTML = ''; return; }
+  if(!docIndex) docIndex = buildDocIndex();
+  const hits = docIndex.filter(e => terms.every(t => e.norm.includes(t)));
+  window.__docHits = hits.slice(0, 30);
+  if(!hits.length){ box.innerHTML = '<div class="ds-none">Không tìm thấy. Thử từ khoá khác (ví dụ: tên hãng, mã lỗi, RS485).</div>'; return; }
+  box.innerHTML = window.__docHits.map((e, i) => `<div class="ds-hit" onclick="openDocHit(${i})"><b>${escapeHtml(e.title)}</b><span>${dsSnippet(e, terms)}</span></div>`).join('')
+    + (hits.length > 30 ? `<div class="ds-none">Còn ${hits.length - 30} kết quả nữa, hãy gõ cụ thể hơn.</div>` : '');
+}
+function openDocHit(i){
+  const e = (window.__docHits || [])[i]; if(!e) return;
+  const sec = document.getElementById('toc-' + e.sec);
+  if(sec && !sec.classList.contains('open')) toggleTocSection(e.sec);
+  setTimeout(() => {
+    let target = null;
+    if(e.dom){
+      const br = document.getElementById(e.dom);
+      if(br && !br.classList.contains('open')) toggleGuideBrand(e.dom);
+      if(e.type !== undefined && br){
+        const d = br.querySelectorAll('details.inv-type')[e.type];
+        if(d){ d.open = true; target = d; }
+      }
+      target = target || br;
+    } else if(e.sec === 'drawings'){
+      if(typeof filterDrawings === 'function') filterDrawings(e.term);
+      target = document.getElementById('toc-drawings');
+    } else {
+      const items = document.querySelectorAll(`#toc-body-${e.sec} .gl-item`);
+      target = Array.from(items).find(x => x.textContent.includes(e.term)) || sec;
+      if(target && target.classList) target.style.outline = '2px solid #F2B807';
+    }
+    if(target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 80);
+}
+
 /* ---------- Pháo giấy chúc mừng khi điểm cao ---------- */
 function launchConfetti(){
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -1383,7 +1501,7 @@ function loadCurrentTrackIntoAudio(){
   const audio = document.getElementById('bg-music');
   const track = getTrackById(currentTrackId);
   if(audio.dataset.trackId !== track.id){
-    audio.src = 'data:audio/mpeg;base64,' + track.b64;
+    audio.src = track.src || ('data:audio/mpeg;base64,' + track.b64);
     audio.dataset.trackId = track.id;
   }
 }

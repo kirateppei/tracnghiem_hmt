@@ -131,3 +131,9 @@ function startUpdateChecks(){
   window.addEventListener('online', maybeCheckForUpdate);
 }
 startUpdateChecks();
+
+
+/* ---------- Chế độ offline: đăng ký service worker (sw.js) ---------- */
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}

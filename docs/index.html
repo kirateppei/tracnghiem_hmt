@@ -625,6 +625,13 @@
   .inv-type>summary small{display:block; font-weight:400; color:#5c6a63; font-size:0.78rem;}
   .inv-unv{color:#a06a00; font-size:0.72rem; font-weight:700; margin-left:4px;}
   .inv-miss{margin:6px 0; font-size:0.82rem; color:#5c6a63; line-height:1.5;}
+  .doc-search{margin:0 0 12px;}
+  .doc-search input{width:100%; padding:11px 14px; border-radius:12px; border:1.5px solid var(--card-border,#dadce0); font-size:0.92rem; background:var(--card); color:var(--card-ink,#1f2d26);}
+  #doc-search-results{margin-top:8px;}
+  .ds-hit{background:var(--card); color:var(--card-ink,#1f2d26); border-radius:10px; padding:9px 12px; margin-bottom:6px; cursor:pointer; border:1px solid var(--card-border,#e3e6e1);}
+  .ds-hit b{display:block; font-size:0.85rem;} .ds-hit span{display:block; font-size:0.78rem; color:#5c6a63; line-height:1.4; margin-top:2px;}
+  .ds-hit mark{background:#FFE58A; color:inherit; border-radius:3px; padding:0 1px;}
+  .ds-none{color:#c9d3cc; font-size:0.85rem; padding:6px 2px;}
   .inv-sub{margin:14px 0 6px; font-weight:700; font-size:0.88rem; color:var(--card-ink,#1f2d26);}
   .inv-tbl{overflow-x:auto; margin:0 0 8px; -webkit-overflow-scrolling:touch;}
   .inv-tbl table{border-collapse:collapse; width:100%; font-size:0.78rem; color:#3c463f;}
@@ -875,6 +882,7 @@ footer.credit{ padding:0 78px 0 6px; }
         <label class="toggle"><input type="checkbox" id="setup-anon"><span class="switch"></span><span>Làm bài ẩn danh<small>Tên của bạn không hiện trên bảng xếp hạng</small></span></label>
       </div>
       <button class="primary" style="width:100%;" onclick="startQuiz()">Bắt đầu làm bài</button>
+      <button id="btn-review-wrong" class="secondary" style="width:100%; margin-top:8px; display:none;" onclick="startWrongReview()">🔁 Ôn lại câu đã sai</button>
       <p class="setup-hint" id="setup-total-hint"></p>
     </div>
 
@@ -1083,6 +1091,10 @@ footer.credit{ padding:0 78px 0 6px; }
   <section id="view-games" class="view"></section>
 
   <section id="view-guide" class="view">
+    <div class="doc-search">
+      <input id="doc-search" type="search" inputmode="search" autocomplete="off" placeholder="🔍 Tìm trong tài liệu (mã lỗi, RS485, mô-men siết…)" oninput="docSearch(this.value)">
+      <div id="doc-search-results"></div>
+    </div>
     <div id="toc-list"></div>
   </section>
 
@@ -1193,16 +1205,16 @@ footer.credit{ padding:0 78px 0 6px; }
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=beb227038e"></script>
-<script src="firebase-config.js?v=beb227038e"></script>
-<script src="questions.js?v=beb227038e"></script>
-<script src="music.js?v=beb227038e"></script>
-<script src="inverters.js?v=beb227038e"></script>
-<script src="drawings.js?v=beb227038e"></script>
-<script src="games.js?v=beb227038e"></script>
-<script src="app.js?v=beb227038e"></script>
-<script src="leaderboard.js?v=beb227038e"></script>
-<script src="auth.js?v=beb227038e"></script>
-<script src="update.js?v=beb227038e"></script>
+<script src="version.js?v=2922b8552b"></script>
+<script src="firebase-config.js?v=2922b8552b"></script>
+<script src="questions.js?v=2922b8552b"></script>
+<script src="music.js?v=2922b8552b"></script>
+<script src="inverters.js?v=2922b8552b"></script>
+<script src="drawings.js?v=2922b8552b"></script>
+<script src="games.js?v=2922b8552b"></script>
+<script src="app.js?v=2922b8552b"></script>
+<script src="leaderboard.js?v=2922b8552b"></script>
+<script src="auth.js?v=2922b8552b"></script>
+<script src="update.js?v=2922b8552b"></script>
 </body>
 </html>

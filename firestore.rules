@@ -69,7 +69,7 @@ service cloud.firestore {
         && d.name is string && d.name.size() <= 80;
     }
 
-    // Điểm cao nhất của game "Chạy năng lượng": mỗi người một tài liệu, id = uid.
+    // Điểm của game "Run now: HMT": mỗi ván lọt top là một tài liệu mới (id tự sinh).
     // best = kWh + thưởng tia nắng (xem INTEGRACION_RUNNER.md), nên best >= kwh và best <= kwh + coins.
     function validRunner() {
       let d = request.resource.data;
@@ -112,7 +112,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ---------- Game "Chạy năng lượng": bảng top 10 điểm cao (mỗi ván lọt top là một tài liệu, một người có thể nhiều dòng) ----------
+    // ---------- Game "Run now: HMT": bảng top 100 điểm cao (mỗi ván lọt top là một tài liệu, một người có thể nhiều dòng) ----------
     // Tất cả: runner_scores; theo năm: runner_y/{năm}/scores; theo tháng: runner_m/{năm-tháng}/scores
     match /runner_scores/{id} {
       allow read: if isMember();

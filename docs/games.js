@@ -336,7 +336,7 @@
     if(on === fsOn) return; fsOn = on;
     root.classList.toggle('gm-fs', on); document.body.style.overflow = on ? 'hidden' : '';
     try{
-      if(on){ const de = document.documentElement, rf = de.requestFullscreen || de.webkitRequestFullscreen; if(rf){ const p = rf.call(de, { navigationUI: 'hide' }); if(p && p.catch) p.catch(() => {}); } }
+      if(on){ const de = document.documentElement, rf = (window.matchMedia && matchMedia('(pointer: coarse)').matches) ? (de.requestFullscreen || de.webkitRequestFullscreen) : null; if(rf){ const p = rf.call(de, { navigationUI: 'hide' }); if(p && p.catch) p.catch(() => {}); } }
       else if(document.fullscreenElement && document.exitFullscreen){ document.exitFullscreen().catch(() => {}); }
       else if(document.webkitFullscreenElement && document.webkitExitFullscreen){ document.webkitExitFullscreen(); }
     }catch(e){}
@@ -413,7 +413,7 @@
     const fs = document.createElement('style'); fs.textContent = '#gm-runner-full .rn-root{border-radius:0;min-height:0}'; full.appendChild(fs);
     full.appendChild(host); document.body.appendChild(full);
     const prevOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
-    try{ const de = document.documentElement, rf = de.requestFullscreen || de.webkitRequestFullscreen; if(rf){ const pr = rf.call(de, { navigationUI: 'hide' }); if(pr && pr.catch) pr.catch(() => {}); } }catch(e){}
+    try{ const de = document.documentElement, rf = (window.matchMedia && matchMedia('(pointer: coarse)').matches) ? (de.requestFullscreen || de.webkitRequestFullscreen) : null; if(rf){ const pr = rf.call(de, { navigationUI: 'hide' }); if(pr && pr.catch) pr.catch(() => {}); } }catch(e){}
     const teardown = () => {
       try{ if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); else if(document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen(); }catch(e){}
       document.body.style.overflow = prevOverflow; if(full.parentNode) full.parentNode.removeChild(full);
@@ -1451,5 +1451,6 @@
     if(!root.dataset.ready){ root.dataset.ready = '1'; showMenu(); }
   };
   window.leaveGames = function(){ clearTimers(); if(root) setFs(false); };
+  window.gamesBack = function(){ if(root && screen !== 'menu'){ showMenu(); return true; } return false; };   // nút Back của Android: đang trong game thì về menu trò chơi trước
   window.__games = { chickSvg, SKINS_CH, get flock(){ return flock; }, simulate, newChicken, SPECIALS, openGame, showMenu, get screen(){ return screen; }, winnerIndex, get wheelItems(){ return wheelItems; }, get views(){ return views; } };
 })();

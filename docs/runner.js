@@ -1185,7 +1185,7 @@ export function runner(container, opt = {}){
 
   /* ---------- Dọn dẹp ---------- */
   function dispose(){
-    if(!alive) return; alive = false; cancelAnimationFrame(raf);
+    if(!alive) return; alive = false; cancelAnimationFrame(raf); cancelAnimationFrame(reviveRaf); clearTimeout(reviveTimer);
     if(ro) ro.disconnect(); else window.removeEventListener('resize', resize);
     window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp);
     doc.removeEventListener('visibilitychange', onVis);

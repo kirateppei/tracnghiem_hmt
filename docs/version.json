@@ -1,7 +1,7 @@
 {
-  "version": "f7ec2ed8a0",
-  "date": "2026-10-12T18:14:03Z",
-  "notes": "Run now: HMT: bảng top 100 theo tháng/năm/tất cả, hồi sinh bằng câu hỏi, khó hơn, skin x10; làm trắc nghiệm toàn màn hình",
+  "version": "e3bebe4b23",
+  "date": "2026-10-12T18:22:05Z",
+  "notes": "Sửa lỗi: trắc nghiệm toàn màn hình trên máy tính, nút Back Android trong game, dọn dẹp hồi sinh",
   "apk": {
     "version": "",
     "url": "",

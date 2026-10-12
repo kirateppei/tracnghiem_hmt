@@ -2050,6 +2050,7 @@ function setupAndroidBackButton(){
 
       const activeTabBtn = document.querySelector('nav.tabs button.active');
       const activeTab = activeTabBtn ? activeTabBtn.dataset.tab : 'quiz';
+      if(activeTab === 'games' && window.gamesBack && window.gamesBack()) return;
       if(activeTab !== 'quiz'){ switchTab('quiz'); return; }
 
       const quizPlay = document.getElementById('quiz-play');
@@ -2115,7 +2116,7 @@ function exitQuiz(){
   if(!confirm('Thoát bài làm? Bài đang làm dở được lưu để làm tiếp lần sau.')) return;
   backToSetup();
 }
-(function quizFullscreen(){
+(function quizFullscreen(){   // Fullscreen API chỉ dùng trên điện thoại/máy tính bảng; máy tính tránh dùng vì trình duyệt hiện thanh "Nhấn Esc" che mất nút Thoát
   const view = document.getElementById('view-quiz'), play = document.getElementById('quiz-play'), res = document.getElementById('quiz-result');
   if(!view || !play || !res) return;
   let on = false;
@@ -2124,7 +2125,7 @@ function exitQuiz(){
     if(want === on) return; on = want;
     view.classList.toggle('qz-fs', on); document.body.style.overflow = on ? 'hidden' : '';
     try{
-      if(on){ const de = document.documentElement, rf = de.requestFullscreen || de.webkitRequestFullscreen; if(rf){ const p = rf.call(de, { navigationUI: 'hide' }); if(p && p.catch) p.catch(() => {}); } }
+      if(on){ const de = document.documentElement, rf = (window.matchMedia && matchMedia('(pointer: coarse)').matches) ? (de.requestFullscreen || de.webkitRequestFullscreen) : null; if(rf){ const p = rf.call(de, { navigationUI: 'hide' }); if(p && p.catch) p.catch(() => {}); } }
       else if(document.fullscreenElement && document.exitFullscreen){ document.exitFullscreen().catch(() => {}); }
       else if(document.webkitFullscreenElement && document.webkitExitFullscreen){ document.webkitExitFullscreen(); }
     }catch(e){}

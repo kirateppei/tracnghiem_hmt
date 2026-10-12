@@ -528,10 +528,18 @@ export function croc(container, opt = {}){
   S.canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
   S.canvas.addEventListener('pointerup', (e) => {
     if(!down) return; const mv = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null; if(mv > 8) return;
-    const r = S.canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-    ray.setFromCamera(ndc, camera);
-    const h = ray.intersectObjects(teeth.map((x) => x.hit), false)[0];
-    if(h && opt.onPick) opt.onPick(h.object.userData.i);
+    // chọn răng có tâm gần điểm chạm nhất trên màn hình (không dùng tia cắt khối: răng sát nhau hoặc ở mép bị răng bên cạnh che mất)
+    const r = S.canvas.getBoundingClientRect(), v = new THREE.Vector3();
+    scene.updateMatrixWorld(true);
+    let best = -1, bd = Infinity;
+    teeth.forEach((th, i) => {
+      if(!th || th.target) return;                       // bỏ qua răng đã lún
+      th.hit.getWorldPosition(v); v.project(camera);
+      const sx = r.left + (v.x + 1) / 2 * r.width, sy = r.top + (1 - v.y) / 2 * r.height, d = Math.hypot(sx - e.clientX, sy - e.clientY);
+      if(d < bd){ bd = d; best = i; }
+    });
+    const lim = Math.max(30, r.width * 0.09);            // vùng chạm rộng, dễ bấm trên điện thoại
+    if(best >= 0 && bd <= lim && opt.onPick) opt.onPick(best);
   });
   S.onFrame((dt, now) => {
     t += dt;
@@ -639,7 +647,38 @@ export function arena(container, opt = {}){
   const { scene, camera, renderer } = S;
   camera.position.set(0, 4.2, 13.5); camera.lookAt(0, 1.3, 0);
   addEnv(S); lights(S, { x: 3, y: 9, z: 7, hemi: 0.95, sun: 2.4, shadowSize: 9 });
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.38 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  // sân thi đấu: nền cát có vòng phấn, hàng rào gỗ phía sau, băng rôn, cờ hiệu, đèn pha và bó rơm
+  const sandTex = canvasTex(512, 512, (c, w, h) => {
+    const g = c.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, w / 2);
+    g.addColorStop(0, 'rgba(226,190,120,1)'); g.addColorStop(0.62, 'rgba(206,166,100,1)'); g.addColorStop(0.9, 'rgba(176,134,78,.85)'); g.addColorStop(1, 'rgba(150,110,60,0)');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    for(let i = 0; i < 5200; i++){ const a = Math.random() * 6.28, r = Math.random() * w * 0.48; c.fillStyle = Math.random() < 0.5 ? 'rgba(255,240,200,.09)' : 'rgba(90,60,25,.12)'; c.fillRect(w / 2 + Math.cos(a) * r, h / 2 + Math.sin(a) * r, 2 + Math.random() * 2, 1 + Math.random() * 2); }
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 7; c.beginPath(); c.arc(w / 2, h / 2, w * 0.33, 0, 7); c.stroke();      // vòng phấn thi đấu
+    c.strokeStyle = 'rgba(255,255,255,.3)'; c.lineWidth = 3; c.beginPath(); c.arc(w / 2, h / 2, w * 0.12, 0, 7); c.stroke();
+  });
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(10.5, 72), new THREE.MeshStandardMaterial({ map: sandTex, transparent: true, roughness: 1 }));
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  const wood = new THREE.MeshStandardMaterial({ color: 0x8a5a2b, roughness: 0.8 }), woodD = new THREE.MeshStandardMaterial({ color: 0x5e3a18, roughness: 0.85 });
+  const fenceZ = -4.2;
+  for(let i = -6; i <= 6; i++){ const p = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.5, 0.22), woodD); p.position.set(i * 1.25, 0.75, fenceZ - Math.abs(i) * 0.06); p.castShadow = true; scene.add(p); }
+  for(const y of [0.55, 1.1]){ const rail = new THREE.Mesh(new THREE.BoxGeometry(16, 0.14, 0.12), wood); rail.position.set(0, y, fenceZ); scene.add(rail); }
+  for(const x of [-8.6, 8.6]){ const bale = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 1.1, 20), new THREE.MeshStandardMaterial({ color: 0xd9b24a, roughness: 1 })); bale.rotation.z = Math.PI / 2; bale.rotation.y = 0.5; bale.position.set(x * 0.92, 0.75, fenceZ + 1.0); bale.castShadow = true; scene.add(bale); }
+  const banner = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 1.15), new THREE.MeshBasicMaterial({ map: canvasTex(1024, 164, (c, w, h) => {
+    const g = c.createLinearGradient(0, 0, w, 0); g.addColorStop(0, '#163B6D'); g.addColorStop(0.5, '#1f5aa8'); g.addColorStop(1, '#163B6D'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+    c.strokeStyle = '#F2B807'; c.lineWidth = 8; c.strokeRect(6, 6, w - 12, h - 12);
+    c.fillStyle = '#F2B807'; c.font = '900 76px "Trebuchet MS",Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ĐẤU TRƯỜNG HMT', w / 2, h / 2 + 4);
+    c.fillStyle = '#ffd45a'; c.beginPath(); c.arc(90, h / 2, 26, 0, 7); c.fill(); c.beginPath(); c.arc(w - 90, h / 2, 26, 0, 7); c.fill();
+  }) }));
+  banner.position.set(0, 3.55, fenceZ - 0.6); scene.add(banner);
+  for(const x of [-3.8, 3.8]){ const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4.1, 8), woodD); pole.position.set(x, 2.05, fenceZ - 0.6); scene.add(pole); }
+  for(const [x, col] of [[-6.4, 0xE8710A], [6.4, 0x14805A]]){
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 4.4, 8), woodD); pole.position.set(x, 2.2, fenceZ - 0.2); scene.add(pole);
+    const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.9), new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide })); flag.position.set(x + (x < 0 ? 0.78 : -0.78), 3.95, fenceZ - 0.2); scene.add(flag);
+  }
+  for(const x of [-5.6, 5.6]){   // đèn pha rọi xuống sân
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(2.4, 7, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xfff1b0, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    cone.position.set(x, 3.8, -1.5); cone.rotation.z = x < 0 ? -0.35 : 0.35; scene.add(cone);
+  }
   const skins = opt.skins, els = opt.els, arenaEl = opt.arenaEl;
   const decal = null;   // bỏ logo to giữa sân (yêu cầu): chỉ giữ logo nhỏ ở góc
   const cs = skins.map((p, k) => { const c = buildChicken(p); c.dir = k === 0 ? 1 : -1; c.root.scale.x = c.dir; scene.add(c.root); c.prev = {}; c.t0 = {}; return c; });

@@ -43,7 +43,7 @@ Các tên `beep`, `noise`, `buzz`, `views`, `clearTimers`, `disposeViews`, `rend
 **a) Thẻ menu** (trong `showMenu()`, cạnh các thẻ khác của `.gm-menu`):
 
 ```js
-<button class="gm-card" data-g="runner"><span class="ico">🏃</span><b>Chạy năng lượng</b><small>Chạy trên mái nhà, nhặt tia nắng, phá kỷ lục kWh</small></button>
+<button class="gm-card" data-g="runner"><span class="ico">🏃</span><b>Chạy năng lượng</b><small>Chạy 3 làn giữa các tòa nhà điện mặt trời, nhặt tia nắng, phá kỷ lục kWh</small></button>
 ```
 
 Dòng ghi chú cuối menu ("kết quả không tính vào bảng xếp hạng") nên sửa lại cho đúng, vì game này có bảng xếp hạng riêng.
@@ -97,10 +97,10 @@ Không cần thêm gì vào `window.leaveGames`: nó đã gọi `clearTimers()` 
 
 ## 4. Luật chơi, điểm, kỷ lục
 
-- Điều khiển: chạm = nhảy (giữ lâu nhảy cao hơn), chạm lần hai khi đang bay = nhảy đôi, vuốt xuống = trượt (đang bay thì lao xuống rồi trượt). Bàn phím: `Space`/`↑`/`W` nhảy, `↓`/`S` trượt, `P` tạm dừng.
+- Kiểu Subway Surfers: đường 3 làn, camera sau lưng, hai bên là cánh đồng pin mặt trời, nhà cao tầng, cột điện. Điều khiển: **vuốt trái/phải = đổi làn**, chạm hoặc vuốt lên = nhảy (giữ lâu nhảy cao hơn), chạm lần hai khi đang bay = nhảy đôi, vuốt xuống = trượt (đang bay thì lao xuống rồi trượt). Bàn phím: `←`/`A`, `→`/`D` đổi làn, `Space`/`↑`/`W` nhảy, `↓`/`S` trượt, `P` tạm dừng.
 - Tốc độ: 7,5 m/s lúc đầu, tăng tuyến tính theo quãng đường tới 17 m/s ở 2400 m (≈ 3 phút 26 giây chạy).
-- Chướng ngại: hố; thùng đồ nghề (từ đầu); tấm pin vỡ (≥ 100 m); giàn dây điện, **phải trượt** (≥ 250 m); chim bay thấp, trượt hoặc nhảy hết cỡ (≥ 500 m). Sinh đường luôn có chỗ qua được (kiểm chứng ở mục 6).
-- Vật phẩm: nam châm 10 s, khiên "cầu chì" chịu một cú va chạm, pin sạc nhân đôi tốc độ ghi điểm 8 s.
+- Chướng ngại (mỗi cái chiếm một làn): **tòa nhà gắn pin mặt trời** dài 10–26 m thay cho toa tàu, phải đổi làn, nhảy không qua được (từ 80 m, mỗi cụm tối đa 2 trong 3 làn); thùng đồ nghề, nhảy (từ đầu); tấm pin vỡ, nhảy (≥ 100 m); giàn dây điện, **phải trượt** (≥ 250 m); chim bay thấp, trượt hoặc nhảy hết cỡ (≥ 500 m). Đâm sườn tòa nhà khi đổi làn cũng thua. Sinh đường luôn có chỗ qua được (kiểm chứng ở mục 8).
+- Vật phẩm: nam châm 10 s, khiên "cầu chì" chịu một cú va chạm (đâm tòa nhà thì bị bật lại làn cũ), **huy hiệu logo HMT = nhân đôi tốc độ ghi điểm trong 8 s** (hiện "x2" trên HUD).
 - **Công thức điểm**
   - `kWh = floor(quãng đường / 10)` (1 kWh mỗi 10 m; trong lúc có pin sạc, mỗi mét tính gấp đôi).
   - `Điểm cuối = kWh + floor(số tia nắng / 2)` (cứ 2 tia nắng cộng 1 điểm).
@@ -164,10 +164,11 @@ Chưa thử được cảm giác điều khiển trên điện thoại thật; c
 
 | Hằng số | Mặc định | Ý nghĩa |
 |---|---|---|
-| `SWIPE_PX` / `SWIPE_RATIO` | 24 / 1.0 | Vuốt xuống tối thiểu bao nhiêu điểm ảnh, và độ dọc so với ngang, thì tính là trượt |
+| `SWIPE_PX` / `SWIPE_RATIO` | 24 / 1.0 | Vuốt tối thiểu bao nhiêu điểm ảnh, và độ lệch hướng chính so với hướng kia, thì tính là vuốt (đổi làn/trượt/nhảy) |
+| `TAP_DELAY_MS` | 55 | Chờ sau khi chạm để phân biệt chạm (nhảy) với vuốt; tăng nếu hay nhảy nhầm khi vuốt, giảm nếu thấy nhảy bị trễ |
 | `CYCLE_M` | 2000 | Chu kỳ bầu trời sáng → trưa → hoàng hôn → đêm (mét) |
-| `VIS_W_LAND` / `VIS_W_PORT` | 17 / 12.5 | Bề ngang cảnh nhìn thấy (m) ở màn ngang/dọc; nhỏ hơn = nhân vật to hơn nhưng thấy chướng ngại muộn hơn |
-| `PLAYER_X`, `GROUND_Y` | 0.24, 0.28 | Vị trí nhân vật theo chiều ngang và mặt mái theo chiều cao màn hình |
+| `VIS_W` | 8.6 | Bề ngang cảnh nhìn thấy (m) tại chỗ nhân vật; nhỏ hơn = nhân vật to hơn (camera gần hơn) |
+| `DRAW_DIST` | 105 | Nhìn xa bao nhiêu mét |
 
 `docs/runner-logic.js` → `CFG`:
 
@@ -177,18 +178,18 @@ Chưa thử được cảm giác điều khiển trên điện thoại thật; c
 | `JUMP_H`, `G` | 2.8, 52 | Độ cao nhảy (m) và trọng lực (lớn hơn = nhảy gọn hơn, thời gian bay ≈ 0,66 s) |
 | `DOUBLE_K` | 0.9 | Lực nhảy đôi so với nhảy thường |
 | `JUMP_CUT`, `JUMP_MIN_T` | 0.5, 0.08 | Chạm nhanh thì nhảy thấp (~1,6 m); giữ lâu nhảy hết cỡ |
-| `COYOTE` | 0.1 | Ân hạn ở mép mái (s) |
+| `LANE_W`, `LANE_SPEED` | 2.0, 7 | Bề rộng làn (m) và tốc độ đổi làn (làn/giây, 7 ≈ 0,14 s/làn) |
 | `JUMP_BUF` | 0.12 | Bấm nhảy sớm trước khi chạm đất vẫn tính (s) |
 | `SLIDE_T` | 0.55 | Thời gian một lần trượt (s) |
-| `REACT` | 0.25 | Khoảng nghỉ tối thiểu giữa hai chướng ngại (giây × tốc độ) |
-| `ROOF_MIN`/`ROOF_MAX`, `UNLOCK` | 6/14, … | Chiều dài mái và quãng đường mở khóa từng loại chướng ngại |
+| `GAP_K`, `GAP_ADD` | 0.6, 2 | Khoảng trống giữa hai cụm chướng ngại = GAP_K × tốc độ + GAP_ADD (đủ để đổi 2 làn) |
+| `BUILD_MIN`/`BUILD_MAX`, `UNLOCK` | 10/26, … | Chiều dài tòa nhà và quãng đường mở khóa từng loại chướng ngại |
 | `MAGNET_T`, `BOOST_T`, `COINS_PER_POINT` | 10, 8, 2 | Thời gian vật phẩm và quy đổi tia nắng ra điểm |
 
-Nếu đổi `G`, `JUMP_H`, `SLIDE_T`, `REACT` hoặc các thông số tốc độ thì chạy lại `node tools/runner-test/logic.test.mjs` để chắc đường vẫn luôn qua được.
+Nếu đổi `G`, `JUMP_H`, `SLIDE_T`, `LANE_SPEED`, `GAP_K` hoặc các thông số tốc độ thì chạy lại `node tools/runner-test/logic.test.mjs` để chắc đường vẫn luôn qua được.
 
 ## 8. Kiểm thử đã làm
 
-- `node tools/runner-test/logic.test.mjs` (không cần trình duyệt): tốc độ tăng đúng và thời gian đạt tối đa; độ cao nhảy/nhảy đôi/nhảy ngắn; ân hạn mép mái; va chạm với thùng, giàn dây (nhảy và nhảy đôi đều không qua được, trượt qua được), hố; khiên; nam châm; pin sạc; công thức điểm và kỷ lục; mở khóa chướng ngại theo quãng đường; mái 6–14 m, hố 2–4,5 m, các vùng bay/trượt không chồng nhau. **3000 đường chạy** với nhiều hạt giống và nhiều đoạn tốc độ (0–5000 m), người máy chơi tối ưu (nhảy ngắn qua thùng/pin, nhảy hết cỡ qua hố, trượt dưới dây, chim thì trượt hoặc nhảy) **không thua lần nào**; một ván liền 12 km cũng không thua.
-- `node tools/runner-test/browser.mjs <thư-mục-ảnh>` (Chromium + WebGL phần mềm): màn chờ nam/nữ, chạy ban ngày/đêm/hoàng hôn, nhặt vật phẩm, hết pin, bảng xếp hạng (dữ liệu giả trong bộ nhớ), chạm = nhảy, vuốt = trượt, phím P, chơi lại, tự dọn dẹp khi gỡ container, không có lỗi console.
+- `node tools/runner-test/logic.test.mjs` (không cần trình duyệt): tốc độ tăng đúng và thời gian đạt tối đa; độ cao nhảy/nhảy đôi/nhảy ngắn; đổi làn; va chạm với thùng (chỉ đúng làn), giàn dây (nhảy và nhảy đôi đều không qua được, trượt qua được), tòa nhà (đâm thẳng, nhảy, đâm sườn, né sang làn trống); khiên; nam châm hút từ làn bên; huy hiệu x2; công thức điểm và kỷ lục; mở khóa chướng ngại theo quãng đường; tòa nhà dài 10–26 m, mỗi cụm tối đa 2 làn, các cụm cách nhau ≥ 6 m. **3000 đường chạy** với nhiều hạt giống và nhiều đoạn tốc độ (0–5000 m), người máy chơi tối ưu (đổi làn tránh nhà, nhảy ngắn qua thùng/pin, trượt dưới dây, chim thì trượt hoặc nhảy) **không thua lần nào**; một ván liền 12 km cũng không thua.
+- `node tools/runner-test/browser.mjs <thư-mục-ảnh>` (Chromium + WebGL phần mềm): màn chờ nam/nữ, chạy ban ngày/đêm/hoàng hôn, các vật cản và vật phẩm, hết pin, bảng xếp hạng (dữ liệu giả trong bộ nhớ), chạm = nhảy, vuốt trái/phải = đổi làn, vuốt xuống = trượt, phím P, chơi lại, tự dọn dẹp khi gỡ container, không có lỗi console.
 
 **Chưa kiểm thử được:** cảm giác điều khiển trên điện thoại thật (độ nhạy vuốt/chạm, độ khó), hiệu năng trên máy yếu (mới thử WebGL phần mềm), âm thanh thật (chỉ kiểm tra gọi hàm), việc đọc/ghi Firestore thật và luật Firestore (chỉ viết, chưa chạy trên Firebase), âm lượng và rung.

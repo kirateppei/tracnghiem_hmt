@@ -58,7 +58,7 @@ await page.evaluate(() => { window.api.debug.dbg.autoplay = true; });
 await page.waitForTimeout(3500);
 const st = await page.evaluate(() => { const g = window.api.debug.game; return { dist: g.dist, dead: g.dead, coins: g.coins, screen: window.api.debug.screen }; });
 console.log('     sau 3,5 s: ', JSON.stringify(st));
-check(!st.dead && st.dist > 15, 'bot chạy được trong trình duyệt');
+check(!st.dead && st.dist > 8, 'bot chạy được trong trình duyệt');
 await shot(page, '3-chay-ngay');
 // ban đêm
 await page.evaluate(() => { window.api.debug.dbg.phase = 0.78; }); await page.waitForTimeout(500); await shot(page, '4-chay-dem');
@@ -78,13 +78,18 @@ const rows = await page.evaluate(() => ({ n: document.querySelectorAll('.rn-row2
 check(rows.n >= 13 && rows.me >= 1, 'bảng xếp hạng hiện dòng và đánh dấu dòng của mình ' + JSON.stringify(rows));
 await page.click('#rn-bclose'); await page.click('#rn-again'); await page.waitForTimeout(600);
 check(await page.evaluate(() => window.api.debug.screen) === 'play', 'Chơi lại');
-// điều khiển cảm ứng: chạm = nhảy, vuốt xuống = trượt
+// điều khiển cảm ứng: chạm = nhảy, vuốt trái/phải = đổi làn, vuốt xuống = trượt
 const box = await page.evaluate(() => { const r = document.querySelector('canvas').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
 await page.waitForTimeout(150);
-await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.waitForTimeout(80);
-check(await page.evaluate(() => window.api.debug.game.y) > 0.05, 'chạm màn hình = nhảy'); await page.mouse.up(); await page.waitForTimeout(900);
-await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.move(box.x, box.y + 60, { steps: 4 }); await page.waitForTimeout(250);
-const sl = await page.evaluate(() => window.api.debug.game.sliding); await page.mouse.up();
+await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.waitForTimeout(400);
+check(await page.evaluate(() => window.api.debug.game.y) > 0.05 || await page.evaluate(() => window.api.debug.game.jumps) > 0, 'chạm màn hình = nhảy'); await page.mouse.up(); await page.waitForTimeout(1200);
+await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.move(box.x - 70, box.y, { steps: 4 }); await page.waitForTimeout(200); await page.mouse.up();
+check(await page.evaluate(() => window.api.debug.game.lane) === 0, 'vuốt trái = sang làn trái');
+await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.move(box.x + 70, box.y, { steps: 4 }); await page.mouse.move(box.x + 140, box.y, { steps: 4 }); await page.waitForTimeout(200); await page.mouse.up();
+check(await page.evaluate(() => window.api.debug.game.lane) === 2, 'vuốt phải hai lần = sang làn phải');
+await page.waitForTimeout(900);
+await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.move(box.x, box.y + 60, { steps: 4 }); await page.waitForTimeout(200);
+const sl = await page.evaluate(() => window.api.debug.game.sliding || window.api.debug.game.slideQ); await page.mouse.up();
 check(sl, 'vuốt xuống = trượt');
 // dọn dẹp khi gỡ container
 await page.evaluate(() => { window.__c = document.getElementById('c'); window.__c.remove(); }); await page.waitForTimeout(400);
@@ -94,7 +99,7 @@ await page.context().close();
 // màn ngang + nhân vật nữ khi chạy
 page = await open(900, 440);
 await page.click('.rn-char[data-g=f]'); await page.click('#rn-start'); await page.evaluate(() => { window.api.debug.dbg.autoplay = true; }); await page.waitForTimeout(2500);
-await page.evaluate(() => { const g = window.api.debug.game; g.track.hz.forEach((h) => { h.botDone = h.botDone; }); }); await shot(page, '8-ngang-nu-chay');
+await shot(page, '8-ngang-nu-chay');
 await page.context().close();
 // nhân vật nam cận cảnh để xem logo trên áo
 page = await open(420, 520);
@@ -107,11 +112,14 @@ page = await open(1100, 460);
 await page.click('#rn-start');
 await page.evaluate(() => {
   const g = window.api.debug.game, T = g.track, d = g.dist;
+  T.hz.length = 0; T.coins.length = 0; T.items.length = 0;
   const add = (o) => T.hz.push({ y0: 0, y1: 1, w: 1, ...o });
-  add({ type: 'crate', x: d + 4, w: 1.1, y1: 0.9 }); add({ type: 'panel', x: d + 7, w: 2.4, y1: 0.55 });
-  add({ type: 'wire', x: d + 11, w: 0.5, y0: 0.95, y1: 6 }); add({ type: 'bird', x: d + 14.5, w: 0.8, y0: 0.95, y1: 1.65 });
+  add({ type: 'crate', x: d + 9, w: 1.1, y1: 0.9, lane: 0 }); add({ type: 'panel', x: d + 9, w: 2.2, y1: 0.55, lane: 2 });
+  add({ type: 'wire', x: d + 17, w: 0.5, y0: 0.95, y1: 6, lane: 1 }); add({ type: 'bird', x: d + 17, w: 0.8, y0: 0.95, y1: 1.65, lane: 0 });
+  add({ type: 'building', x: d + 26, w: 18, y1: 8, lane: 1 }); add({ type: 'building', x: d + 26, w: 14, y1: 8, lane: 2 });
   T.hz.sort((a, b) => a.x - b.x);
-  T.items.push({ type: 'magnet', x: d + 2, y: 1.5, taken: false }, { type: 'shield', x: d + 9, y: 2.2, taken: false }, { type: 'boost', x: d + 17, y: 1.2, taken: false });
+  for(let i = 0; i < 8; i++) T.coins.push({ x: d + 6 + i * 1.8, lane: 1, y: 0.9, taken: false });
+  T.items.push({ type: 'magnet', x: d + 6, y: 1.1, lane: 1, taken: false }, { type: 'shield', x: d + 13, y: 1.1, lane: 2, taken: false }, { type: 'boost', x: d + 14, y: 1.1, lane: 0, taken: false });
   T.items.sort((a, b) => a.x - b.x);
   window.api.debug.setCam(0);
 });

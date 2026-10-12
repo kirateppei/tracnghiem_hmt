@@ -8,15 +8,14 @@ const { CFG } = L;
 
 /* ================= Hằng số dễ chỉnh theo phản hồi người chơi (giao diện/điều khiển) ================= */
 const UI = {
-  SWIPE_PX: 24,          // vuốt xuống ít nhất chừng này điểm ảnh thì tính là trượt
-  SWIPE_RATIO: 1.0,      // độ lệch dọc phải lớn hơn độ lệch ngang × hệ số này
+  SWIPE_PX: 24,          // vuốt ít nhất chừng này điểm ảnh thì tính là vuốt (trái/phải = đổi làn, xuống = trượt, lên = nhảy)
+  SWIPE_RATIO: 1.0,      // độ lệch theo hướng chính phải lớn hơn hướng kia × hệ số này
   CYCLE_M: 2000,         // chu kỳ đổi bầu trời: sáng → trưa → hoàng hôn → đêm (mét)
   START_PHASE: 0.02,     // pha bầu trời lúc xuất phát (0 = sáng sớm)
-  VIS_W_LAND: 17,        // bề ngang cảnh nhìn thấy (m) khi màn ngang
-  VIS_W_PORT: 12.5,        // ... khi màn dọc (điện thoại)
-  PLAYER_X: 0.24,        // vị trí nhân vật theo chiều ngang màn hình (0–1)
-  GROUND_Y: 0.28,        // mặt mái nằm cách đáy màn hình bao nhiêu phần chiều cao
-  MAX_DPR: 2,
+  VIS_W: 8.6,            // bề ngang cảnh nhìn thấy (m) tại chỗ nhân vật; nhỏ hơn = nhân vật to hơn
+  TAP_DELAY_MS: 55,      // chờ chừng này ms sau khi chạm để phân biệt chạm (nhảy) với vuốt
+  DRAW_DIST: 105,        // nhìn xa bao nhiêu mét (vật ở xa hơn không được vẽ)
+    MAX_DPR: 2,
   KEY: { best: 'gm_runner_best', rec: 'gm_runner_bestrec', char: 'gm_runner_char', synced: 'gm_runner_synced' },
 };
 
@@ -79,12 +78,6 @@ function facadeTex(){
   }, { repeat: true });
   return { map: m, emi: e };
 }
-const roofTopTex = () => canvasTex(256, 256, (c, w, h) => {
-  c.fillStyle = '#b9b9b4'; c.fillRect(0, 0, w, h);
-  for(let i = 0; i < 1500; i++){ c.fillStyle = `rgba(${Math.random() < 0.5 ? '0,0,0' : '255,255,255'},${Math.random() * 0.07})`; c.fillRect(Math.random() * w, Math.random() * h, 3, 3); }
-  c.strokeStyle = 'rgba(0,0,0,.18)'; c.lineWidth = 2; c.strokeRect(0, 0, w, h);
-  c.fillStyle = '#f2c230'; c.fillRect(0, h - 10, w, 10);   // vạch vàng ở mép gần camera
-}, { repeat: true });
 function panelTex(cracked){
   return canvasTex(128, 64, (c, w, h) => {
     c.fillStyle = '#c9d2dc'; c.fillRect(0, 0, w, h);
@@ -101,11 +94,6 @@ function panelTex(cracked){
     }
   }, { repeat: true });
 }
-const railTex = () => canvasTex(128, 64, (c, w, h) => {
-  c.clearRect(0, 0, w, h);
-  c.fillStyle = '#9aa3ad'; c.fillRect(0, 4, w, 6); c.fillRect(0, h * 0.55, w, 4); c.fillStyle = '#f2c230'; c.fillRect(0, 0, w, 4);
-  c.fillStyle = '#7d8791'; for(let x = 6; x < w; x += 32) c.fillRect(x, 4, 5, h - 4);
-}, { repeat: true });
 const crateTex = () => canvasTex(128, 96, (c, w, h) => {
   const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#e0452f'); g.addColorStop(1, '#a52a1c');
   c.fillStyle = g; c.fillRect(0, 0, w, h);
@@ -274,47 +262,45 @@ function buildCharacter(gender, skin, tex){
   return { root, flip, body, hips, torso, head, tail, armL: aL.sh, foreL: aL.fore, armR: aR.sh, foreR: aR.fore, legL: lL.th, shinL: lL.shin, legR: lR.th, shinR: lR.shin, sc };
 }
 
-/* ================= Vật thể trên đường ================= */
+/* ================= Vật thể trên đường (làn chạy dọc trục z; người chơi chạy về phía -z, camera ở sau lưng) ================= */
 function makeCrate(T){
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), [T.crateSide, T.crateSide, T.crateSide, T.crateSide, T.crate, T.crateSide]);
-  body.position.y = 0.4; body.scale.set(1, 0.8, 0.8); g.add(body);
-  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.1, 0.84), T.crateSide); lid.position.y = 0.85; g.add(lid);
-  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 6, 12, Math.PI), T.metal); handle.position.y = 0.9; g.add(handle);
-  g.userData.body = body; g.userData.lid = lid; return g;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.8, 1), [T.crateSide, T.crateSide, T.crateSide, T.crateSide, T.crate, T.crateSide]);
+  body.position.y = 0.4; g.add(body);
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.1, 1.06), T.crateSide); lid.position.y = 0.85; g.add(lid);
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.03, 6, 12, Math.PI), T.metal); handle.position.y = 0.9; g.add(handle);
+  return g;
 }
 function makePanel(T){
   const g = new THREE.Group();
-  const p = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1.2), [T.frame, T.frame, T.panelBroken, T.frame, T.frame, T.frame]);
-  p.position.y = 0.3; p.rotation.x = 0.0; p.rotation.z = 0.0; g.add(p);
-  const leg1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.3, 0.06), T.frame); leg1.position.set(-0.4, 0.15, 0.4); g.add(leg1);
-  const leg2 = leg1.clone(); leg2.position.set(0.4, 0.15, -0.4); g.add(leg2);
-  const shard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.4), T.panelBroken); shard.position.set(0.3, 0.06, 0.55); shard.rotation.set(0.1, 0.5, 0.25); g.add(shard);
-  g.userData.p = p; g.userData.leg2 = leg2; return g;
+  const p = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 2.2), [T.frame, T.frame, T.panelBroken, T.frame, T.frame, T.frame]);
+  p.position.y = 0.33; p.rotation.x = -0.18; g.add(p);
+  for(const [x, z] of [[-0.7, 0.8], [0.7, 0.8], [-0.7, -0.9], [0.7, -0.9]]){ const l = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.2, 0.06), T.frame); l.position.set(x, 0.1, z); g.add(l); }
+  const shard = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.04, 0.5), T.panelBroken); shard.position.set(0.55, 0.05, 1.1); shard.rotation.set(0.05, 0.5, 0.2); g.add(shard);
+  return g;
 }
 function makeWire(T){
   const g = new THREE.Group();
-  for(const z of [-2.6, 2.6]){ const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 3.7, 8), T.metal); pole.position.set(0, 1.85, z); g.add(pole); }
-  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 5.6), T.wood); arm.position.y = 3.55; g.add(arm);
-  const cabs = [];
+  for(const x of [-0.95, 0.95]){ const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 3.7, 8), T.metal); pole.position.set(x, 1.85, 0); g.add(pole); }
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.12, 0.14), T.wood); arm.position.y = 3.55; g.add(arm);
   for(let i = 0; i < 7; i++){
-    const z = -1.8 + i * 0.6, h = 2.55 + (i % 2) * 0.12;
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, h, 5), T.cable); c.position.set(0, 3.5 - h / 2, z); g.add(c);
-    const ins = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.1, 6), T.white); ins.position.set(0, 3.5, z); g.add(ins); cabs.push(c);
+    const x = -0.9 + i * 0.3, h = 2.55 + (i % 2) * 0.12;
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, h, 5), T.cable); c.position.set(x, 3.5 - h / 2, 0); g.add(c);
+    const ins = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.1, 6), T.white); ins.position.set(x, 3.5, 0); g.add(ins);
   }
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.6), T.danger); sign.position.set(0.1, 2.9, 2.0); g.add(sign);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.55), T.danger); sign.position.set(0, 3.0, 0.1); g.add(sign);
   const spark = new THREE.Sprite(T.sparkMat); spark.scale.set(0.9, 0.9, 1); spark.position.set(0, 1.0, 0); g.add(spark);
-  g.userData.spark = spark; g.userData.cabs = cabs; return g;
+  g.userData.spark = spark; return g;
 }
 function makeBird(T){
   const g = new THREE.Group();
   const bodyM = new THREE.MeshLambertMaterial({ color: '#4b5565' });
-  const b = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 10), bodyM); b.scale.set(1.3, 0.85, 0.9); g.add(b);
-  const h = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), bodyM); h.position.set(-0.33, 0.1, 0); g.add(h);
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 6), T.beak); beak.rotation.z = Math.PI / 2; beak.position.set(-0.5, 0.08, 0); g.add(beak);
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), T.dark); eye.position.set(-0.42, 0.15, 0.1); g.add(eye);
-  const tailM = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 0.2), bodyM); tailM.position.set(0.45, 0, 0); g.add(tailM);
-  const wing = (s) => { const w = new THREE.Group(); w.position.set(0, 0.1, s * 0.12); const m = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.03, 0.55), bodyM); m.position.z = s * 0.28; w.add(m); g.add(w); return w; };
+  const b = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 10), bodyM); b.scale.set(0.9, 0.85, 1.3); g.add(b);
+  const h = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), bodyM); h.position.set(0, 0.1, 0.33); g.add(h);
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 6), T.beak); beak.rotation.x = Math.PI / 2; beak.position.set(0, 0.08, 0.5); g.add(beak);
+  for(const s of [-1, 1]){ const e = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), T.dark); e.position.set(s * 0.09, 0.15, 0.42); g.add(e); }
+  const tailM = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.3), bodyM); tailM.position.set(0, 0, -0.45); g.add(tailM);
+  const wing = (s) => { const w = new THREE.Group(); w.position.set(s * 0.12, 0.1, 0); const m = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.03, 0.34), bodyM); m.position.x = s * 0.28; w.add(m); g.add(w); return w; };
   g.userData.wl = wing(1); g.userData.wr = wing(-1);
   return g;
 }
@@ -327,14 +313,56 @@ function makeItem(type, T){
     const c = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.5, 12), T.ceramic); c.rotation.z = Math.PI / 2; g.add(c);
     for(const s of [-1, 1]){ const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.12, 10), T.gold); cap.rotation.z = Math.PI / 2; cap.position.x = s * 0.3; g.add(cap); }
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.025, 6, 24), T.cyan); g.add(ring);
-  } else {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.5, 0.22), T.green); g.add(b);
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.07, 0.1), T.white); cap.position.y = 0.28; g.add(cap);
-    const bolt = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.22, 0.24), T.yellow); bolt.rotation.z = 0.35; g.add(bolt);
+  } else {   // x2: huy hiệu logo công ty
+    const gm = new THREE.CylinderGeometry(0.46, 0.46, 0.1, 32); gm.rotateX(Math.PI / 2);
+    const m = new THREE.Mesh(gm, [T.gold, T.medal, T.medal]); g.add(m);
   }
-  const glow = new THREE.Sprite(type === 'magnet' ? T.glowRed : type === 'shield' ? T.glowCyan : T.glowGreen); glow.scale.set(1.5, 1.5, 1); g.add(glow);
+  const glow = new THREE.Sprite(type === 'magnet' ? T.glowRed : type === 'shield' ? T.glowCyan : T.glowGold); glow.scale.set(1.6, 1.6, 1); g.add(glow);
   g.scale.setScalar(1.2);
   return g;
+}
+/* Huy hiệu x2: logo công ty trong vòng cam, nhãn "x2" */
+function medalTex(){
+  const draw = (c, w, h, img) => {
+    c.fillStyle = '#ffb02a'; c.fillRect(0, 0, w, h);
+    c.fillStyle = '#ff8a0d'; c.beginPath(); c.arc(w / 2, h / 2, w * 0.49, 0, 7); c.fill();
+    c.fillStyle = '#ffffff'; c.beginPath(); c.arc(w / 2, h / 2, w * 0.4, 0, 7); c.fill();
+    if(img){ c.save(); c.beginPath(); c.arc(w / 2, h / 2, w * 0.38, 0, 7); c.clip(); const s = w * 0.76; c.drawImage(img, w / 2 - s / 2, h / 2 - s / 2, s, s); c.restore(); }
+    c.fillStyle = '#e03a1a'; c.beginPath(); c.arc(w * 0.78, h * 0.78, w * 0.17, 0, 7); c.fill();
+    c.fillStyle = '#fff'; c.font = '900 ' + Math.round(w * 0.2) + 'px "Trebuchet MS",Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('x2', w * 0.78, h * 0.79);
+  };
+  const t = canvasTex(128, 128, (c, w, h) => draw(c, w, h, null));
+  withLogo((img) => { const cv = t.image; draw(cv.getContext('2d'), cv.width, cv.height, img); t.needsUpdate = true; });
+  return t;
+}
+/* Tòa nhà gắn pin năng lượng mặt trời (thay cho toa tàu): thân tường có cửa sổ, nửa trên phủ giàn pin */
+function buildingTex(front){
+  const cols = front ? 2 : 4;
+  const draw = (c, w, h, lit) => {
+    c.fillStyle = lit ? '#000' : '#d9d3c4'; c.fillRect(0, 0, w, h);
+    const ph = h * 0.44;
+    if(!lit){
+      for(let i = 0; i < 600; i++){ c.fillStyle = `rgba(0,0,0,${Math.random() * 0.05})`; c.fillRect(Math.random() * w, Math.random() * h, 3, 2); }
+      const g = c.createLinearGradient(0, 0, w, ph); g.addColorStop(0, '#2c6fd0'); g.addColorStop(1, '#16397f');
+      c.fillStyle = '#c9d2dc'; c.fillRect(0, 0, w, ph + 6); c.fillStyle = g; c.fillRect(4, 4, w - 8, ph - 4);
+      c.strokeStyle = 'rgba(225,238,255,.7)'; c.lineWidth = 1.5;
+      for(let i = 1; i < cols * 2; i++){ const x = 4 + (w - 8) * i / (cols * 2); c.beginPath(); c.moveTo(x, 4); c.lineTo(x, ph); c.stroke(); }
+      for(let i = 1; i < 4; i++){ const y = 4 + (ph - 4) * i / 4; c.beginPath(); c.moveTo(4, y); c.lineTo(w - 4, y); c.stroke(); }
+      c.fillStyle = 'rgba(255,255,255,.12)'; c.beginPath(); c.moveTo(4, 4); c.lineTo(w * 0.5, 4); c.lineTo(w * 0.2, ph); c.lineTo(4, ph); c.fill();
+      c.fillStyle = '#f2c230'; c.fillRect(0, ph + 6, w, 6);
+    }
+    const rows = 2, top = ph + 22, ch_ = (h - top - 10) / rows;
+    let s = 5; const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+    for(let r = 0; r < rows; r++) for(let k = 0; k < cols; k++){
+      const x = (k + 0.18) * w / cols, ww = w / cols * 0.64, y = top + r * ch_ + ch_ * 0.12, hh = ch_ * 0.7;
+      if(lit){ if(rnd() < 0.55){ c.fillStyle = '#ffd27a'; c.fillRect(x, y, ww, hh); } }
+      else { c.fillStyle = '#486a88'; c.fillRect(x, y, ww, hh); c.fillStyle = 'rgba(255,255,255,.25)'; c.fillRect(x, y, ww, hh * 0.25); c.fillStyle = 'rgba(0,0,0,.2)'; c.fillRect(x - 2, y + hh, ww + 4, 3); }
+    }
+  };
+  const w = front ? 128 : 256;
+  const map = canvasTex(w, 256, (c, ww, hh) => draw(c, ww, hh, false), { repeat: true });
+  const emi = canvasTex(w, 256, (c, ww, hh) => draw(c, ww, hh, true), { repeat: true });
+  return { map, emi };
 }
 
 /* ================= Chương trình chính ================= */
@@ -366,14 +394,14 @@ export function runner(container, opt = {}){
   renderer.shadowMap.enabled = false;            // không bật bóng đổ thật; dùng bóng giả
   const canvas = renderer.domElement; canvas.className = 'rn-canvas'; wrap.appendChild(canvas);
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 400);
+  const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 400);
   const sky = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-    uniforms: { top: { value: new THREE.Color('#69b4ee') }, bot: { value: new THREE.Color('#ffe0b0') } },
+    uniforms: { top: { value: new THREE.Color('#69b4ee') }, bot: { value: new THREE.Color('#ffe0b0') }, hv: { value: 0.5 } },
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.9999, 1.0); }',
-    fragmentShader: 'uniform vec3 top; uniform vec3 bot; varying vec2 vUv; void main(){ float k = smoothstep(0.22, 1.0, vUv.y); gl_FragColor = vec4(mix(bot, top, k), 1.0);\n#include <colorspace_fragment>\n}',
+    fragmentShader: 'uniform vec3 top; uniform vec3 bot; uniform float hv; varying vec2 vUv; void main(){ float k = smoothstep(hv, 1.0, vUv.y); gl_FragColor = vec4(mix(bot, top, k), 1.0);\n#include <colorspace_fragment>\n}',
     depthTest: false, depthWrite: false, fog: false }));
   sky.frustumCulled = false; sky.renderOrder = -100; scene.add(sky);
-  scene.fog = new THREE.Fog('#ffe0b0', 20, 140);
+  scene.fog = new THREE.Fog('#ffe0b0', 30, 130);
   const hemi = new THREE.HemisphereLight('#ffffff', '#667766', 1.0); scene.add(hemi);
   const sunL = new THREE.DirectionalLight('#ffffff', 2); sunL.position.set(-4, 9, 9); scene.add(sunL);
 
@@ -382,134 +410,115 @@ export function runner(container, opt = {}){
   const keep = (t) => { own.push(t); return t; };
   const Tx = {};
   const fac = facadeTex(); Tx.facade = keep(fac.map); Tx.facadeEmi = keep(fac.emi);
-  Tx.roofTop = keep(roofTopTex()); Tx.panel = keep(panelTex(false)); Tx.panelBroken = keep(panelTex(true)); Tx.rail = keep(railTex());
+  Tx.panel = keep(panelTex(false)); Tx.panelBroken = keep(panelTex(true));
   Tx.crate = keep(crateTex()); Tx.coin = keep(coinFace()); Tx.glow = keep(glowTex()); Tx.cloud = keep(cloudTex());
   const Lm = (c, o = {}) => keep(new THREE.MeshLambertMaterial({ color: c, ...o }));
   const spr = (c, s) => keep(new THREE.SpriteMaterial({ map: Tx.glow, color: c, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false, opacity: s == null ? 1 : s }));
   const MAT = {
     crate: Lm('#ffffff', { map: Tx.crate }), crateSide: Lm('#c93a24'), metal: Lm('#9aa3ad'), wood: Lm('#6b4a2b'), cable: Lm('#16181c'), white: Lm('#f2f2f2'),
     danger: Lm('#ffffff', { map: keep(canvasTex(64, 40, (c, w, h) => { c.fillStyle = '#ffdd22'; c.fillRect(0, 0, w, h); c.fillStyle = '#c00'; c.font = '900 30px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('⚡', w / 2, h / 2 + 2); })), side: THREE.DoubleSide }),
-    frame: Lm('#aab3be'), panelBroken: Lm('#ffffff', { map: Tx.panelBroken }), beak: Lm('#ff9a1f'), dark: Lm('#111'),
+    barrier: Lm('#b8b9bc'), medal: Lm('#ffffff', { map: keep(medalTex()), emissive: '#442200' }), frame: Lm('#aab3be'), panelBroken: Lm('#ffffff', { map: Tx.panelBroken }), beak: Lm('#ff9a1f'), dark: Lm('#111'),
     red: Lm('#e0302a'), ceramic: Lm('#f4efe6'), gold: Lm('#e8b830'), cyan: Lm('#46d6ff', { emissive: '#1a90b0' }), green: Lm('#38b04a', { emissive: '#144a1c' }), yellow: Lm('#ffe14a', { emissive: '#aa8a00' }),
   };
-  const TEX = { ...MAT, sparkMat: spr('#ffe9a0'), glowRed: spr('#ff5a4a'), glowCyan: spr('#6ae0ff'), glowGreen: spr('#6aff7a'), glowGold: spr('#ffd04a', 0.9) };
+  const TEX = { ...MAT, sparkMat: spr('#ffe9a0'), glowRed: spr('#ff5a4a'), glowCyan: spr('#6ae0ff'), glowGreen: spr('#6aff7a'), glowGold: spr('#ffd04a', 0.9), glowCoin: spr('#ffc040', 0.45) };
   const geoms = { unit: new THREE.BoxGeometry(1, 1, 1), plane: new THREE.PlaneGeometry(1, 1) };
 
-  /* ---------- Mái nhà ---------- */
-  const facMats = [0, 1, 2].map((i) => keep(new THREE.MeshLambertMaterial({ map: Tx.facade, emissiveMap: Tx.facadeEmi, emissive: '#ffffff', emissiveIntensity: 0, color: ['#ffffff', '#f0e0d0', '#dbe6f2'][i] })));
-  const roofSlots = [];
-  function makeRoofSlot(i){
-    const g = new THREE.Group();
-    const top = Tx.roofTop.clone(); top.needsUpdate = true; top.wrapS = top.wrapT = THREE.RepeatWrapping; own.push(top);
-    const fr = Tx.facade.clone(); fr.needsUpdate = true; own.push(fr);
-    const fe = Tx.facadeEmi.clone(); fe.needsUpdate = true; own.push(fe);
-    const fm = keep(new THREE.MeshLambertMaterial({ map: fr, emissiveMap: fe, emissive: '#ffffff', emissiveIntensity: 0, color: ['#ffffff', '#f0e0d0', '#dbe6f2'][i % 3] }));
-    const topM = keep(new THREE.MeshLambertMaterial({ map: top }));
-    const bodyM = new THREE.Mesh(geoms.unit, [facMats[0], facMats[0], topM, facMats[0], fm, facMats[0]]);
-    g.add(bodyM);
-    const curb = new THREE.Mesh(geoms.unit, MAT.metal); g.add(curb);
-    const rt = Tx.rail.clone(); rt.needsUpdate = true; own.push(rt);
-    const railM = keep(new THREE.MeshBasicMaterial({ map: rt, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, fog: true }));
-    const rail = new THREE.Mesh(geoms.plane, railM); g.add(rail);
-    const pt = Tx.panel.clone(); pt.needsUpdate = true; own.push(pt);
-    const pm = keep(new THREE.MeshLambertMaterial({ map: pt }));
-    const panels = new THREE.Mesh(geoms.unit, [MAT.frame, MAT.frame, pm, MAT.frame, MAT.frame, MAT.frame]); g.add(panels);
-    const panels2 = new THREE.Mesh(geoms.unit, [MAT.frame, MAT.frame, pm, MAT.frame, MAT.frame, MAT.frame]); g.add(panels2);
-    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1, 12), MAT.metal); g.add(tank);
-    g.userData = { top, fr, fe, bodyM, curb, rail, railM, rt, panels, panels2, pt, tank, fm };
-    g.visible = false; scene.add(g);
-    return g;
-  }
-  for(let i = 0; i < 18; i++) roofSlots.push(makeRoofSlot(i));
-  function setRoof(g, a, b, wx, idx){
-    const u = g.userData, len = b - a;
-    g.visible = true; g.position.set(wx, 0, 0);
-    u.bodyM.scale.set(len, 18, 6.7); u.bodyM.position.set(len / 2, -9, -1.15);
-    u.top.repeat.set(len / 4, 2); u.fr.repeat.set(len / 6, 2.2); u.fe.repeat.set(len / 6, 2.2);
-    u.curb.scale.set(len, 0.55, 0.3); u.curb.position.set(len / 2, 0.27, -4.35);
-    u.rail.scale.set(len, 0.9, 1); u.rail.position.set(len / 2, 0.95, -4.2); u.rt.repeat.set(len / 1.4, 1);
-    const pl = Math.max(2, len - 2.4);
-    u.panels.scale.set(pl, 0.07, 1.25); u.panels.position.set(len / 2, 0.78, -3.3); u.panels.rotation.x = 0.5; u.pt.repeat.set(pl / 1.2, 1);
-    u.panels2.scale.set(pl, 0.07, 1.25); u.panels2.position.set(len / 2, 0.78, -1.9); u.panels2.rotation.x = 0.5; u.panels2.visible = len >= 9;
-    u.tank.visible = idx % 3 === 0; u.tank.scale.set(0.9, 1.1, 0.9); u.tank.position.set(len - 1, 0.55, -3.7);
-  }
-
-  /* ---------- Nền: nhà xa, cột điện, mây, mặt trời, sao ---------- */
-  const farLayers = [];
-  const panelTop = keep(new THREE.MeshLambertMaterial({ color: '#2a5fb8', emissive: '#0a1d44' }));
-  function makeFarLayer(z, n, hMin, hMax, tintBase, withPanels, seed){
-    let s = seed; const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-    const pats = []; let off = 0;
-    for(let i = 0; i < n; i++){ const w = 7 + rnd() * 6, h = hMin + rnd() * (hMax - hMin); pats.push({ off, w, h, tint: Math.floor(rnd() * 3) }); off += w + 1 + rnd() * 3; }
-    const period = off;
-    const geos = pats.map((p) => { const g = geoms.unit.clone(); const uv = g.attributes.uv; for(let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * p.w / 6, uv.getY(i) * (p.h + 10) / 8); return g; });
-    const slots = [];
-    const want = Math.ceil(n * 3.4);
-    const mats = [0, 1, 2].map((i) => keep(new THREE.MeshLambertMaterial({ map: Tx.facade, emissiveMap: Tx.facadeEmi, emissive: '#ffffff', emissiveIntensity: 0, color: new THREE.Color(tintBase).multiplyScalar(0.85 + i * 0.1) })));
-    for(let i = 0; i < want; i++){
-      const m = new THREE.Mesh(geos[0], mats[i % 3]); m.visible = false; scene.add(m);
-      let pan = null;
-      if(withPanels){ pan = new THREE.Mesh(geoms.unit, [MAT.frame, MAT.frame, panelTop, MAT.frame, MAT.frame, MAT.frame]); m.add(pan); }
-      slots.push({ m, pan });
+  /* ---------- Đường 3 làn, cánh đồng pin, nhà xa, cột điện, tòa nhà chắn đường ---------- */
+  const ROAD_LEN = 240, DRAW = UI.DRAW_DIST;
+  const roadTex = keep(canvasTex(256, 512, (c, w, h) => {
+    c.fillStyle = '#4a4d55'; c.fillRect(0, 0, w, h);
+    for(let i = 0; i < 2500; i++){ c.fillStyle = `rgba(${Math.random() < 0.5 ? '0,0,0' : '255,255,255'},${Math.random() * 0.06})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+    c.fillStyle = '#6d6f73'; c.fillRect(0, 0, w * 0.25, h); c.fillRect(w * 0.75, 0, w * 0.25, h);
+    c.fillStyle = '#f2c230'; c.fillRect(w * 0.25 - 4, 0, 6, h); c.fillRect(w * 0.75 - 2, 0, 6, h);
+    c.fillStyle = '#f2f2f2'; for(const u of [5 / 12, 7 / 12]) c.fillRect(w * u - 3, 0, 6, h * 0.38);      // vạch đứt giữa các làn
+  }, { repeat: true }));
+  roadTex.repeat.set(1, ROAD_LEN / 8);
+  const road = new THREE.Mesh(geoms.plane, keep(new THREE.MeshLambertMaterial({ map: roadTex })));
+  road.rotation.x = -Math.PI / 2; road.scale.set(12, ROAD_LEN, 1); road.position.set(0, 0, 40 - ROAD_LEN / 2); scene.add(road);
+  const ground = new THREE.Mesh(geoms.plane, keep(new THREE.MeshLambertMaterial({ color: '#7b8470' })));
+  ground.rotation.x = -Math.PI / 2; ground.scale.set(700, 700, 1); ground.position.set(0, -0.06, -120); scene.add(ground);
+  for(const sx of [-1, 1]){ const b = new THREE.Mesh(geoms.unit, MAT.barrier); b.scale.set(0.35, 0.8, ROAD_LEN); b.position.set(sx * 3.35, 0.4, 40 - ROAD_LEN / 2); scene.add(b); }
+  // cánh đồng pin hai bên đường (InstancedMesh: mỗi tấm nghiêng về phía người chơi, đặt trên chân đế)
+  Tx.panel.repeat.set(3, 1);
+  const PF = { cols: [-9, 9, -17.5, 17.5], per: 40, step: 4 };
+  const pfMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(7.4, 0.08, 2.2), [MAT.frame, MAT.frame, Lm('#ffffff', { map: Tx.panel }), MAT.frame, MAT.frame, MAT.frame], PF.cols.length * PF.per);
+  const pfPost = new THREE.InstancedMesh(new THREE.BoxGeometry(6.8, 0.8, 0.1), MAT.dark, PF.cols.length * PF.per);
+  pfMesh.frustumCulled = pfPost.frustumCulled = false; scene.add(pfMesh); scene.add(pfPost);
+  const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.5, 0, 0)), _qi = new THREE.Quaternion(), _s1 = new THREE.Vector3(1, 1, 1), _pv = new THREE.Vector3();
+  function updateField(d){
+    let k = 0;
+    for(const cx of PF.cols) for(let i = 0; i < PF.per; i++){
+      const z = 18 - ((((PF.step * i - d) % 160) + 160) % 160);
+      _pv.set(cx, 0.95, z); _m4.compose(_pv, _q, _s1); pfMesh.setMatrixAt(k, _m4);
+      _pv.set(cx, 0.4, z - 0.25); _m4.compose(_pv, _qi, _s1); pfPost.setMatrixAt(k, _m4); k++;
     }
-    farLayers.push({ z, pats, period, slots, mats, n, geos });
+    pfMesh.instanceMatrix.needsUpdate = pfPost.instanceMatrix.needsUpdate = true;
   }
-  makeFarLayer(-24, 12, 5, 11, '#cfc8bc', true, 11);
-  makeFarLayer(-46, 12, 9, 19, '#b9c0cc', false, 23);
-  makeFarLayer(-78, 10, 14, 28, '#a2adc2', false, 37);
-  function updateFar(distNow, nightK){
-    for(const L_ of farLayers){
-      let k = 0; const base = Math.floor((distNow - 100) / L_.period);
-      const reach = 140 + Math.abs(L_.z);
-      for(let rep = base; rep < base + 7 && k < L_.slots.length; rep++){
-        for(let i = 0; i < L_.n && k < L_.slots.length; i++){
-          const p = L_.pats[i], x0 = rep * L_.period + p.off - distNow;
-          if(x0 + p.w < -100 || x0 > reach) continue;
-          const sl = L_.slots[k++], H = p.h + 10;
-          sl.m.visible = true; sl.m.geometry = L_.geos[i]; sl.m.scale.set(p.w, H, p.w * 0.8); sl.m.position.set(x0 + p.w / 2, (p.h - 10) / 2, L_.z);
-          if(sl.pan){ sl.pan.scale.set(0.8, 0.5 / H, 0.55); sl.pan.position.set(0, 0.5 + 0.25 / H, 0); }
-        }
-      }
-      for(; k < L_.slots.length; k++) L_.slots[k].m.visible = false;
-      L_.mats.forEach((m) => { m.emissiveIntensity = nightK * 0.9; });
-    }
+  // nhà xa hai bên (cửa sổ sáng đèn về đêm, giàn pin trên mái)
+  const BH = [16, 26, 38], bdGeo = BH.map((h) => { const g = geoms.unit.clone(); const uv = g.attributes.uv; for(let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 14 / 6, uv.getY(i) * h / 8); return g; });
+  const bdMats = [0, 1, 2].map((i) => keep(new THREE.MeshLambertMaterial({ map: Tx.facade, emissiveMap: Tx.facadeEmi, emissive: '#ffffff', emissiveIntensity: 0, color: ['#e6dfd0', '#d3d9e3', '#e8d6c6'][i] })));
+  const bdPan = Lm('#2a5fb8', { emissive: '#0a1d44' });
+  const backdrop = [];
+  for(let i = 0; i < 16; i++){
+    const side = i % 2 ? 1 : -1, j = i >> 1, v = (i * 5) % 3;
+    const m = new THREE.Mesh(bdGeo[v], bdMats[i % 3]); m.scale.set(14, BH[v], 14); scene.add(m);
+    const pan = new THREE.Mesh(geoms.unit, bdPan); pan.scale.set(0.8, 0.5 / BH[v], 0.5); pan.position.set(0, 0.5 + 0.3 / BH[v], 0); m.add(pan);
+    backdrop.push({ m, x: side * (31 + (j * 7) % 9), s: j * 24 + (side > 0 ? 12 : 0), h: BH[v] });
   }
-  // cột điện + đường dây + đèn
-  const POLE_GAP = 26, poles = [];
+  // cột điện + đường dây (bên trái), cột đèn đường (hai bên)
+  const POLE_GAP = 22;
   const wireGeo = (() => {
     const pts = [];
-    for(const z of [-0.9, 0, 0.9]){ let prev = null; for(let i = 0; i <= 10; i++){ const t = i / 10, q = [t * POLE_GAP, 6.6 - 1.6 * 4 * t * (1 - t), z]; if(prev) pts.push(...prev, ...q); prev = q; } }
+    for(const x of [-0.8, 0, 0.8]){ let prev = null; for(let i = 0; i <= 10; i++){ const t = i / 10, q = [x, 7.4 - 0.6 * 4 * t * (1 - t), -POLE_GAP * t]; if(prev) pts.push(...prev, ...q); prev = q; } }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)); return g;
   })();
   const wireMat = keep(new THREE.LineBasicMaterial({ color: '#15171c' }));
   const lampMat = keep(new THREE.MeshBasicMaterial({ color: '#555' }));
-  for(let i = 0; i < 9; i++){
+  const coneMat = keep(new THREE.MeshBasicMaterial({ color: '#ffe7a0', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide }));
+  const glowMat = spr('#ffe7a0', 0);
+  const poles = [];
+  function makePole(side, wires){
     const g = new THREE.Group();
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 26, 8), MAT.wood); pole.position.y = -6; g.add(pole);
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 2.2), MAT.wood); arm.position.y = 6.6; g.add(arm);
-    const lampArm = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.07, 0.07), MAT.metal); lampArm.position.set(0.5, 6.0, 1.0); g.add(lampArm);
-    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.3), lampMat); lamp.position.set(1.0, 5.95, 1.0); g.add(lamp);
-    const glow = new THREE.Sprite(spr('#ffe7a0', 0)); glow.scale.set(5, 5, 1); glow.position.set(1.0, 5.6, 1.0); g.add(glow);
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(2.6, 6, 16, 1, true), keep(new THREE.MeshBasicMaterial({ color: '#ffe7a0', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide }))); cone.position.set(1.0, 2.8, 1.0); g.add(cone);
-    const wires = new THREE.LineSegments(wireGeo, wireMat); g.add(wires);
-    g.visible = false; g.position.z = -7; scene.add(g);
-    poles.push({ g, glow, cone });
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 8, 8), MAT.wood); pole.position.y = 4; g.add(pole);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.1, 0.12), MAT.wood); arm.position.y = 7.4; if(wires) g.add(arm);
+    const la = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.07, 0.07), MAT.metal); la.position.set(-side * 0.7, 6.6, 0); g.add(la);
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.3), lampMat); lamp.position.set(-side * 1.35, 6.55, 0); g.add(lamp);
+    const glow = new THREE.Sprite(glowMat); glow.scale.set(3.2, 3.2, 1); glow.position.set(-side * 1.35, 6.2, 0); g.add(glow);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(3.2, 6.4, 16, 1, true), coneMat); cone.position.set(-side * 1.35, 3.3, 0); g.add(cone);
+    if(wires) g.add(new THREE.LineSegments(wireGeo, wireMat));
+    scene.add(g); return g;
   }
+  for(let i = 0; i < 9; i++){ poles.push({ g: makePole(-1, true), x: -4.7, s: i * POLE_GAP }); poles.push({ g: makePole(1, false), x: 4.7, s: i * POLE_GAP + POLE_GAP / 2 }); }
+  // tòa nhà gắn pin mặt trời chắn đường (thay cho toa tàu)
+  const BT = buildingTex(false), BF = buildingTex(true); [BT.map, BT.emi, BF.map, BF.emi].forEach(keep);
+  const bldTints = ['#ffffff', '#f2e4d2', '#dbe6f2'];
+  const topMat = Lm('#8d8f94');
+  const bldSlots = [];
+  for(let i = 0; i < 8; i++){
+    const sm = BT.map.clone(), se = BT.emi.clone(); sm.needsUpdate = se.needsUpdate = true; own.push(sm, se);
+    const sideMats = bldTints.map((t) => keep(new THREE.MeshLambertMaterial({ map: sm, emissiveMap: se, emissive: '#ffffff', emissiveIntensity: 0, color: t })));
+    const frontMats = bldTints.map((t) => keep(new THREE.MeshLambertMaterial({ map: BF.map, emissiveMap: BF.emi, emissive: '#ffffff', emissiveIntensity: 0, color: t })));
+    const mesh = new THREE.Mesh(geoms.unit, [sideMats[0], sideMats[0], topMat, topMat, frontMats[0], frontMats[0]]);
+    mesh.visible = false; scene.add(mesh);
+    bldSlots.push({ mesh, sm, se, sideMats, frontMats, mats: bldTints.map((_, t) => [sideMats[t], sideMats[t], topMat, topMat, frontMats[t], frontMats[t]]) });
+  }
+  /* ---------- Mặt trời, mây, sao: gắn vào camera nên luôn nằm đúng vị trí trên màn hình ---------- */
+  scene.add(camera);
+  const SKY_D = 150;
   const sunSpr = new THREE.Sprite(keep(new THREE.SpriteMaterial({ map: Tx.glow, color: '#fff2c0', transparent: true, depthWrite: false, fog: false })));
-  sunSpr.renderOrder = -90; scene.add(sunSpr);
+  sunSpr.renderOrder = -90; camera.add(sunSpr);
   const sunHalo = new THREE.Sprite(keep(new THREE.SpriteMaterial({ map: Tx.glow, color: '#ffd080', transparent: true, depthWrite: false, fog: false, opacity: 0.55, blending: THREE.AdditiveBlending })));
-  sunHalo.renderOrder = -91; scene.add(sunHalo);
+  sunHalo.renderOrder = -91; camera.add(sunHalo);
   const clouds = [];
   for(let i = 0; i < 9; i++){
     const m = keep(new THREE.SpriteMaterial({ map: Tx.cloud, transparent: true, depthWrite: false, fog: false, opacity: 0.9 }));
-    const s = new THREE.Sprite(m); s.renderOrder = -80; scene.add(s);
-    clouds.push({ s, m, bx: (i / 9) * 170 - 20, y: 0.45 + (i * 37 % 10) / 20, k: 0.16 + (i * 13 % 9) * 0.022, sp: 0.5 + (i % 4) * 0.25 });
+    const s = new THREE.Sprite(m); s.renderOrder = -80; camera.add(s);
+    clouds.push({ s, m, bx: (i / 9) * 2.8 - 1.4, y: 0.2 + (i * 37 % 10) / 14, k: 0.28 + (i * 13 % 9) * 0.03, sp: 0.004 + (i % 4) * 0.002 });
   }
   const starGeo = new THREE.BufferGeometry();
-  { const p = []; for(let i = 0; i < 140; i++) p.push((Math.random() - 0.5) * 2, 0.15 + Math.random() * 0.85, 0); starGeo.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); }
+  { const p = []; for(let i = 0; i < 140; i++) p.push((Math.random() - 0.5) * 2, 0.2 + Math.random() * 0.8, 0); starGeo.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); }
   const starMat = keep(new THREE.PointsMaterial({ color: '#ffffff', size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false, fog: false }));
-  const stars = new THREE.Points(starGeo, starMat); stars.frustumCulled = false; stars.renderOrder = -95; scene.add(stars);
-  const pit = new THREE.Mesh(geoms.plane, keep(new THREE.MeshLambertMaterial({ color: '#2a2f3a' }))); pit.rotation.x = -Math.PI / 2; pit.position.y = -17; pit.scale.set(900, 300, 1); scene.add(pit);
+  const stars = new THREE.Points(starGeo, starMat); stars.frustumCulled = false; stars.renderOrder = -95; camera.add(stars);
 
   /* ---------- Bóng giả, hiệu ứng ---------- */
   const shadow = new THREE.Mesh(geoms.plane, keep(new THREE.MeshBasicMaterial({ map: keep(canvasTex(64, 64, (c, w, h) => { const g = c.createRadialGradient(w / 2, h / 2, 2, w / 2, h / 2, w / 2); g.addColorStop(0, 'rgba(0,0,0,.65)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); })), transparent: true, depthWrite: false })));
@@ -524,13 +533,13 @@ export function runner(container, opt = {}){
   /* ---------- Pool vật cản, tia nắng, vật phẩm ---------- */
   const pools = { crate: [], panel: [], wire: [], bird: [], item: { magnet: [], shield: [], boost: [] } };
   const mk = (n, f, arr) => { for(let i = 0; i < n; i++){ const o = f(); o.visible = false; scene.add(o); arr.push(o); } };
-  mk(8, () => makeCrate(TEX), pools.crate); mk(6, () => makePanel(TEX), pools.panel); mk(5, () => makeWire(TEX), pools.wire); mk(6, () => makeBird(TEX), pools.bird);
+  mk(14, () => makeCrate(TEX), pools.crate); mk(10, () => makePanel(TEX), pools.panel); mk(10, () => makeWire(TEX), pools.wire); mk(10, () => makeBird(TEX), pools.bird);
   for(const t of ['magnet', 'shield', 'boost']) mk(3, () => makeItem(t, TEX), pools.item[t]);
   const coinGeo = (() => { const g = new THREE.CylinderGeometry(0.34, 0.34, 0.08, 20); g.rotateX(Math.PI / 2); return g; })();
   const coinMats = [keep(new THREE.MeshLambertMaterial({ color: '#ffb020', emissive: '#ff8a00', emissiveIntensity: 0.7 })), keep(new THREE.MeshLambertMaterial({ map: Tx.coin, emissive: '#ffa000', emissiveMap: Tx.coin, emissiveIntensity: 0.6 })), keep(new THREE.MeshLambertMaterial({ map: Tx.coin, emissive: '#ffa000', emissiveMap: Tx.coin, emissiveIntensity: 0.6 }))];
   const coinPool = [];
-  for(let i = 0; i < 90; i++){
-    const m = new THREE.Mesh(coinGeo, coinMats); const gl = new THREE.Sprite(TEX.glowGold); gl.scale.set(1.5, 1.5, 1); m.add(gl);
+  for(let i = 0; i < 150; i++){
+    const m = new THREE.Mesh(coinGeo, coinMats); const gl = new THREE.Sprite(TEX.glowCoin); gl.scale.set(1.0, 1.0, 1); m.add(gl);
     m.visible = false; scene.add(m); coinPool.push(m);
   }
 
@@ -547,32 +556,32 @@ export function runner(container, opt = {}){
     scene.add(ch.root);
   }
   setCharacterModel();
-  const pose = { legL: 0, legR: 0, shinL: 0.2, shinR: 0.2, armL: 0, armR: 0, foreL: -0.4, foreR: -0.4, lean: 0, flip: 0, flipY: 0.9, bob: 0, yaw: -1.1, tail: 0.3 };
+  const pose = { legL: 0, legR: 0, shinL: 0.2, shinR: 0.2, armL: 0, armR: 0, foreL: -0.4, foreR: -0.4, lean: 0, flip: 0, flipY: 0.9, bob: 0, yaw: 0, roll: 0, tail: 0.3 };
   const tgt = { ...pose };
 
-  /* ---------- Camera ---------- */
+  /* ---------- Camera: sau lưng nhân vật, nhìn dọc đường 3 làn ---------- */
   let camK = 1;                     // 1 = cận cảnh màn chờ, 0 = camera chạy
-  let vw = 300, vh = 400, runDist = 13, visW = 17, lookX = 4;
+  let vw = 300, vh = 400, camD = 9, camH = 4.5, camX = 0, horizonFy = 0.3;
+  const _dir = new THREE.Vector3();
   function resize(){
     vw = wrap.clientWidth || container.clientWidth || 300; vh = wrap.clientHeight || container.clientHeight || 400;
     renderer.setSize(vw, vh, false); camera.aspect = vw / vh; camera.updateProjectionMatrix();
-    const asp = vw / vh, tan = Math.tan(camera.fov * Math.PI / 360);
-    visW = asp >= 1.2 ? UI.VIS_W_LAND : UI.VIS_W_PORT;
-    runDist = clamp(visW / (2 * tan * asp), 11, 44);
-    const actualW = 2 * tan * runDist * asp;
-    lookX = actualW * (0.5 - UI.PLAYER_X);
-    scene.fog.near = runDist + 12; scene.fog.far = runDist + 115;
+    const tan = Math.tan(camera.fov * Math.PI / 360);
+    camD = clamp(UI.VIS_W / (2 * tan * camera.aspect), 6.5, 15);
+    camH = 0.34 * camD + 1.7;
+    scene.fog.near = 30; scene.fog.far = UI.DRAW_DIST + 25;
   }
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
   if(ro) ro.observe(wrap); else window.addEventListener('resize', resize);
   function placeCamera(shakeX, shakeY){
-    const tan = Math.tan(camera.fov * Math.PI / 360), h = tan * runDist;
-    const ly = h * (1 - 2 * UI.GROUND_Y);                  // mặt mái (y=0) nằm ở UI.GROUND_Y chiều cao màn hình
-    const run = { px: lookX, py: ly + 1.0, pz: runDist, lx: lookX, ly };
-    const near = { px: 0.9, py: 1.25, pz: Math.max(3.9, 4.8 / Math.max(0.6, Math.min(1.4, camera.aspect * 1.2))), lx: 0.1, ly: 0.8 };
+    const run = { px: camX * 0.55, py: camH, pz: camD, lx: camX * 0.4, ly: 1.1, lz: -16 };
+    const near = { px: 0.5, py: 1.35, pz: Math.max(3.6, 4.6 / Math.max(0.6, Math.min(1.4, camera.aspect * 1.2))), lx: 0, ly: 0.95, lz: 0 };
     const k = camK * camK * (3 - 2 * camK);
     camera.position.set(lerp(run.px, near.px, k) + (shakeX || 0), lerp(run.py, near.py, k) + (shakeY || 0), lerp(run.pz, near.pz, k));
-    camera.lookAt(lerp(run.lx, near.lx, k), lerp(run.ly, near.ly, k), 0);
+    camera.lookAt(lerp(run.lx, near.lx, k), lerp(run.ly, near.ly, k), lerp(run.lz, near.lz, k));
+    camera.updateMatrixWorld(true);
+    camera.getWorldDirection(_dir);
+    horizonFy = Math.tan(-Math.asin(clamp(_dir.y, -0.99, 0.99))) / Math.tan(camera.fov * Math.PI / 360);   // vị trí đường chân trời trên màn hình
   }
 
   /* ---------- Trạng thái ---------- */
@@ -580,7 +589,7 @@ export function runner(container, opt = {}){
   let G = L.createGame((opt.seed || 1) | 0 || 1);
   let paused = false, last = performance.now(), raf = 0, acc = 0, tClock = 0, shake = 0, deathShown = false;
   let best = +store(UI.KEY.best) || 0;
-  const input = { jump: false, held: false, slide: false };
+  const input = { jump: false, held: false, slide: false, left: false, right: false };
   let rIdx = 0, comboSfx = 0;
   const dbg = { autoplay: false, bot: L.createBot(), phase: null, bird: 'mix' };
   let finalRes = null;
@@ -597,11 +606,11 @@ export function runner(container, opt = {}){
       <div class="rn-pw">
         <div class="rn-chip" id="rn-pw-magnet" hidden><span>🧲</span><i></i></div>
         <div class="rn-chip" id="rn-pw-shield" hidden><span>🛡️</span><i></i></div>
-        <div class="rn-chip" id="rn-pw-boost" hidden><span>🔋</span><i></i></div>
+        <div class="rn-chip" id="rn-pw-boost" hidden><span><img src="${LOGO_URL}" alt=""><b>x2</b></span><i></i></div>
       </div>
     </div>
     <div class="rn-scr rn-menu">
-      <div class="rn-title"><h2>⚡ Chạy năng lượng</h2><p>Chạm = nhảy (giữ để cao hơn, chạm lần nữa trên không = nhảy đôi) · vuốt xuống = trượt</p></div>
+      <div class="rn-title"><h2>⚡ Chạy năng lượng</h2><p>Vuốt trái/phải = đổi làn · chạm hoặc vuốt lên = nhảy (chạm lần nữa = nhảy đôi) · vuốt xuống = trượt</p></div>
       <div class="rn-bottom">
         <div class="rn-chars" role="group" aria-label="Chọn nhân vật">
           <button class="rn-char" data-g="m">👷‍♂️ Nam</button><button class="rn-char" data-g="f">👷‍♀️ Nữ</button>
@@ -648,7 +657,7 @@ export function runner(container, opt = {}){
   function startGame(){
     const seed = opt.seed ? (opt.seed | 0) : (Math.floor(Math.random() * 2147483000) + 1);
     G = L.createGame(seed); rIdx = 0; deathShown = false; finalRes = null; shake = 0; hudCache.kwh = hudCache.coin = hudCache.best = -1;
-    acc = 0; input.jump = input.slide = false; input.held = false; comboSfx = 0; paused = false; screen = 'play'; camTo = 0;
+    acc = 0; input.jump = input.slide = input.left = input.right = false; input.held = false; camX = 0; comboSfx = 0; paused = false; screen = 'play'; camTo = 0;
     Object.values(hudEl.chips).forEach((c) => { c.hidden = true; });
     showOnly('hud'); snd.beep(523, 0.08, 'triangle', 0.08); snd.beep(784, 0.12, 'triangle', 0.08, 0.08);
   }
@@ -707,18 +716,27 @@ export function runner(container, opt = {}){
   canvas.addEventListener('pointerdown', (e) => {
     if(screen !== 'play' || paused) return;
     e.preventDefault(); try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
-    ptr = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), swiped: false };
-    input.jump = true; input.held = true;
+    const p = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, jumped: false, timer: 0 };
+    // chạm = nhảy; chờ một chút để phân biệt với vuốt đổi làn/trượt
+    p.timer = setTimeout(() => { if(ptr === p && !p.moved && !p.jumped){ p.jumped = true; input.jump = true; input.held = true; } }, UI.TAP_DELAY_MS);
+    ptr = p;
   });
   canvas.addEventListener('pointermove', (e) => {
-    if(!ptr || e.pointerId !== ptr.id || ptr.swiped || screen !== 'play') return;
-    const dy = e.clientY - ptr.y, dx = Math.abs(e.clientX - ptr.x);
-    if(dy > UI.SWIPE_PX && dy > dx * UI.SWIPE_RATIO){ ptr.swiped = true; input.slide = true; input.held = false; }
+    if(!ptr || e.pointerId !== ptr.id || screen !== 'play') return;
+    const dx = e.clientX - ptr.x, dy = e.clientY - ptr.y, ax = Math.abs(dx), ay = Math.abs(dy), R = UI.SWIPE_RATIO;
+    if(ax > UI.SWIPE_PX && ax > ay * R){ ptr.moved = true; if(dx > 0) input.right = true; else input.left = true; ptr.x = e.clientX; ptr.y = e.clientY; }
+    else if(dy > UI.SWIPE_PX && dy > ax * R){ ptr.moved = true; input.slide = true; input.held = false; ptr.x = e.clientX; ptr.y = e.clientY; }
+    else if(dy < -UI.SWIPE_PX && ay > ax * R){ ptr.moved = true; if(!ptr.jumped){ ptr.jumped = true; input.jump = true; input.held = true; } ptr.x = e.clientX; ptr.y = e.clientY; }
   });
-  const up = (e) => { if(ptr && e.pointerId === ptr.id){ ptr = null; input.held = false; } };
+  const up = (e) => {
+    if(!ptr || e.pointerId !== ptr.id) return;
+    clearTimeout(ptr.timer);
+    if(!ptr.moved && !ptr.jumped) input.jump = true;           // chạm rất nhanh: nhảy thấp
+    ptr = null; input.held = false;
+  };
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  const JUMPK = new Set([' ', 'Spacebar', 'ArrowUp', 'w', 'W']), SLIDEK = new Set(['ArrowDown', 's', 'S']);
+  const JUMPK = new Set([' ', 'Spacebar', 'ArrowUp', 'w', 'W']), SLIDEK = new Set(['ArrowDown', 's', 'S']), LEFTK = new Set(['ArrowLeft', 'a', 'A']), RIGHTK = new Set(['ArrowRight', 'd', 'D']);
   function onKey(e){
     if(!container.isConnected) return;
     const k = e.key;
@@ -727,6 +745,8 @@ export function runner(container, opt = {}){
     if(screen !== 'play' || paused) return;
     if(JUMPK.has(k)){ e.preventDefault(); if(!e.repeat){ input.jump = true; } input.held = true; }
     else if(SLIDEK.has(k)){ e.preventDefault(); if(!e.repeat) input.slide = true; }
+    else if(LEFTK.has(k)){ e.preventDefault(); if(!e.repeat) input.left = true; }
+    else if(RIGHTK.has(k)){ e.preventDefault(); if(!e.repeat) input.right = true; }
   }
   function onKeyUp(e){ if(JUMPK.has(e.key)) input.held = false; }
   window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKeyUp);
@@ -735,95 +755,83 @@ export function runner(container, opt = {}){
 
   /* ---------- Cập nhật cảnh ---------- */
   const tmpC = new THREE.Color();
-  function applySky(p, distNow){
+  function applySky(p){
     const s = skyAt(p);
     sky.material.uniforms.top.value.copy(s.c.top); sky.material.uniforms.bot.value.copy(s.c.bot);
+    sky.material.uniforms.hv.value = clamp((1 + horizonFy) / 2, 0.05, 0.95);
     scene.fog.color.copy(s.c.bot);
     hemi.color.copy(s.c.hemi); hemi.groundColor.copy(s.c.gnd); hemi.intensity = s.hi;
     sunL.color.copy(s.c.sun); sunL.intensity = s.hs;
     const night = s.night;
-    facMats.forEach((m) => { m.emissiveIntensity = night * 0.9; });
-    roofSlots.forEach((g) => { g.userData.fm.emissiveIntensity = night * 0.9; });
-    const tan = Math.tan(camera.fov * Math.PI / 360), D = 90;                       // đặt các vật ở nền theo toạ độ màn hình
-    const hh = tan * (runDist + D), ww = hh * camera.aspect;
+    bdMats.forEach((m) => { m.emissiveIntensity = night * 0.9; });
+    bldSlots.forEach((b) => { b.sideMats.forEach((m) => { m.emissiveIntensity = night * 0.9; }); b.frontMats.forEach((m) => { m.emissiveIntensity = night * 0.9; }); });
+    const tan = Math.tan(camera.fov * Math.PI / 360), hh = tan * SKY_D, ww = hh * camera.aspect;
     const sunX = clamp(lerp(-0.55, 0.65, ((p + 0.2) % 1.0)), -0.7, 0.8);
-    const gy = (1 - 2 * UI.GROUND_Y) * tan * runDist;                               // y của điểm ngắm (≈ mặt mái)
-    const fy = (f) => gy + (f - 0.5) * 2 * hh;                                      // f = vị trí theo chiều cao màn hình (0 đáy – 1 đỉnh)
-    sunSpr.position.set(lookX + sunX * ww, fy(UI.GROUND_Y + 0.1 + s.sy * 0.5), -D);
-    sunSpr.scale.setScalar(ww * 0.34); sunHalo.position.copy(sunSpr.position); sunHalo.scale.setScalar(ww * 0.8);
+    sunSpr.position.set(sunX * ww, (horizonFy + s.sy * 0.75) * hh, -SKY_D);
+    sunSpr.scale.setScalar(ww * 0.34); sunHalo.position.copy(sunSpr.position); sunHalo.scale.setScalar(ww * 0.55);
     sunSpr.visible = sunHalo.visible = s.sy > -0.3;
     sunSpr.material.color.copy(s.c.sun).lerp(tmpC.set('#ffffff'), 0.5);
     sunHalo.material.color.copy(s.c.sun);
     starMat.opacity = clamp((night - 0.35) * 1.6, 0, 1);
-    stars.scale.set(ww, hh, 1); stars.position.set(lookX, gy + hh * 0.15, -D);
+    stars.scale.set(ww, hh, 1); stars.position.set(0, 0, -SKY_D);
     for(const c of clouds){
-      const span = 2 * ww + 60, x = ((c.bx * ww / 80 - tClock * c.sp - distNow * 0.01) % span + span) % span - span / 2;
+      const span = 2.8, x = ((((c.bx - tClock * c.sp) % span) + span) % span) - span / 2;
       const cs = ww * c.k;
-      c.s.position.set(lookX + x, fy(0.58 + c.y * 0.32), -D + 10); c.s.scale.set(cs, cs * 0.38, 1);
+      c.s.position.set(x * ww, (horizonFy + 0.08 + c.y * 0.55) * hh, -SKY_D + 10); c.s.scale.set(cs, cs * 0.38, 1);
       c.m.opacity = lerp(0.9, 0.12, night); c.m.color.copy(tmpC.set('#ffffff')).lerp(s.c.bot, 0.35 * (1 - night));
     }
     return night;
   }
   function updateWorld(night){
     const d = G.dist, T = G.track;
-    // mái
-    while(rIdx < T.roofs.length - 1 && T.roofs[rIdx].b < d - 25) rIdx++;
-    let k = 0;
-    for(let i = rIdx; i < T.roofs.length && k < roofSlots.length; i++){
-      const r = T.roofs[i]; if(r.a - d > 95) break;
-      setRoof(roofSlots[k++], r.a, r.b, r.a - d, i);
-    }
-    for(; k < roofSlots.length; k++) roofSlots[k].visible = false;
-    // cột điện
-    const pbase = Math.floor((d - 30) / POLE_GAP);
-    poles.forEach((p, i) => {
-      const x = (pbase + i) * POLE_GAP - d; p.g.visible = true; p.g.position.x = x;
-      p.glow.material.opacity = night; p.cone.material.opacity = night * 0.1;
-    });
-    lampMat.color.set(night > 0.3 ? '#fff0b0' : '#555');
-    // hố & vật cản
-    const used = { crate: 0, panel: 0, wire: 0, bird: 0 };
+    roadTex.offset.y = (d / 8) % 1;
+    updateField(d);
+    for(const b of backdrop){ b.m.position.set(b.x, b.h / 2 - 0.1, 20 - ((((b.s - d) % 192) + 192) % 192)); }
+    for(const p of poles){ p.g.position.set(p.x, 0, 20 - ((((p.s - d) % 198) + 198) % 198)); }
+    glowMat.opacity = night * 0.7; coneMat.opacity = night * 0.035; lampMat.color.set(night > 0.3 ? '#fff0b0' : '#555');
+    const used = { crate: 0, panel: 0, wire: 0, bird: 0, building: 0 };
     const hz = T.hz;
-    for(let i = Math.max(0, L.windowOf(hz, d - 12)); i < hz.length && hz[i].x < d + 85; i++){
-      const h = hz[i]; if(h.type === 'gap' || h.broken) continue;
-      const o = pools[h.type][used[h.type]++]; if(!o) continue;
-      o.visible = true; const x = h.x - d;
-      if(h.type === 'crate'){ o.position.set(x + h.w / 2, 0, 0); o.userData.body.scale.set(h.w, 0.8, 0.8); o.userData.lid.scale.x = h.w / 1.0; o.scale.set(1, 1, 1); }
-      else if(h.type === 'panel'){ o.position.set(x + h.w / 2, 0, 0); o.scale.set(h.w, 1, 1); o.rotation.y = 0; }
-      else if(h.type === 'wire'){ o.position.set(x + h.w / 2, 0, 0); const sw = Math.sin(tClock * 3 + h.x) * 0.03; o.userData.cabs.forEach((c, j) => { c.rotation.x = sw * (j % 2 ? 1 : -1); }); const sp = o.userData.spark; sp.material.opacity = Math.random() < 0.5 ? 1 : 0.3; sp.position.set(0, 0.95 + Math.random() * 0.1, (Math.random() - 0.5) * 3.2); }
-      else if(h.type === 'bird'){
-        o.position.set(x + h.w / 2, 1.3 + Math.sin(tClock * 6 + h.x) * 0.06, 0); const f = Math.sin(tClock * 22 + h.x) * 0.9;
-        o.userData.wl.rotation.x = f; o.userData.wr.rotation.x = -f;
+    for(let i = Math.max(0, L.windowOf(hz, d - CFG.BUILD_MAX - 8)); i < hz.length && hz[i].x < d + DRAW; i++){
+      const h = hz[i]; if(h.broken || h.x + h.w < d - 8) continue;
+      const zc = -(h.x + h.w / 2 - d), x = L.laneX(h.lane);
+      if(h.type === 'building'){
+        const sl = bldSlots[used.building++]; if(!sl) continue;
+        const t = Math.floor(h.x) % 3;
+        sl.mesh.material = sl.mats[t]; sl.mesh.visible = true; sl.mesh.position.set(x, 3.75, zc); sl.mesh.scale.set(1.7, 7.5, h.w);
+        sl.sm.repeat.set(h.w / 6, 1); sl.se.repeat.set(h.w / 6, 1);
+        continue;
       }
+      const o = pools[h.type][used[h.type]++]; if(!o) continue;
+      o.visible = true; o.position.set(x, 0, zc);
+      if(h.type === 'crate') o.scale.set(1, 1, h.w);
+      else if(h.type === 'wire'){ const sp = o.userData.spark; sp.material.opacity = Math.random() < 0.5 ? 1 : 0.3; sp.position.set((Math.random() - 0.5) * 1.6, 0.95 + Math.random() * 0.1, 0); }
+      else if(h.type === 'bird'){ o.position.y = 1.3 + Math.sin(tClock * 6 + h.x) * 0.06; const f = Math.sin(tClock * 22 + h.x) * 0.9; o.userData.wl.rotation.z = f; o.userData.wr.rotation.z = -f; }
     }
-    for(const t in used){ for(let j = used[t]; j < pools[t].length; j++) pools[t][j].visible = false; }
-    // tia nắng
+    for(const t in used){ if(t === 'building'){ for(let j = used[t]; j < bldSlots.length; j++) bldSlots[j].mesh.visible = false; } else for(let j = used[t]; j < pools[t].length; j++) pools[t][j].visible = false; }
     let ci = 0;
-    for(let i = Math.max(0, L.windowOf(T.coins, d - 8)); i < T.coins.length && T.coins[i].x < d + 85; i++){
+    for(let i = Math.max(0, L.windowOf(T.coins, d - 8)); i < T.coins.length && T.coins[i].x < d + DRAW; i++){
       const c = T.coins[i]; if(c.taken) continue;
       const m = coinPool[ci++]; if(!m) break;
-      m.visible = true; m.position.set(c.x - d, c.y + Math.sin(tClock * 4 + c.x) * 0.05, 0); m.rotation.y = tClock * 3 + c.x * 0.7;
+      m.visible = true; m.position.set(c.px != null ? c.px : L.laneX(c.lane), c.y + Math.sin(tClock * 4 + c.x) * 0.05, -(c.x - d)); m.rotation.y = tClock * 3 + c.x * 0.7;
     }
     for(; ci < coinPool.length; ci++) coinPool[ci].visible = false;
-    // vật phẩm
     const iu = { magnet: 0, shield: 0, boost: 0 };
     for(const it of T.items){
-      if(it.taken || it.x < d - 8 || it.x > d + 85) continue;
+      if(it.taken || it.x < d - 8 || it.x > d + DRAW) continue;
       const o = pools.item[it.type][iu[it.type]++]; if(!o) continue;
-      o.visible = true; o.position.set(it.x - d, it.y + Math.sin(tClock * 3 + it.x) * 0.1, 0); o.rotation.y = tClock * 2;
+      o.visible = true; o.position.set(L.laneX(it.lane), it.y + Math.sin(tClock * 3 + it.x) * 0.1, -(it.x - d)); o.rotation.y = tClock * 2;
     }
     for(const t in iu){ for(let j = iu[t]; j < pools.item[t].length; j++) pools.item[t][j].visible = false; }
-    updateFar(d, night);
   }
   function setPose(g, dt){
     const t = g.t, v = g.speed;
     const ph = t * (7.5 + v * 0.45), s = Math.sin(ph), c = Math.cos(ph);
     const T_ = tgt;
-    T_.flipY = 0.9; T_.bob = 0; T_.yaw = -0.5; T_.flip = 0;
+    T_.flipY = 0.9; T_.bob = 0; T_.flip = 0; const dl = clamp(g.lane - g.lx, -1, 1); T_.yaw = Math.PI - 0.35 * dl; T_.roll = -0.15 * dl;
     if(screen === 'menu'){
-      T_.yaw = -0.95 + Math.sin(tClock * 0.8) * 0.3; T_.legL = 0.05; T_.legR = -0.05; T_.shinL = T_.shinR = 0.06; T_.armL = 0.12 + Math.sin(tClock * 1.6) * 0.05; T_.armR = -0.12; T_.foreL = T_.foreR = -0.25; T_.lean = 0.02; T_.bob = Math.sin(tClock * 2) * 0.008; T_.tail = Math.sin(tClock * 1.6) * 0.15;
+      T_.yaw = Math.sin(tClock * 0.8) * 0.4; T_.roll = 0; T_.legL = 0.05; T_.legR = -0.05; T_.shinL = T_.shinR = 0.06; T_.armL = 0.12 + Math.sin(tClock * 1.6) * 0.05; T_.armR = -0.12; T_.foreL = T_.foreR = -0.25; T_.lean = 0.02; T_.bob = Math.sin(tClock * 2) * 0.008; T_.tail = Math.sin(tClock * 1.6) * 0.15;
     } else if(g.dead){
-      T_.yaw = -0.7;
+      T_.yaw = Math.PI + 0.4; T_.roll = 0;
       if(g.cause === 'fall'){ T_.flip = g.deadT * 7; T_.legL = -0.9; T_.legR = 0.4; T_.armL = -2.6; T_.armR = -2.2; T_.shinL = 1.1; T_.shinR = 0.8; T_.lean = 0; }
       else { T_.flip = -1.45; T_.flipY = 0.35; T_.legL = -0.25; T_.legR = 0.15; T_.shinL = 0.2; T_.shinR = 0.4; T_.armL = -1.7; T_.armR = -1.4; T_.foreL = T_.foreR = -0.2; T_.lean = 0; }
     } else if(g.sliding){
@@ -845,16 +853,16 @@ export function runner(container, opt = {}){
     ch.torso.rotation.x = pose.lean; ch.flip.rotation.x = pose.flip; ch.flip.position.y = pose.flipY; ch.body.position.y = -pose.flipY;
     ch.hips.position.y = 0.86 + pose.bob;
     if(ch.tail) ch.tail.rotation.x = pose.tail;
-    ch.root.rotation.y = Math.PI / 2 + pose.yaw;
-    ch.root.position.set(0, Math.max(g.y, -4), 0);
-    shadow.position.set(0, 0.04, 0);
-    const over = G.track.roofAt(G.dist) && g.y > -0.2 && !g.dead;
-    shadow.visible = !!over; const sc = (female() ? 0.9 : 1) * 1.0 * (1 - clamp(g.y / 5, 0, 0.6)); shadow.scale.set(1.2 * sc, 1.2 * sc, 1);
+    const px = L.laneX(g.lx);
+    ch.root.rotation.y = pose.yaw; ch.body.rotation.z = pose.roll;
+    ch.root.position.set(px, Math.max(g.y, -4), 0);
+    shadow.position.set(px, 0.04, 0);
+    shadow.visible = g.y > -0.2; const sc = (female() ? 0.9 : 1) * 1.0 * (1 - clamp(g.y / 5, 0, 0.6)); shadow.scale.set(1.2 * sc, 1.2 * sc, 1);
     shadow.material.opacity = 0.7 - clamp(g.y / 6, 0, 0.45);
     const cy = g.y + 0.9;
-    bubble.visible = !!g.shield && !g.dead; bubble.position.set(0, cy, 0); bubble.scale.setScalar(1 + Math.sin(tClock * 6) * 0.03 + (g.invuln > 0 ? Math.sin(tClock * 40) * 0.1 : 0));
-    magRing.visible = g.magnet > 0 && !g.dead; magRing.position.set(0, cy, 0); magRing.rotation.set(tClock * 2, tClock * 3, 0); magRing.scale.setScalar(1 + (tClock * 1.5 % 1) * 0.5);
-    boostRing.visible = g.boost > 0 && !g.dead; boostRing.position.set(0, cy, 0); boostRing.rotation.set(Math.PI / 2, 0, tClock * 5); boostRing.scale.setScalar(1.1 + Math.sin(tClock * 8) * 0.08);
+    bubble.visible = !!g.shield && !g.dead; bubble.position.set(px, cy, 0); bubble.scale.setScalar(1 + Math.sin(tClock * 6) * 0.03 + (g.invuln > 0 ? Math.sin(tClock * 40) * 0.1 : 0));
+    magRing.visible = g.magnet > 0 && !g.dead; magRing.position.set(px, cy, 0); magRing.rotation.set(tClock * 2, tClock * 3, 0); magRing.scale.setScalar(1 + (tClock * 1.5 % 1) * 0.5);
+    boostRing.visible = g.boost > 0 && !g.dead; boostRing.position.set(px, cy, 0); boostRing.rotation.set(Math.PI / 2, 0, tClock * 5); boostRing.scale.setScalar(1.1 + Math.sin(tClock * 8) * 0.08);
   }
   const female = () => gender === 'f';
 
@@ -877,12 +885,13 @@ export function runner(container, opt = {}){
       if(e === 'coin'){
         const step = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24][Math.min(G.combo - 1, 10)] || 0;
         snd.beep(880 * Math.pow(2, step / 12), 0.09, 'triangle', 0.09);
-        spark(0.35, G.y + 1.0, '#ffe27a');
+        spark(L.laneX(G.lx), G.y + 1.0, '#ffe27a');
       } else if(e === 'jump'){ snd.beep(330, 0.09, 'square', 0.05); snd.beep(520, 0.09, 'square', 0.04, 0.05); snd.buzz(8); }
-      else if(e === 'jump2'){ snd.beep(520, 0.07, 'square', 0.05); snd.beep(780, 0.1, 'square', 0.05, 0.05); snd.buzz(8); for(let i = 0; i < 4; i++) spark(-0.2, G.y + 0.6, '#cfe8ff'); }
+      else if(e === 'jump2'){ snd.beep(520, 0.07, 'square', 0.05); snd.beep(780, 0.1, 'square', 0.05, 0.05); snd.buzz(8); for(let i = 0; i < 4; i++) spark(L.laneX(G.lx), G.y + 0.6, '#cfe8ff'); }
       else if(e === 'slide'){ snd.noise(0.14, 0.07); }
-      else if(e === 'shield'){ snd.noise(0.25, 0.2); snd.beep(240, 0.2, 'sawtooth', 0.12); snd.buzz([40, 30, 60]); shake = 0.25; for(let i = 0; i < 8; i++) spark(0.3, G.y + 0.9, '#6ae0ff'); }
-      else if(e.startsWith('item:')){ snd.beep(660, 0.08, 'triangle', 0.1); snd.beep(880, 0.08, 'triangle', 0.1, 0.08); snd.beep(1320, 0.14, 'triangle', 0.1, 0.16); for(let i = 0; i < 6; i++) spark(0.3, G.y + 0.9, '#9dffb0'); }
+      else if(e === 'lane'){ snd.noise(0.06, 0.05); }
+      else if(e === 'shield'){ snd.noise(0.25, 0.2); snd.beep(240, 0.2, 'sawtooth', 0.12); snd.buzz([40, 30, 60]); shake = 0.25; for(let i = 0; i < 8; i++) spark(L.laneX(G.lx), G.y + 0.9, '#6ae0ff'); }
+      else if(e.startsWith('item:')){ snd.beep(660, 0.08, 'triangle', 0.1); snd.beep(880, 0.08, 'triangle', 0.1, 0.08); snd.beep(1320, 0.14, 'triangle', 0.1, 0.16); for(let i = 0; i < 6; i++) spark(L.laneX(G.lx), G.y + 0.9, '#9dffb0'); }
       else if(e === 'die'){ snd.noise(0.35, 0.28); snd.beep(110, 0.45, 'sawtooth', 0.2); snd.beep(70, 0.5, 'sine', 0.2, 0.1); snd.buzz([60, 40, 140]); shake = 0.4; }
     }
     ev.length = 0;
@@ -917,11 +926,11 @@ export function runner(container, opt = {}){
     tClock += dt;
     if(++frames > 30 && frames < 150){ slow += dt; if(frames === 149 && slow / 119 > 0.03 && dpr > 1){ dpr = 1; renderer.setPixelRatio(1); resize(); } }
     if(screen === 'play'){
-      if(dbg.autoplay){ dbg.bot.birdMode = dbg.bird; const a = L.botStep(G, dbg.bot); input.jump = a.jump; input.held = a.held; input.slide = a.slide; }
+      if(dbg.autoplay){ dbg.bot.birdMode = dbg.bird; const a = L.botStep(G, dbg.bot); input.jump = a.jump; input.held = a.held; input.slide = a.slide; input.left = a.left; input.right = a.right; }
       let rest = dt;
       while(rest > 1e-6){
         const h = Math.min(rest, 1 / 60); rest -= h;
-        L.stepGame(G, h, input); input.jump = false; input.slide = false;
+        L.stepGame(G, h, input); input.jump = input.slide = input.left = input.right = false;
         if(G.dead) break;
       }
       handleEvents();
@@ -934,11 +943,12 @@ export function runner(container, opt = {}){
     camK += (camTo - camK) * (1 - Math.exp(-dt * 5));
     const sk = shake > 0 ? shake : 0; shake = Math.max(0, shake - dt);
     const phase = dbg.phase != null ? dbg.phase : (UI.START_PHASE + G.dist / UI.CYCLE_M) % 1;
-    const night = applySky(phase, G.dist);
-    updateWorld(night);
+    camX += (L.laneX(G.lx) - camX) * (1 - Math.exp(-dt * 8));
     setPose(G, dt);
     for(const p of sparks){ if(p.t > 0){ p.t -= dt; p.s.position.x += p.vx * dt; p.s.position.y += p.vy * dt; p.s.material.opacity = clamp(p.t / 0.45, 0, 1); if(p.t <= 0) p.s.visible = false; } }
     placeCamera((Math.random() - 0.5) * sk * 0.8, (Math.random() - 0.5) * sk * 0.8);
+    const night = applySky(phase);
+    updateWorld(night);
     renderer.render(scene, camera);
   }
 
@@ -1004,7 +1014,9 @@ function injectCss(doc){
 .rn-pw{display:flex;gap:8px;padding:0 10px}
 .rn-chip{position:relative;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;background:conic-gradient(#7dff9a var(--p,100%),rgba(0,0,0,.45) 0);}
 .rn-chip[hidden]{display:none}
-.rn-chip span{position:relative;z-index:1}
+.rn-chip span{position:relative;z-index:1;display:flex}
+.rn-chip img{width:30px;height:30px;border-radius:50%;background:#fff;object-fit:cover}
+.rn-chip b{position:absolute;right:-8px;bottom:-6px;background:#e03a1a;color:#fff;border-radius:8px;padding:0 4px;font-size:.62rem;line-height:1.3}
 .rn-chip i{position:absolute;inset:4px;border-radius:50%;background:rgba(10,15,30,.85)}
 .rn-pausescr,.rn-over,.rn-boardscr{align-items:center;justify-content:center;background:rgba(5,10,25,.55)}
 .rn-card{background:rgba(18,26,48,.94);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;align-items:center;width:min(92%,380px);box-shadow:0 10px 40px rgba(0,0,0,.5)}

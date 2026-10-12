@@ -862,6 +862,32 @@ button.secondary{ border-radius:14px; padding:12px 18px; }
 /* Phần chân trang */
 footer.credit{ font-size:0.72rem; opacity:0.6; margin-top:22px; padding-bottom:150px; }
 
+/* Tiến độ, báo lỗi, thi thử */
+.option.picked{ border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, #fff); }
+.stats-panel{ margin-top:16px; border-top:1px solid var(--line); padding-top:12px; }
+.stats-panel > summary{ cursor:pointer; font-weight:800; font-size:0.95rem; list-style:none; }
+.stats-panel > summary::-webkit-details-marker{ display:none; }
+.st-top{ display:flex; gap:8px; margin:12px 0 4px; }
+.st-box{ flex:1; background: color-mix(in srgb, var(--accent) 14%, #fff); border-radius:14px; padding:10px 6px; text-align:center; }
+.st-box b{ display:block; font-size:1.3rem; letter-spacing:-0.02em; }
+.st-box span{ font-size:0.68rem; color:#6b7268; font-weight:600; }
+.st-title{ font-size:0.74rem; text-transform:uppercase; letter-spacing:0.06em; color:#7a867f; font-weight:700; margin:14px 0 6px; }
+.st-row{ display:flex; align-items:center; gap:8px; font-size:0.8rem; margin:5px 0; }
+.st-name{ flex:0 0 38%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+.st-bar{ flex:1; height:8px; border-radius:999px; background: rgba(0,0,0,0.07); overflow:hidden; }
+.st-bar i{ display:block; height:100%; border-radius:999px; background: var(--btn-grad); }
+.st-pct{ width:36px; text-align:right; font-weight:700; font-variant-numeric: tabular-nums; }
+.st-weak{ width:100%; margin-top:10px; }
+.st-badges{ display:flex; flex-wrap:wrap; gap:6px; }
+.st-badge{ display:inline-flex; align-items:center; gap:5px; font-size:0.72rem; font-weight:700; padding:5px 10px; border-radius:999px; background: rgba(0,0,0,0.06); color:#9aa39c; filter:grayscale(1); opacity:0.7; }
+.st-badge.on{ background: color-mix(in srgb, var(--accent) 24%, #fff); color: var(--accent-ink); filter:none; opacity:1; }
+.st-badge i{ font-style:normal; }
+.rp-link{ background:none; border:none; cursor:pointer; color:#B23A2E; font-size:0.95rem; padding:0 4px; }
+#report-btn{ white-space:nowrap; }
+.rp-item{ border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:8px; font-size:0.85rem; }
+.rp-q{ font-weight:700; margin-bottom:3px; } .rp-note{ color:#3c463f; margin-bottom:4px; }
+.rp-meta{ font-size:0.74rem; color:#7a867f; } .rp-del{ float:right; background:none; border:1px solid var(--line); border-radius:999px; padding:2px 10px; cursor:pointer; font-size:0.72rem; }
+
 /* Cuộn mượt và tôn trọng "giảm chuyển động" */
 html{ scroll-behavior:smooth; }
 @media (prefers-reduced-motion: reduce){
@@ -984,8 +1010,10 @@ html{ scroll-behavior:smooth; }
         <label class="toggle"><input type="checkbox" id="setup-anon"><span class="switch"></span><span>Làm bài ẩn danh<small>Tên của bạn không hiện trên bảng xếp hạng</small></span></label>
       </div>
       <button class="primary" style="width:100%;" onclick="startQuiz()">Bắt đầu làm bài</button>
+      <button id="btn-exam" class="secondary" style="width:100%; margin-top:8px;" onclick="startExam()">🎓 Thi thử (40 câu · 45 phút)</button>
       <button id="btn-review-wrong" class="secondary" style="width:100%; margin-top:8px; display:none;" onclick="startWrongReview()">🔁 Ôn lại câu đã sai</button>
       <p class="setup-hint" id="setup-total-hint"></p>
+      <details class="stats-panel" id="stats-panel"><summary>📈 Tiến độ của bạn</summary><div id="stats-body"></div></details>
     </div>
 
     <div id="quiz-empty" class="card empty" style="display:none;">
@@ -1011,6 +1039,7 @@ html{ scroll-behavior:smooth; }
       <div class="q-explain-box" id="q-explain-box"><b>💡 Giải thích:</b><span id="q-explain-text"></span></div>
       <div class="quiz-footer">
         <button class="ghost" onclick="confirmFinishEarly()">Kết thúc sớm</button>
+        <button class="ghost" id="report-btn" style="display:none" onclick="openReport(quizOrder[currentIndex])">⚑ Báo lỗi</button>
         <button class="primary" id="next-btn" disabled onclick="nextQuestion()">Câu tiếp theo</button>
       </div>
     </div>
@@ -1050,6 +1079,7 @@ html{ scroll-behavior:smooth; }
       <button type="button" data-range="month" onclick="setLbRange('month')">Tháng</button>
       <button type="button" data-range="year" onclick="setLbRange('year')">Năm</button>
     </div>
+    <div id="lb-export-row" style="display:none; margin-bottom:10px;"><button type="button" class="secondary" style="width:100%; color:var(--chalk); border-color:var(--board-line); background:var(--glass);" onclick="exportLeaderboardCsv()">⬇ Xuất Excel (CSV) kỳ này</button></div>
     <div class="lb-nav">
       <button type="button" onclick="lbShift(-1)" aria-label="Kỳ trước">‹</button>
       <div class="lb-period" id="lb-period-label">—</div>
@@ -1108,6 +1138,7 @@ html{ scroll-behavior:smooth; }
     </div>
     <div class="manage-header"><span id="acc-count">0 tài khoản</span></div>
     <div id="acc-list"></div>
+    <div class="card" style="margin-top:14px;"><div class="st-title" style="margin-top:0;">📣 Báo lỗi câu hỏi từ nhân viên</div><div id="rp-list"></div></div>
   </section>
 
   <!-- ADD QUESTION VIEW (admin only) -->
@@ -1234,6 +1265,18 @@ html{ scroll-behavior:smooth; }
 <button id="music-toggle" onclick="toggleMusic()" title="Bật/tắt nhạc nền">🔇</button>
 <audio id="bg-music" loop preload="none"></audio>
 
+<div class="modal-backdrop" id="report-backdrop">
+  <div class="modal">
+    <h3 style="margin:0 0 6px;">⚑ Báo câu hỏi sai</h3>
+    <p class="form-hint" id="report-q" style="margin:0 0 10px;"></p>
+    <textarea id="report-note" maxlength="300" rows="4" placeholder="Câu này sai ở đâu? (đáp án, số liệu, chính tả…)" style="width:100%; border:1.5px solid var(--line); border-radius:12px; padding:10px; font-family:var(--font-body); font-size:0.92rem;"></textarea>
+    <div class="form-actions" style="margin-top:10px; display:flex; gap:8px;">
+      <button class="secondary" type="button" style="flex:1;" onclick="closeReport()">Huỷ</button>
+      <button class="primary" type="button" id="report-send" style="flex:1;" onclick="sendReport()">Gửi báo lỗi</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="theme-modal-backdrop">
   <div class="modal" style="position:relative; max-width:380px;">
     <button class="close-x" onclick="closeThemePicker()">✕</button>
@@ -1307,16 +1350,16 @@ html{ scroll-behavior:smooth; }
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=420ce7ba67"></script>
-<script src="firebase-config.js?v=420ce7ba67"></script>
-<script src="questions.js?v=420ce7ba67"></script>
-<script src="music.js?v=420ce7ba67"></script>
-<script src="inverters.js?v=420ce7ba67"></script>
-<script src="drawings.js?v=420ce7ba67"></script>
-<script src="games.js?v=420ce7ba67"></script>
-<script src="app.js?v=420ce7ba67"></script>
-<script src="leaderboard.js?v=420ce7ba67"></script>
-<script src="auth.js?v=420ce7ba67"></script>
-<script src="update.js?v=420ce7ba67"></script>
+<script src="version.js?v=3a6c71b6cd"></script>
+<script src="firebase-config.js?v=3a6c71b6cd"></script>
+<script src="questions.js?v=3a6c71b6cd"></script>
+<script src="music.js?v=3a6c71b6cd"></script>
+<script src="inverters.js?v=3a6c71b6cd"></script>
+<script src="drawings.js?v=3a6c71b6cd"></script>
+<script src="games.js?v=3a6c71b6cd"></script>
+<script src="app.js?v=3a6c71b6cd"></script>
+<script src="leaderboard.js?v=3a6c71b6cd"></script>
+<script src="auth.js?v=3a6c71b6cd"></script>
+<script src="update.js?v=3a6c71b6cd"></script>
 </body>
 </html>

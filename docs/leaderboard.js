@@ -202,7 +202,37 @@ function lbLoad(){
   }).catch((err) => { if(seq === lbSeq) lbError(err); });
 }
 
+function exportLeaderboardCsv(){
+  if(!session || session.role !== 'admin'){ return; }
+  const rows = lbFiltered();
+  const list = aggregateResults(rows, lbSort);
+  const { start, end } = periodRange(lbRange, lbAnchor);
+  const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const fmtDt = (ms) => { const d = new Date(ms); const p = (n) => String(n).padStart(2, '0'); return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+  const lines = [
+    ['Hạng', 'Họ tên', 'Số bài', 'Điểm trung bình (%)', 'Cao nhất (%)', 'Làm gần nhất'].map(q).join(','),
+    ...list.map((a, i) => [i + 1, a.name, a.n, Math.round(a.avg), Math.round(a.best), fmtDt(a.last)].map(q).join(',')),
+    '', ['Chi tiết từng lượt'].map(q).join(','), ['Họ tên', 'Thời gian', 'Đúng', 'Tổng', '%', 'Loại đề'].map(q).join(','),
+    ...rows.slice().sort((x, y) => y.ts - x.ts).map((r) => [r.name, fmtDt(r.ts), r.score, r.total, Math.round(r.pct), r.level].map(q).join(',')),
+  ];
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const name = 'xep-hang-' + new Date(start).toISOString().slice(0, 10) + '.csv';
+  try{
+    const file = new File([blob], name, { type: 'text/csv' });
+    if(navigator.canShare && navigator.canShare({ files: [file] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)){
+      navigator.share({ files: [file], title: 'Bảng xếp hạng' }).catch(() => {}); return;
+    }
+  }catch(e){}
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  showToast('Đã tạo file ' + name);
+}
+
 function drawLeaderboard(){
+  const exp = document.getElementById('lb-export-row');
+  if(exp) exp.style.display = (session && session.role === 'admin') ? 'block' : 'none';
   const note = document.getElementById('lb-note');
   const wrap = document.getElementById('lb-list');
   const emptyEl = document.getElementById('lb-empty');

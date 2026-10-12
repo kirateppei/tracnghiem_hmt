@@ -1,7 +1,7 @@
 {
-  "version": "420ce7ba67",
-  "date": "2026-10-12T14:15:52Z",
-  "notes": "Giao diện mới gọn và hiện đại hơn: thanh đầu trang, tab biểu tượng, thẻ và đáp án",
+  "version": "3a6c71b6cd",
+  "date": "2026-10-12T14:19:29Z",
+  "notes": "Thêm: tiến độ và huy hiệu, thi thử 45 phút, báo câu hỏi sai, xuất Excel bảng xếp hạng",
   "apk": {
     "version": "",
     "url": "",

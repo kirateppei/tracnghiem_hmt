@@ -126,7 +126,7 @@ function switchTab(name){
   if(name === 'manage'){ manageRenderLimit = 30; renderManage(); }
   if(name === 'quiz') backToSetup();
   if(name === 'leaderboard') renderLeaderboard();
-  if(name === 'accounts') renderAccounts();
+  if(name === 'accounts'){ renderAccounts(); renderReports(); }
   if(name === 'games' && window.renderGames) window.renderGames();
 }
 document.querySelectorAll('nav.tabs button').forEach(b=>{
@@ -149,6 +149,8 @@ function backToSetup(){
   document.getElementById('quiz-setup').style.display='block';
   updateSetupHint();
   updateWrongButton();
+  renderStatsPanel();
+  stopExamTimer(); quizExam = false;
 }
 document.getElementById('setup-difficulty').addEventListener('change', updateSetupHint);
 function updateSetupHint(){
@@ -237,8 +239,103 @@ function pickWeightedByDifficulty(basePool, count){
   return shuffle(combined).slice(0, Math.min(count, basePool.length));
 }
 
+/* ---------- Tiến độ cá nhân: thống kê theo chủ đề, chuỗi ngày học, huy hiệu (lưu trên máy) ---------- */
+function statsKey(){ return 'hmt-stats-' + ((session && session.uid) || 'guest'); }
+function dayStr(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function loadStats(){
+  try{ const s = JSON.parse(localStorage.getItem(statsKey()) || 'null'); if(s && s.cats && Array.isArray(s.days)) return s; }catch(e){}
+  return { cats: {}, days: [], n: 0, c: 0 };
+}
+function recordStat(q, ok){
+  const s = loadStats(), cat = (q && q.category) || 'Khác';
+  const e = s.cats[cat] || (s.cats[cat] = { n: 0, c: 0 });
+  e.n++; s.n++; if(ok){ e.c++; s.c++; }
+  const d = dayStr(new Date());
+  if(!s.days.includes(d)){ s.days.push(d); s.days = s.days.slice(-120); }
+  try{ localStorage.setItem(statsKey(), JSON.stringify(s)); }catch(e2){}
+}
+function streakDays(days){
+  const set = new Set(days), d = new Date();
+  if(!set.has(dayStr(d))) d.setDate(d.getDate() - 1);   // chưa học hôm nay thì tính tới hôm qua
+  let n = 0;
+  while(set.has(dayStr(d))){ n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+const BADGES = [
+  { icon: '🌱', name: 'Khởi đầu', desc: 'Trả lời câu hỏi đầu tiên', ok: (s) => s.n >= 1 },
+  { icon: '🔥', name: 'Chuỗi 3 ngày', desc: 'Học 3 ngày liên tiếp', ok: (s, k) => k >= 3 },
+  { icon: '🔥', name: 'Chuỗi 7 ngày', desc: 'Học 7 ngày liên tiếp', ok: (s, k) => k >= 7 },
+  { icon: '🌋', name: 'Chuỗi 30 ngày', desc: 'Học 30 ngày liên tiếp', ok: (s, k) => k >= 30 },
+  { icon: '💯', name: '100 câu', desc: 'Đã trả lời 100 câu', ok: (s) => s.n >= 100 },
+  { icon: '📚', name: '500 câu', desc: 'Đã trả lời 500 câu', ok: (s) => s.n >= 500 },
+  { icon: '🏅', name: '1000 câu', desc: 'Đã trả lời 1000 câu', ok: (s) => s.n >= 1000 },
+  { icon: '🎯', name: 'Chính xác', desc: 'Đúng từ 90% khi đã làm 50 câu trở lên', ok: (s) => s.n >= 50 && s.c / s.n >= 0.9 },
+];
+function weakCategories(s){
+  return Object.keys(s.cats).map((c) => ({ c, n: s.cats[c].n, pct: s.cats[c].c / s.cats[c].n * 100 }))
+    .filter((x) => x.n >= 5).sort((a, b) => a.pct - b.pct);
+}
+function renderStatsPanel(){
+  const box = document.getElementById('stats-body');
+  if(!box) return;
+  const s = loadStats(), k = streakDays(s.days);
+  if(s.n === 0){ box.innerHTML = '<p class="form-hint">Làm vài câu để bắt đầu theo dõi tiến độ của bạn.</p>'; return; }
+  const pct = Math.round(s.c / s.n * 100);
+  const cats = Object.keys(s.cats).map((c) => ({ c, n: s.cats[c].n, pct: Math.round(s.cats[c].c / s.cats[c].n * 100) })).sort((a, b) => b.n - a.n).slice(0, 10);
+  const weak = weakCategories(s);
+  box.innerHTML = `
+    <div class="st-top">
+      <div class="st-box"><b>${k}</b><span>🔥 ngày liên tiếp</span></div>
+      <div class="st-box"><b>${s.n}</b><span>câu đã làm</span></div>
+      <div class="st-box"><b>${pct}%</b><span>trả lời đúng</span></div>
+    </div>
+    <div class="st-title">Theo chủ đề</div>
+    ${cats.map((x) => `<div class="st-row"><span class="st-name">${escapeHtml(x.c)}</span><span class="st-bar"><i style="width:${x.pct}%"></i></span><span class="st-pct">${x.pct}%</span></div>`).join('')}
+    ${weak.length ? `<button class="secondary st-weak" onclick="startCategoryPractice(decodeURIComponent('${encodeURIComponent(weak[0].c)}'))">🎯 Luyện chủ đề yếu nhất: ${escapeHtml(weak[0].c)} (${Math.round(weak[0].pct)}%)</button>` : ''}
+    <div class="st-title">Huy hiệu</div>
+    <div class="st-badges">${BADGES.map((b) => `<span class="st-badge ${b.ok(s, k) ? 'on' : ''}" title="${escapeHtml(b.desc)}"><i>${b.icon}</i>${escapeHtml(b.name)}</span>`).join('')}</div>`;
+}
+function startCategoryPractice(cat){
+  const pool = questions.filter((q) => (q.category || 'Khác') === cat);
+  if(pool.length === 0){ showToast('Không có câu hỏi cho chủ đề này.'); return; }
+  const count = parseInt(document.getElementById('setup-count').value, 10) || 20;
+  quizAnon = true; quizReview = true; quizExam = false;
+  quizOrder = pickQuestions(pool, Math.min(count, pool.length));
+  currentIndex = 0; score = 0; answers = [];
+  document.getElementById('quiz-setup').style.display = 'none';
+  document.getElementById('quiz-empty').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-play').style.display = 'block';
+  renderQuestion();
+}
+
 /* ---------- Ôn lại câu đã làm sai (lưu trên máy, theo từng tài khoản) ---------- */
 let quizReview = false;
+let quizExam = false;
+const EXAM_COUNT = 40, EXAM_MINUTES = 45, EXAM_PASS = 80;
+let examInterval = null, examDeadline = 0;
+function stopExamTimer(){ if(examInterval){ clearInterval(examInterval); examInterval = null; } }
+function examTick(){
+  const left = Math.max(0, Math.ceil((examDeadline - Date.now()) / 1000));
+  const label = document.getElementById('q-timer'), bar = document.getElementById('timer-bar-fill');
+  if(label){ label.textContent = '⏱ ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0'); label.classList.toggle('timer-warn', left <= 300); }
+  if(bar){ bar.style.width = (left / (EXAM_MINUTES * 60) * 100) + '%'; bar.classList.toggle('warn', left <= 300); }
+  if(left <= 0){ stopExamTimer(); showToast('Hết giờ thi thử!'); showResult(); }
+}
+function startExam(){
+  if(questions.length < 10){ showToast('Chưa đủ câu hỏi để thi thử.'); return; }
+  quizAnon = !!document.getElementById('setup-anon').checked;
+  quizReview = false; quizExam = true;
+  quizOrder = pickWeightedByDifficulty(questions, Math.min(EXAM_COUNT, questions.length));
+  currentIndex = 0; score = 0; answers = [];
+  document.getElementById('quiz-setup').style.display = 'none';
+  document.getElementById('quiz-empty').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-play').style.display = 'block';
+  examDeadline = Date.now() + EXAM_MINUTES * 60 * 1000;
+  stopExamTimer(); examInterval = setInterval(examTick, 1000);
+  renderQuestion(); examTick();
+}
 const WRONG_MAX = 300;
 function wrongKey(){ return 'hmt-wrong-' + ((session && session.uid) || 'guest'); }
 function loadWrongIds(){
@@ -268,7 +365,7 @@ function startWrongReview(){
   const pool = wrongPool();
   if(pool.length === 0){ showToast('Bạn chưa có câu sai nào cần ôn.'); updateWrongButton(); return; }
   const count = parseInt(document.getElementById('setup-count').value, 10) || 20;
-  quizAnon = true; quizReview = true;
+  quizAnon = true; quizReview = true; quizExam = false;
   quizOrder = pickQuestions(pool, Math.min(count, pool.length));
   currentIndex = 0; score = 0; answers = [];
   document.getElementById('quiz-setup').style.display='none';
@@ -283,7 +380,7 @@ function startQuiz(){
   const diff = document.getElementById('setup-difficulty').value;
   const count = parseInt(document.getElementById('setup-count').value, 10);
   quizAnon = !!document.getElementById('setup-anon').checked;
-  quizReview = false;
+  quizReview = false; quizExam = false;
   let basePool = questions;
   if(basePool.length === 0){ showToast('Không có câu hỏi phù hợp với lựa chọn này.'); return; }
 
@@ -318,6 +415,7 @@ let timerDuration = QUESTION_TIME;
 
 function startTimer(duration){
   stopTimer();
+  if(quizExam){ examTick(); return; }   // thi thử: chỉ có đồng hồ tổng, không đếm từng câu
   timerDuration = duration || QUESTION_TIME;
   timeLeft = timerDuration;
   updateTimerUI();
@@ -357,7 +455,7 @@ function handleTimeout(){
     opts.forEach(o=> o.disabled = true);
     opts[q.correct].classList.add('correct');
     answers.push({ id: q.id, question: q.question, options: q.options, chosen: null, correct: q.correct, isCorrect: false, explanation: q.explanation });
-    recordWrongAnswer(q.id, false);
+    recordWrongAnswer(q.id, false); recordStat(q, false);
     showExplanationBox(q, false);
   }
   // Hết giờ: tự động chuyển sang câu tiếp theo, chờ lâu hơn một chút để kịp đọc giải thích
@@ -369,7 +467,8 @@ function renderQuestion(){
   const myIndex = currentIndex; // chụp lại để đối chiếu khi video kết thúc (tránh tính giờ nhầm câu)
   document.getElementById('q-explain-box').classList.remove('show');
   document.getElementById('q-counter').textContent = `Câu ${currentIndex+1}/${quizOrder.length}`;
-  document.getElementById('q-score-live').textContent = `Điểm: ${score}`;
+  document.getElementById('q-score-live').textContent = quizExam ? 'Thi thử' : `Điểm: ${score}`;
+  { const rb = document.getElementById('report-btn'); if(rb) rb.style.display = 'none'; }
   document.getElementById('progress-fill').style.width = `${(currentIndex/quizOrder.length)*100}%`;
   document.getElementById('q-cat-tag').textContent = q.category || 'Khác';
   const diffMap = { de: ['Dễ','diff-de'], tb: ['Trung bình','diff-tb'], kho: ['Khó','diff-kho'], cuckho: ['Cực khó','diff-cuckho'], xuatsac: ['Xuất sắc','diff-xuatsac'] };
@@ -428,14 +527,15 @@ function selectAnswer(idx){
   stopTimer();
   opts.forEach(o=> o.disabled = true);
   const isCorrect = idx === q.correct;
-  opts[idx].classList.add(isCorrect ? 'correct' : 'wrong');
-  if(!isCorrect){ opts[q.correct].classList.add('correct'); }
+  if(quizExam){ opts[idx].classList.add('picked'); }   // thi thử: không lộ đáp án giữa chừng
+  else{ opts[idx].classList.add(isCorrect ? 'correct' : 'wrong'); if(!isCorrect){ opts[q.correct].classList.add('correct'); } }
   if(isCorrect) score++;
   answers.push({ id: q.id, question: q.question, options: q.options, chosen: idx, correct: q.correct, isCorrect, explanation: q.explanation });
-  recordWrongAnswer(q.id, isCorrect);
-  document.getElementById('q-score-live').textContent = `Điểm: ${score}`;
+  recordWrongAnswer(q.id, isCorrect); recordStat(q, isCorrect);
+  document.getElementById('q-score-live').textContent = quizExam ? 'Thi thử' : `Điểm: ${score}`;
   document.getElementById('next-btn').disabled = false;
-  showExplanationBox(q, isCorrect);
+  if(quizExam){ document.getElementById('q-explain-box').classList.remove('show'); } else showExplanationBox(q, isCorrect);
+  const rb = document.getElementById('report-btn'); if(rb) rb.style.display = quizExam ? 'none' : 'inline-block';
 }
 
 function nextQuestion(){
@@ -463,7 +563,7 @@ function finishEarly(){
 }
 
 function showResult(){
-  stopTimer();
+  stopTimer(); const wasExam = quizExam; stopExamTimer();
   document.getElementById('quiz-play').style.display = 'none';
   document.getElementById('quiz-result').style.display = 'block';
   document.getElementById('progress-fill').style.width = '100%';
@@ -484,7 +584,9 @@ function showResult(){
   else if(pct >= 80) msg = `Rất tốt, ${session.name}! Gần như hoàn hảo.`;
   else if(pct >= 50) msg = `Khá ổn, ${session.name}, cố gắng thêm nhé.`;
   else msg = `${session.name} cần ôn lại thêm một chút.`;
-  document.getElementById('result-msg').textContent = `${msg} (${pct}%)`;
+  document.getElementById('result-msg').textContent = wasExam
+    ? `${pct >= EXAM_PASS ? '✅ ĐẠT' : '❌ CHƯA ĐẠT'} thi thử (yêu cầu ${EXAM_PASS}%) · ${score}/${total} câu${answers.length < total ? ` · bỏ trống ${total - answers.length}` : ''}`
+    : `${msg} (${pct}%)`;
 
   const reviewWrap = document.getElementById('review-list');
   reviewWrap.innerHTML = '';
@@ -499,7 +601,7 @@ function showResult(){
         : `<div class="a-wrong">Bạn chọn: ${letters[a.chosen]}. ${escapeHtml(a.options[a.chosen])}</div>`;
       const explainLine = a.explanation ? `<div class="a-explain">💡 ${escapeHtml(a.explanation)}</div>` : '';
       div.innerHTML = `
-        <div class="q">${escapeHtml(a.question)}</div>
+        <div class="q">${escapeHtml(a.question)} <button type="button" class="rp-link" data-qid="${escapeHtml(String(a.id))}" title="Báo câu hỏi này sai">⚑</button></div>
         ${chosenLine}
         <div class="a-correct">Đáp án đúng: ${letters[a.correct]}. ${escapeHtml(a.options[a.correct])}</div>
         ${explainLine}
@@ -516,7 +618,7 @@ function showResult(){
     score: score,
     total: total,
     pct: pct,
-    category: (function(){
+    category: wasExam ? 'Thi thử' : (function(){
       const dsel = document.getElementById('setup-difficulty');
       const label = dsel.selectedOptions[0] ? dsel.selectedOptions[0].textContent : 'Tất cả mức độ';
       return label;
@@ -526,6 +628,61 @@ function showResult(){
 }
 
 function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+/* ---------- Báo câu hỏi sai ---------- */
+let reportQ = null;
+function openReport(q){
+  if(!q || !session){ return; }
+  reportQ = q;
+  document.getElementById('report-q').textContent = q.question;
+  document.getElementById('report-note').value = '';
+  document.getElementById('report-backdrop').classList.add('show');
+}
+function closeReport(){ document.getElementById('report-backdrop').classList.remove('show'); reportQ = null; }
+async function sendReport(){
+  const q = reportQ, note = document.getElementById('report-note').value.trim();
+  if(!q) return;
+  if(note.length < 3){ showToast('Hãy ghi ngắn gọn câu này sai ở đâu.'); return; }
+  if(typeof fbDb === 'undefined' || !fbDb){ showToast('Chưa kết nối máy chủ.'); return; }
+  const btn = document.getElementById('report-send'); btn.disabled = true;
+  try{
+    await fbDb.collection('reports').add({
+      qid: String(q.id).slice(0, 60), q: String(q.question).slice(0, 200), note: note.slice(0, 300),
+      uid: session.uid, name: String(session.name).slice(0, 80),
+      ts: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    showToast('Đã gửi báo lỗi. Cảm ơn bạn!');
+    closeReport();
+  }catch(e){
+    showToast(e && e.code === 'permission-denied' ? 'Chưa gửi được: quản trị viên cần cập nhật luật Firestore (xem HUONG_DAN.md).' : 'Không gửi được, kiểm tra mạng rồi thử lại.');
+  }finally{ btn.disabled = false; }
+}
+document.getElementById('review-list').addEventListener('click', (e) => {
+  const b = e.target.closest('.rp-link'); if(!b) return;
+  const q = questions.find((x) => String(x.id) === b.dataset.qid);
+  if(q) openReport(q);
+});
+async function renderReports(){
+  const box = document.getElementById('rp-list');
+  if(!box || !fbDb || !session || session.role !== 'admin') return;
+  box.innerHTML = '<p class="form-hint">Đang tải…</p>';
+  try{
+    const snap = await fbDb.collection('reports').orderBy('ts', 'desc').limit(50).get();
+    if(snap.empty){ box.innerHTML = '<p class="form-hint">Chưa có báo lỗi nào.</p>'; return; }
+    box.innerHTML = snap.docs.map((d) => {
+      const v = d.data({ serverTimestamps: 'estimate' });
+      const ts = v.ts && v.ts.toMillis ? v.ts.toMillis() : 0;
+      return `<div class="rp-item"><div class="rp-q">${escapeHtml(v.q || '')}</div><div class="rp-note">${escapeHtml(v.note || '')}</div>
+        <div class="rp-meta">${escapeHtml(v.name || '')} · ${ts ? timeAgoVi(ts) : ''} · mã câu ${escapeHtml(String(v.qid || ''))}
+        <button type="button" class="rp-del" onclick="deleteReport('${d.id}')">Xoá</button></div></div>`;
+    }).join('');
+  }catch(e){
+    box.innerHTML = '<p class="form-hint">Không tải được báo lỗi' + (e && e.code === 'permission-denied' ? ' (cần dán luật Firestore mới).' : '.') + '</p>';
+  }
+}
+async function deleteReport(id){
+  try{ await fbDb.collection('reports').doc(id).delete(); renderReports(); }catch(e){ showToast('Không xoá được.'); }
+}
 
 /* ---------- Ảnh đại diện (ảnh Google của tài khoản; không có thì hiện chữ cái đầu) ---------- */
 const PHOTO_RE = /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.googleusercontent\.com\/[^\s"'<>]{1,280}$/i;

@@ -57,6 +57,18 @@ service cloud.firestore {
         && d.pct is number && d.pct >= 0 && d.pct <= 100;
     }
 
+    function validReport() {
+      let d = request.resource.data;
+      return d.keys().hasAll(['qid', 'q', 'note', 'uid', 'name', 'ts'])
+        && d.keys().hasOnly(['qid', 'q', 'note', 'uid', 'name', 'ts'])
+        && d.uid == request.auth.uid
+        && d.ts == request.time
+        && d.qid is string && d.qid.size() <= 60
+        && d.q is string && d.q.size() <= 200
+        && d.note is string && d.note.size() >= 3 && d.note.size() <= 300
+        && d.name is string && d.name.size() <= 80;
+    }
+
     // ---------- Hồ sơ đặc biệt: quản trị viên, người bị khoá, tên hiển thị, danh sách cho phép ----------
     match /allowed/{email} {
       allow get: if signedIn() && (email == myEmail() || isAdmin());
@@ -78,6 +90,14 @@ service cloud.firestore {
     match /results/{id} {
       allow read: if isMember();
       allow create: if isMember() && validResult();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Báo câu hỏi sai (nhân viên gửi, quản trị viên đọc và xoá) ----------
+    match /reports/{id} {
+      allow create: if isMember() && validReport();
+      allow read: if isAdmin();
       allow update: if false;
       allow delete: if isAdmin();
     }

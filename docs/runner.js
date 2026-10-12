@@ -26,6 +26,7 @@ export const SKINS = {
 };
 export const supported = () => { try{ const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); }catch(e){ return false; } };
 
+const LOGO_URL = new URL('./logo.png', import.meta.url).href;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, k) => a + (b - a) * k;
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
@@ -135,6 +136,18 @@ const cloudTex = () => canvasTex(256, 96, (c, w, h) => {
   }
 });
 
+/* Ảnh logo công ty (docs/logo.png): chỉ vẽ nhỏ ở ngực trái như phù hiệu áo cầu thủ; vẽ lại texture khi ảnh tải xong */
+let logoImg = null, logoWait = [];
+function withLogo(cb){
+  if(logoImg && logoImg.complete && logoImg.naturalWidth){ cb(logoImg); return; }
+  logoWait.push(cb);
+  if(!logoImg){
+    logoImg = new Image();
+    logoImg.onload = () => { const w = logoWait; logoWait = []; w.forEach((f) => { try{ f(logoImg); }catch(e){} }); };
+    logoImg.onerror = () => { logoWait = []; };
+    logoImg.src = LOGO_URL;
+  }
+}
 function shirtTextures(skin){
   const stripes = (c, w, h) => {
     for(const y of [0.60, 0.74]){
@@ -152,7 +165,7 @@ function shirtTextures(skin){
     c.fillStyle = 'rgba(40,20,0,.7)'; c.font = '800 21px "Trebuchet MS",Arial'; c.textAlign = 'center'; c.fillText('HIỆP MINH THỊNH', w / 2, h * 0.28); c.font = '700 15px "Trebuchet MS",Arial'; c.fillText('ĐIỆN MẶT TRỜI', w / 2, h * 0.34);
     c.fillStyle = skin.band; c.fillRect(w * 0.1, h * 0.40, w * 0.8, 6);
   });
-  const front = canvasTex(256, 320, (c, w, h) => {
+  const draw = (c, w, h, img) => {
     base(c, w, h); stripes(c, w, h);
     c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(w / 2 - 1.5, h * 0.17, 3, h * 0.83);                  // khóa kéo
     c.fillStyle = '#c9ccd2'; c.fillRect(w / 2 - 4, h * 0.17, 8, 10);
@@ -165,7 +178,13 @@ function shirtTextures(skin){
     }
     c.fillStyle = '#f4f1e8'; c.fillRect(w * 0.58, h * 0.50, w * 0.28, h * 0.05);                    // bảng tên trống
     c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = 1.5; c.strokeRect(w * 0.58, h * 0.50, w * 0.28, h * 0.05);
-  });
+    const cx = w * 0.74, cy = h * 0.2, r = w * 0.075;                                                 // phù hiệu nhỏ ở ngực trái
+    c.fillStyle = '#ffffff'; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.fill();
+    c.strokeStyle = 'rgba(0,0,0,.3)'; c.lineWidth = 1.5; c.stroke();
+    if(img){ c.save(); c.beginPath(); c.arc(cx, cy, r - 1.5, 0, 7); c.clip(); const d = (r - 1.5) * 2; c.drawImage(img, cx - d / 2, cy - d / 2, d, d); c.restore(); }
+  };
+  const front = canvasTex(256, 320, (c, w, h) => draw(c, w, h, null));
+  withLogo((img) => { const cv = front.image; draw(cv.getContext('2d'), cv.width, cv.height, img); front.needsUpdate = true; });
   return { side, back, front };
 }
 

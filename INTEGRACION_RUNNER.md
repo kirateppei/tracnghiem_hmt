@@ -142,7 +142,7 @@ Lưu ý: bảng xếp hạng đọc bằng `orderBy('best','desc').limit(20)` tr
 
 ## 6. Nhân vật và cách thêm skin sau
 
-Hai nhân vật Nam/Nữ (nữ nhỏ hơn, tóc đuôi ngựa thò ra dưới mũ), cùng đồng phục vàng cam, mũ bảo hộ vàng có đèn pin và quai cằm, vạch phản quang bạc, túi ngực/túi đùi, cầu vai, đai đồ nghề kèm túi và bộ đàm, bảo vệ đầu gối, giày bảo hộ. **Không có logo trên áo** (đã bỏ theo yêu cầu); chỉ có dòng chữ nhỏ "HIỆP MINH THỊNH" ở lưng áo. Lựa chọn lưu ở `gm_runner_char`.
+Hai nhân vật Nam/Nữ (nữ nhỏ hơn, tóc đuôi ngựa thò ra dưới mũ), cùng đồng phục vàng cam, mũ bảo hộ vàng có đèn pin và quai cằm, vạch phản quang bạc, túi ngực/túi đùi, cầu vai, đai đồ nghề kèm túi và bộ đàm, bảo vệ đầu gối, giày bảo hộ. Logo công ty (`docs/logo.png`) chỉ là phù hiệu nhỏ ở ngực trái như áo cầu thủ; dòng chữ "HIỆP MINH THỊNH" nhỏ ở lưng áo. Lựa chọn lưu ở `gm_runner_char`.
 
 Thêm skin: thêm một mục vào `SKINS` đầu `docs/runner.js`, rồi gọi `api.setSkin('id')`:
 

@@ -1,7 +1,7 @@
 {
-  "version": "b151882e8a",
-  "date": "2026-10-12T18:34:29Z",
-  "notes": "Bảng xếp hạng Run now: tháng/năm lấy theo thời gian ghi; nền năng lượng mặt trời cho game và trắc nghiệm; ảnh tập thể làm mặt bàn; sửa bố cục toàn màn hình trên máy tính",
+  "version": "ebda3d1b8b",
+  "date": "2026-10-12T18:40:13Z",
+  "notes": "Xúc xắc: ảnh nền chỉ xuất hiện một lần, hết lặp hình",
   "apk": {
     "version": "",
     "url": "",

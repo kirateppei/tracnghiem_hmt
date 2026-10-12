@@ -156,16 +156,13 @@ export function dice(container, opt = {}){
   const felt = canvasTex(512, 512, (c, w, h) => {
     const g = c.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w * 0.55); g.addColorStop(0, '#1d5a9e'); g.addColorStop(1, '#0c2850');
     c.fillStyle = g; c.fillRect(0, 0, w, h);
-    if(bgImg){   // ảnh tập thể nhân viên Hiệp Minh Thịnh làm mặt bàn, phủ màu xanh đậm cho dịu và vẫn đọc rõ xúc xắc
-      const s = Math.max(w / bgImg.width, h / bgImg.height), dw = bgImg.width * s, dh = bgImg.height * s;
-      c.globalAlpha = 0.9; c.drawImage(bgImg, (w - dw) / 2, (h - dh) / 2, dw, dh); c.globalAlpha = 1;
-      const ov = c.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w * 0.6); ov.addColorStop(0, 'rgba(14,52,110,.5)'); ov.addColorStop(1, 'rgba(6,24,56,.72)');
-      c.fillStyle = ov; c.fillRect(0, 0, w, h);
-    }
     for(let i = 0; i < 2600; i++){ c.fillStyle = `rgba(255,255,255,${Math.random() * 0.05})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
   });
-  const table = new THREE.Mesh(new THREE.CircleGeometry(6.2, 64), new THREE.MeshStandardMaterial({ map: felt, roughness: 0.95 }));
-  table.rotation.x = -Math.PI / 2; table.receiveShadow = true; scene.add(table);
+  // mặt bàn nỉ trong mờ để ảnh tập thể làm nền phía sau chỉ xuất hiện một lần (liền mạch, không lặp); bóng đổ vẽ riêng bằng ShadowMaterial
+  const table = new THREE.Mesh(new THREE.CircleGeometry(6.2, 64), new THREE.MeshStandardMaterial({ map: felt, roughness: 0.95, transparent: true, opacity: 0.5 }));
+  table.rotation.x = -Math.PI / 2; scene.add(table);
+  const tableShadow = new THREE.Mesh(new THREE.CircleGeometry(6.2, 64), new THREE.ShadowMaterial({ opacity: 0.4 }));
+  tableShadow.rotation.x = -Math.PI / 2; tableShadow.position.y = 0.004; tableShadow.receiveShadow = true; scene.add(tableShadow);
   const rim = new THREE.Mesh(new THREE.TorusGeometry(6.25, 0.32, 16, 80), new THREE.MeshStandardMaterial({ color: 0xE8710A, roughness: 0.45, metalness: 0.2 }));
   rim.rotation.x = Math.PI / 2; rim.position.y = 0.05; rim.receiveShadow = true; scene.add(rim);
   if(logoImg){   // logo công ty in giữa mặt bàn

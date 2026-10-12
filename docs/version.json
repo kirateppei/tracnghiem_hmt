@@ -1,7 +1,7 @@
 {
-  "version": "937d0b8892",
-  "date": "2026-10-12T17:35:15Z",
-  "notes": "Chạy năng lượng: chướng ngại thùng đồ nghề thành biến tần mặt trời",
+  "version": "5bdef2d25a",
+  "date": "2026-10-12T17:45:18Z",
+  "notes": "Game chạy: giao diện toàn màn hình, biến tần GoodWe/Sungrow/Huawei chạy lên được, máng đi dây nối pin và biến tần",
   "apk": {
     "version": "",
     "url": "",

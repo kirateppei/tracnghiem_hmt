@@ -74,6 +74,20 @@ ok('tia sét giật: phải đổi làn, nhảy/trượt đều không qua, khi�
   const d = blank([Z()]); run(d, 0.5); L.stepGame(d, DT, { left: true }); run(d, 6); assert.ok(!d.dead && d.dist > 40, 'đổi làn thì qua');
   const sh = blank([Z()]); sh.shield = true; run(sh, 6); assert.ok(!sh.dead && !sh.shield, 'khiên đỡ một lần');
 });
+ok('biến tần (thùng): nhảy lên mặt trên đứng được rồi rơi xuống đất, đâm thẳng thì thua', () => {
+  const C = () => ({ type: 'crate', x: 20, w: 1.4, y0: 0, y1: 0.9, lane: 1 });
+  const a = blank([C()]); run(a, 6); assert.ok(a.dead && a.cause === 'crate', 'đâm thẳng');
+  const j = blank([C()]); let up = false, top = 0;
+  run(j, 6, (g) => { if(!up && g.onGround && g.dist > 18.8){ up = true; return { jump: true }; } if(g.onGround && g.y > 0.8) top++; return {}; });
+  assert.ok(!j.dead, 'nhảy ngắn lên mặt biến tần thì sống: ' + j.cause); assert.ok(top >= 1, 'có chạy trên mặt trên ' + top); assert.ok(j.y === 0 && j.onGround && j.dist > 30, 'xuống đất sau khi hết');
+});
+ok('máng đi dây vắt ngang 3 làn: phải trượt, đứng yên/nhảy/đổi làn đều thua', () => {
+  const Tr = () => [0, 1, 2].map((lane) => ({ type: 'tray', x: 20, w: 0.6, y0: 0.95, y1: 6, lane }));
+  const a = blank(Tr()); run(a, 6); assert.ok(a.dead && a.cause === 'tray', 'đâm thẳng');
+  const j = blank(Tr()); let k = 0; run(j, 6, (g) => { if(!k && g.dist > 18){ k = 1; return { jump: true, held: true }; } return { held: true }; }); assert.ok(j.dead && j.cause === 'tray', 'nhảy không qua');
+  const l = blank(Tr()); run(l, 0.5); L.stepGame(l, DT, { left: true }); run(l, 6); assert.ok(l.dead && l.cause === 'tray', 'đổi làn không né được');
+  const s = blank(Tr()); let sl = 0; run(s, 6, (g) => { if(!sl && g.dist > 20 - 0.25 - 0.12 * g.speed){ sl = 1; return { slide: true }; } return {}; }); assert.ok(!s.dead && s.dist > 30, 'trượt thì qua ' + s.cause);
+});
 ok('khiên cầu chì: chịu một cú va chạm với thùng, bật lại làn cũ khi đâm tòa nhà', () => {
   const g = blank([{ type: 'crate', x: 20, w: 1, y1: 0.9 }, { type: 'crate', x: 40, w: 1, y1: 0.9 }]); g.shield = true;
   run(g, 10); assert.ok(g.dead); assert.ok(g.dist > 38 && g.dist < 41, 'chết ở thùng thứ hai ' + g.dist); assert.equal(g.shield, false);

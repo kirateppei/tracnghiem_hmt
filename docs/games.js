@@ -367,18 +367,32 @@
   }
   function showRunner(){
     clearTimers(); screen = 'runner';
-    render('<div id="gm-runner" style="height:calc(100dvh - 150px);min-height:420px"></div>');
+    render('<p style="text-align:center;padding:30px 10px">Đang mở game…</p>');
+    // giao diện riêng, toàn màn hình như game trên điện thoại: phủ kín cửa sổ, ẩn mọi thanh của trang
+    const full = document.createElement('div'); full.id = 'gm-runner-full';
+    full.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;width:100vw;height:100vh;height:100dvh;z-index:2147483000;background:#000;touch-action:none;overscroll-behavior:none;';
+    const host = document.createElement('div'); host.id = 'gm-runner'; host.style.cssText = 'position:absolute;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:env(safe-area-inset-bottom,0px);';
+    const fs = document.createElement('style'); fs.textContent = '#gm-runner-full .rn-root{border-radius:0;min-height:0}'; full.appendChild(fs);
+    full.appendChild(host); document.body.appendChild(full);
+    const prevOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
+    try{ const rf = full.requestFullscreen || full.webkitRequestFullscreen; if(rf){ const pr = rf.call(full, { navigationUI: 'hide' }); if(pr && pr.catch) pr.catch(() => {}); } }catch(e){}
+    const teardown = () => {
+      try{ if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); else if(document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen(); }catch(e){}
+      document.body.style.overflow = prevOverflow; if(full.parentNode) full.parentNode.removeChild(full);
+    };
+    let inner = null, closed = false;
+    const close = () => { if(closed) return; closed = true; if(inner){ try{ inner.dispose(); }catch(e){} } teardown(); };
+    views.push({ dispose: close });
     loadRunner().then((m) => {
-      if(screen !== 'runner') return;
-      if(!m){ const h = $('gm-runner'); if(h) h.innerHTML = '<p style="text-align:center;padding:30px 10px">Không tải được game. Kiểm tra mạng rồi thử lại.</p>'; return; }
-      const v = m.runner($('gm-runner'), {
+      if(closed || screen !== 'runner') return;
+      if(!m){ host.innerHTML = '<p style="color:#fff;text-align:center;padding:60px 20px">Không tải được game. Kiểm tra mạng rồi thử lại.<br><br><button class="gm-primary" id="gm-rn-back" style="max-width:220px">← Quay lại</button></p>'; const b = host.querySelector('#gm-rn-back'); if(b) b.addEventListener('click', showMenu); return; }
+      inner = m.runner(host, {
         sfx: { beep, noise, buzz },
         loadBoard: runnerBoard,
         submitScore: runnerSubmit,
         me: (typeof session !== 'undefined' && session) ? { uid: session.uid, name: session.name, photo: session.photo } : null,
         onExit: showMenu,
       });
-      views.push(v);
     });
   }
   function openGame(g){

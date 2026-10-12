@@ -33,7 +33,7 @@ export const CFG = {
   BUILD_MIN: 10, BUILD_MAX: 26,     // chiều dài tòa nhà chắn đường (m)
   ROOF_TOL: 0.25,     // chân cao hơn mái từ mức này trở lên thì không đụng tường (nhảy bám mép mái vẫn lên được)
   ZAP_W: 1.2, ZAP_WARN: 15,         // tia sét: bề rộng (m); hiện cảnh báo trên đất, giáng xuống khi người chơi còn cách ZAP_WARN m
-  UNLOCK: { crate: 0, building: 80, panel: 100, zap: 150, wire: 250, bird: 500 },  // quãng đường (m) bắt đầu xuất hiện
+  UNLOCK: { crate: 0, building: 80, panel: 100, zap: 150, tray: 120, wire: 250, bird: 500 },  // quãng đường (m) bắt đầu xuất hiện
 };
 
 export const V_JUMP = () => Math.sqrt(2 * CFG.G * CFG.JUMP_H);
@@ -71,7 +71,7 @@ const r1 = (x) => Math.round(x * 10) / 10;
 /* ---------------- Chướng ngại ---------------- */
 // hộp va chạm: x..x+w (dọc đường), y0..y1 (độ cao); chiếm trọn một làn
 const SPEC = {
-  crate: { w: [0.9, 1.2], y0: 0, y1: 0.9, w_: 4 },     // thùng đồ nghề: nhảy
+  crate: { w: [1.2, 1.6], y0: 0, y1: 0.9, w_: 4 },     // biến tần: nhảy qua hoặc nhảy lên mặt trên chạy tiếp
   panel: { w: [2.2, 2.2], y0: 0, y1: 0.55, w_: 2 },    // tấm pin vỡ: nhảy
   wire:  { w: [0.5, 0.5], y0: 0.95, y1: 6, w_: 2 },    // giàn dây điện: phải trượt
   bird:  { w: [0.8, 0.8], y0: 0.95, y1: 1.65, w_: 2 }, // chim bay thấp: trượt hoặc nhảy hết cỡ
@@ -110,11 +110,18 @@ function genRow(T){
   const z0min = T.prevZ1 + G;
   const roll = r();
   const kind = T.rows++ === 0 ? 'haz' : T.prevZ1 < CFG.UNLOCK.building ? (roll < 0.3 ? 'coins' : 'haz') : (roll < 0.16 ? 'coins' : roll < 0.5 ? 'haz' : (roll < 0.8 || T.prevZ1 < CFG.UNLOCK.zap) ? 'build' : 'zap');
+  const kindF = (kind === 'haz' && T.prevZ1 >= CFG.UNLOCK.tray && r() < 0.16) ? 'tray' : kind;   // một phần cụm chướng ngại thường đổi thành máng cáp vắt ngang đường
   const coins = [];
   const addCoin = (x, lane, y) => coins.push({ x: r1(x), lane, y: r1(y), taken: false });
   const line = (x0, lane, n, step, y = 0.9) => { for(let i = 0; i < n; i++) addCoin(x0 + i * step, lane, y); };
   let z0, z1;
-  if(kind === 'haz'){
+  if(kindF === 'tray'){
+    // máng đi dây điện vắt ngang cả 3 làn, thấp: bắt buộc trượt qua (không đổi làn, không nhảy qua được)
+    const w = 0.6, [a] = zoneRel('wire', w, v), x = r1(z0min + a);
+    for(const lane of [0, 1, 2]) T.hz.push({ type: 'tray', lane, x, w, y0: 0.95, y1: 6, z0: r1(z0min), z1: r1(x + zoneRel('wire', w, v)[1]) });
+    for(let i = 0; i < 4; i++) addCoin(x - 1.2 + i * 1.1, 1, 0.45);
+    z0 = z0min; z1 = x + zoneRel('wire', w, v)[1];
+  } else if(kind === 'haz'){
     const k = r() < 0.45 ? 1 : (r() < 0.8 || diff < 0.2) ? 2 : 3;
     const lanes = [0, 1, 2].sort(() => r() - 0.5).slice(0, k);
     const list = lanes.map((lane) => { const type = pickType(r, z0min); const sp = SPEC[type]; return { type, lane, w: r1(lerp(sp.w[0], sp.w[1], r())), y0: sp.y0, y1: sp.y1 }; });
@@ -204,13 +211,14 @@ function tryJump(g){
 }
 function die(g, cause){ g.dead = true; g.cause = cause; g.deadT = 0; g.events.push('die'); }
 
+const CLIMB = new Set(['building', 'crate']);   // vật có thể nhảy lên và chạy trên mặt trên: nhà thấp, biến tần
 /* Độ cao mặt đỡ dưới chân: 0 (đất) hoặc mái một tòa nhà nếu chân (ở độ cao fromY) đang ở trên mái hoặc chỉ thấp hơn mái ≤ ROOF_TOL */
 export function floorAt(g, fromY){
   const hz = g.track.hz, cx = laneX(g.lx), z0 = g.dist - 0.3, z1 = g.dist + 0.3;
   let f = 0;
   for(let i = Math.max(0, lowerBound(hz, g.dist - CFG.BUILD_MAX - 6)); i < hz.length && hz[i].x < g.dist + 2; i++){
     const h = hz[i];
-    if(h.type !== 'building' || h.broken) continue;
+    if(!CLIMB.has(h.type) || h.broken) continue;
     const hx = laneX(h.lane);
     if(z1 > h.x && z0 < h.x + h.w && cx + CFG.HB_HALF > hx - CFG.OBS_HALF && cx - CFG.HB_HALF < hx + CFG.OBS_HALF && fromY >= h.y1 - CFG.ROOF_TOL && h.y1 > f) f = h.y1;
   }
@@ -223,7 +231,7 @@ export function hitboxOf(g, standing){
 }
 function overlaps(b, h){
   const hx = laneX(h.lane);
-  return b.z1 > h.x && b.z0 < h.x + h.w && b.x1 > hx - CFG.OBS_HALF && b.x0 < hx + CFG.OBS_HALF && b.y1 > h.y0 && b.y0 < h.y1 - (h.type === 'building' ? CFG.ROOF_TOL : 0);
+  return b.z1 > h.x && b.z0 < h.x + h.w && b.x1 > hx - CFG.OBS_HALF && b.x0 < hx + CFG.OBS_HALF && b.y1 > h.y0 && b.y0 < h.y1 - (CLIMB.has(h.type) ? CFG.ROOF_TOL : 0);
 }
 function collides(g, standing){
   const b = hitboxOf(g, standing), hz = g.track.hz;
@@ -366,7 +374,7 @@ export function botStep(g, bot){
     const c = h.x + h.w / 2, air = AIR_T() * v, hop = HOP_T() * v;
     let act, trig;
     if(h.type === 'crate' || h.type === 'panel'){ act = 'hop'; trig = c - hop / 2; }
-    else if(h.type === 'wire'){ act = 'slide'; trig = h.x - 0.25 - 0.12 * v; }
+    else if(h.type === 'wire' || h.type === 'tray'){ act = 'slide'; trig = h.x - 0.25 - 0.12 * v; }
     else {
       const m = bot.birdMode === 'mix' ? ((Math.floor(h.x) % 2) ? 'slide' : 'full') : bot.birdMode;
       act = m; trig = m === 'slide' ? h.x - 0.25 - 0.12 * v : c - air / 2;

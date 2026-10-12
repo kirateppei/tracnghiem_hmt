@@ -99,7 +99,7 @@ Không cần thêm gì vào `window.leaveGames`: nó đã gọi `clearTimers()` 
 
 - Kiểu Subway Surfers: đường 3 làn, camera sau lưng, hai bên là cánh đồng pin mặt trời, nhà cao tầng, cột điện. Điều khiển: **vuốt trái/phải = đổi làn**, chạm hoặc vuốt lên = nhảy (giữ lâu nhảy cao hơn), chạm lần hai khi đang bay = nhảy đôi, vuốt xuống = trượt (đang bay thì lao xuống rồi trượt). Bàn phím: `←`/`A`, `→`/`D` đổi làn, `Space`/`↑`/`W` nhảy, `↓`/`S` trượt, `P` tạm dừng.
 - Tốc độ: 7,5 m/s lúc đầu, tăng tuyến tính theo quãng đường tới 17 m/s ở 2400 m (≈ 3 phút 26 giây chạy).
-- Chướng ngại (mỗi cái chiếm một làn): **nhà thấp mái pin mặt trời** cao 1,3 m dài 10–26 m (từ 80 m, mỗi cụm tối đa 2 trong 3 làn): nhảy (kể cả nhảy ngắn) để lên mái và chạy trên đó, hết mái thì rơi; đâm thẳng vào tường hoặc rẽ vào sườn khi đang ở dưới đất thì thua; **tia sét giật** (từ 150 m, 1–2 làn mỗi cụm): vòng cảnh báo trên đường, nhảy/trượt đều không qua, chỉ đổi làn; biến tần (inverter) năng lượng mặt trời, nhảy (từ đầu); tấm pin vỡ, nhảy (≥ 100 m); giàn dây điện, **phải trượt** (≥ 250 m); chim bay thấp, trượt hoặc nhảy hết cỡ (≥ 500 m). Đâm sườn tòa nhà khi đổi làn cũng thua. Sinh đường luôn có chỗ qua được (kiểm chứng ở mục 8).
+- Chướng ngại (mỗi cái chiếm một làn): **nhà thấp mái pin mặt trời** cao 1,3 m dài 10–26 m (từ 80 m, mỗi cụm tối đa 2 trong 3 làn): nhảy (kể cả nhảy ngắn) để lên mái và chạy trên đó, hết mái thì rơi; đâm thẳng vào tường hoặc rẽ vào sườn khi đang ở dưới đất thì thua; **tia sét giật** (từ 150 m, 1–2 làn mỗi cụm): vòng cảnh báo trên đường, nhảy/trượt đều không qua, chỉ đổi làn; biến tần (inverter) năng lượng mặt trời kiểu GoodWe/Sungrow/Huawei, nhảy qua hoặc nhảy lên mặt trên chạy tiếp (từ đầu); **máng đi dây điện** vắt ngang cả 3 làn (từ 120 m), phải trượt, hai đầu nối ra dàn pin và biến tần ngoài đường; tấm pin vỡ, nhảy (≥ 100 m); giàn dây điện, **phải trượt** (≥ 250 m); chim bay thấp, trượt hoặc nhảy hết cỡ (≥ 500 m). Đâm sườn tòa nhà khi đổi làn cũng thua. Sinh đường luôn có chỗ qua được (kiểm chứng ở mục 8).
 - Vật phẩm: nam châm 10 s, khiên "cầu chì" chịu một cú va chạm (đâm tòa nhà thì bị bật lại làn cũ), **huy hiệu logo HMT = nhân đôi tốc độ ghi điểm trong 8 s** (hiện "x2" trên HUD).
 - **Công thức điểm**
   - `kWh = floor(quãng đường / 10)` (1 kWh mỗi 10 m; trong lúc có pin sạc, mỗi mét tính gấp đôi).
@@ -193,3 +193,8 @@ Nếu đổi `G`, `JUMP_H`, `SLIDE_T`, `LANE_SPEED`, `GAP_K` hoặc các thông 
 - `node tools/runner-test/browser.mjs <thư-mục-ảnh>` (Chromium + WebGL phần mềm): màn chờ nam/nữ, chạy ban ngày/đêm/hoàng hôn, các vật cản và vật phẩm, hết pin, bảng xếp hạng (dữ liệu giả trong bộ nhớ), chạm = nhảy, vuốt trái/phải = đổi làn, vuốt xuống = trượt, phím P, chơi lại, tự dọn dẹp khi gỡ container, không có lỗi console.
 
 **Chưa kiểm thử được:** cảm giác điều khiển trên điện thoại thật (độ nhạy vuốt/chạm, độ khó), hiệu năng trên máy yếu (mới thử WebGL phần mềm), âm thanh thật (chỉ kiểm tra gọi hàm), việc đọc/ghi Firestore thật và luật Firestore (chỉ viết, chưa chạy trên Firebase), âm lượng và rung.
+
+
+## 9. Giao diện toàn màn hình
+
+`showRunner()` trong `docs/games.js` tạo lớp phủ `#gm-runner-full` (position:fixed, phủ kín cửa sổ, z-index rất cao), khóa cuộn trang và gọi Fullscreen API nếu trình duyệt cho phép; rời game (nút ← Thoát, đổi tab) thì `dispose` gỡ lớp phủ và thoát toàn màn hình.

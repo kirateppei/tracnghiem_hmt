@@ -428,7 +428,7 @@
   let crocCfg = Object.assign({ char: 'croc', teeth: 6, penalty: 1 }, store('croc') || {});
   function normCroc(){
     if(!CHARS[crocCfg.char]) crocCfg.char = 'croc';
-    crocCfg.teeth = Math.min(10, Math.max(4, parseInt(crocCfg.teeth, 10) || 6));
+    crocCfg.teeth = Math.min(20, Math.max(4, parseInt(crocCfg.teeth, 10) || 6));
     crocCfg.penalty = Math.min(crocCfg.teeth, Math.max(1, parseInt(crocCfg.penalty, 10) || 1));
   }
   const penaltyLabel = () => (crocCfg.penalty >= crocCfg.teeth ? 'Toàn bộ răng' : String(crocCfg.penalty));

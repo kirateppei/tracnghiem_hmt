@@ -102,13 +102,27 @@ function panelTex(cracked){
     }
   }, { repeat: true });
 }
-const crateTex = () => canvasTex(128, 96, (c, w, h) => {
-  const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#e0452f'); g.addColorStop(1, '#a52a1c');
+/* Biến tần (inverter) năng lượng mặt trời: mặt trước có màn hình, đèn báo, nút, công tắc DC */
+const crateTex = () => canvasTex(256, 145, (c, w, h) => {
+  const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#f4f6f8'); g.addColorStop(1, '#cfd5db');
   c.fillStyle = g; c.fillRect(0, 0, w, h);
-  c.fillStyle = '#f2c230'; c.fillRect(0, 0, w, 10); c.fillRect(0, h - 10, w, 10);
-  c.fillStyle = '#2a2a2a'; for(let x = -20; x < w; x += 24){ c.beginPath(); c.moveTo(x, 0); c.lineTo(x + 12, 0); c.lineTo(x + 2, 10); c.lineTo(x - 10, 10); c.fill(); }
-  c.fillStyle = '#f5e9d0'; c.font = '800 20px "Trebuchet MS",Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ĐỒ NGHỀ', w / 2, h / 2 + 2);
-  c.fillStyle = '#c9ccd2'; c.fillRect(w / 2 - 12, 12, 24, 8); c.strokeStyle = 'rgba(0,0,0,.3)'; c.strokeRect(1, 1, w - 2, h - 2);
+  c.strokeStyle = '#8a929b'; c.lineWidth = 5; c.strokeRect(2.5, 2.5, w - 5, h - 5);
+  c.fillStyle = '#163B6D'; c.fillRect(8, 8, w - 16, 20);                                              // dải thương hiệu
+  c.fillStyle = '#ffffff'; c.font = '800 15px "Trebuchet MS",Arial'; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText('HMT', 16, 18);
+  c.fillStyle = '#F2B807'; c.beginPath(); c.arc(w - 22, 18, 6, 0, 7); c.fill();
+  for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2; c.strokeStyle = '#F2B807'; c.lineWidth = 2; c.beginPath(); c.moveTo(w - 22 + Math.cos(a) * 8, 18 + Math.sin(a) * 8); c.lineTo(w - 22 + Math.cos(a) * 11, 18 + Math.sin(a) * 11); c.stroke(); }
+  c.fillStyle = '#0b2433'; c.fillRect(14, 38, 112, 62); c.strokeStyle = '#59616b'; c.lineWidth = 3; c.strokeRect(14, 38, 112, 62);   // màn hình LCD
+  c.fillStyle = '#5dff9d'; c.font = '800 28px "Courier New",monospace'; c.textAlign = 'center'; c.fillText('5.0kW', 70, 62);
+  c.fillStyle = '#2b7a52'; c.fillRect(24, 82, 92, 8); c.fillStyle = '#5dff9d'; c.fillRect(24, 82, 64, 8);
+  const led = (x, col) => { c.fillStyle = col; c.beginPath(); c.arc(x, 52, 6, 0, 7); c.fill(); c.strokeStyle = 'rgba(0,0,0,.4)'; c.lineWidth = 1.5; c.stroke(); };
+  led(150, '#2eea6a'); led(172, '#2eea6a'); led(194, '#ff9a1f');                                   // đèn báo
+  c.fillStyle = '#e9ecef'; c.strokeStyle = '#7a828b'; c.lineWidth = 2; [[148, 78], [178, 78], [208, 78]].forEach(([x, y]) => { c.beginPath(); c.arc(x + 4, y + 4, 9, 0, 7); c.fill(); c.stroke(); });   // nút bấm
+  c.fillStyle = '#d6291f'; c.fillRect(w - 52, h - 38, 38, 26); c.fillStyle = '#ffd21a'; c.fillRect(w - 47, h - 33, 28, 16); c.fillStyle = '#222'; c.fillRect(w - 36, h - 33, 6, 16);   // công tắc DC
+  c.fillStyle = '#4a525b'; c.font = '700 11px "Trebuchet MS",Arial'; c.textAlign = 'left'; c.fillText('SOLAR INVERTER', 14, h - 14);
+});
+const finTex = () => canvasTex(64, 128, (c, w, h) => {
+  c.fillStyle = '#b9c0c7'; c.fillRect(0, 0, w, h);
+  for(let y = 6; y < h; y += 9){ c.fillStyle = '#6d757e'; c.fillRect(0, y, w, 4); c.fillStyle = 'rgba(255,255,255,.55)'; c.fillRect(0, y + 4, w, 2); }
 });
 const coinFace = () => canvasTex(96, 96, (c, w, h) => {
   c.fillStyle = '#ffc928'; c.fillRect(0, 0, w, h);
@@ -273,10 +287,14 @@ function buildCharacter(gender, skin, tex){
 /* ================= Vật thể trên đường (làn chạy dọc trục z; người chơi chạy về phía -z, camera ở sau lưng) ================= */
 function makeCrate(T){
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.8, 1), [T.crateSide, T.crateSide, T.crateSide, T.crateSide, T.crate, T.crateSide]);
-  body.position.y = 0.4; g.add(body);
-  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.1, 1.06), T.crateSide); lid.position.y = 0.85; g.add(lid);
-  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.03, 6, 12, Math.PI), T.metal); handle.position.y = 0.9; g.add(handle);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.78, 1), [T.crateSide, T.crateSide, T.crateTop, T.crateTop, T.crate, T.crateSide]);
+  body.position.y = 0.52; g.add(body);
+  for(const x of [-0.55, 0.55]){ const foot = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.13, 0.9), T.crateBase); foot.position.set(x, 0.065, 0); g.add(foot); }   // chân đế
+  for(let i = 0; i < 7; i++){ const fin = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.9), T.crateTop); fin.position.set(-0.6 + i * 0.2, 0.93, 0); g.add(fin); }   // cánh tản nhiệt trên nắp
+  [[-0.5, T.mc4r], [-0.3, T.mc4b], [0.05, T.mc4r], [0.25, T.mc4b]].forEach(([x, m]) => {   // đầu nối MC4 và cáp DC ở đáy mặt trước
+    const gl = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.1, 10), T.crateBase); gl.rotation.x = Math.PI / 2; gl.position.set(x, 0.2, 0.55); g.add(gl);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.12, 10), m); cap.rotation.x = Math.PI / 2; cap.position.set(x, 0.2, 0.64); g.add(cap);
+  });
   return g;
 }
 function makePanel(T){
@@ -448,11 +466,11 @@ export function runner(container, opt = {}){
   const Tx = {};
   const fac = facadeTex(); Tx.facade = keep(fac.map); Tx.facadeEmi = keep(fac.emi);
   Tx.panel = keep(panelTex(false)); Tx.panelBroken = keep(panelTex(true));
-  Tx.crate = keep(crateTex()); Tx.coin = keep(coinFace()); Tx.glow = keep(glowTex()); Tx.cloud = keep(cloudTex());
+  Tx.crate = keep(crateTex()); Tx.fin = keep(finTex()); Tx.coin = keep(coinFace()); Tx.glow = keep(glowTex()); Tx.cloud = keep(cloudTex());
   const Lm = (c, o = {}) => keep(new THREE.MeshLambertMaterial({ color: c, ...o }));
   const spr = (c, s) => keep(new THREE.SpriteMaterial({ map: Tx.glow, color: c, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false, opacity: s == null ? 1 : s }));
   const MAT = {
-    crate: Lm('#ffffff', { map: Tx.crate }), crateSide: Lm('#c93a24'), metal: Lm('#9aa3ad'), wood: Lm('#6b4a2b'), cable: Lm('#16181c'), white: Lm('#f2f2f2'),
+    crate: Lm('#ffffff', { map: Tx.crate }), crateSide: Lm('#ffffff', { map: Tx.fin }), crateTop: Lm('#aeb5bc'), crateBase: Lm('#3a3f46'), mc4r: Lm('#d6291f'), mc4b: Lm('#1a1a1a'), metal: Lm('#9aa3ad'), wood: Lm('#6b4a2b'), cable: Lm('#16181c'), white: Lm('#f2f2f2'),
     danger: Lm('#ffffff', { map: keep(canvasTex(64, 40, (c, w, h) => { c.fillStyle = '#ffdd22'; c.fillRect(0, 0, w, h); c.fillStyle = '#c00'; c.font = '900 30px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('⚡', w / 2, h / 2 + 2); })), side: THREE.DoubleSide }),
     barrier: Lm('#b8b9bc'), medal: Lm('#ffffff', { map: keep(medalTex()), emissive: '#442200' }), frame: Lm('#aab3be'), panelBroken: Lm('#ffffff', { map: Tx.panelBroken }), beak: Lm('#ff9a1f'), dark: Lm('#111'),
     red: Lm('#e0302a'), ceramic: Lm('#f4efe6'), gold: Lm('#e8b830'), cyan: Lm('#46d6ff', { emissive: '#1a90b0' }), green: Lm('#38b04a', { emissive: '#144a1c' }), yellow: Lm('#ffe14a', { emissive: '#aa8a00' }),

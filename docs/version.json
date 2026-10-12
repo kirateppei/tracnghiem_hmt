@@ -1,7 +1,7 @@
 {
-  "version": "4d96867553",
-  "date": "2026-10-12T17:32:51Z",
-  "notes": "Game chạy: sửa điều khiển cảm ứng (không vừa vuốt vừa nhảy, không nhảy đôi ngoài ý muốn)",
+  "version": "937d0b8892",
+  "date": "2026-10-12T17:35:15Z",
+  "notes": "Chạy năng lượng: chướng ngại thùng đồ nghề thành biến tần mặt trời",
   "apk": {
     "version": "",
     "url": "",

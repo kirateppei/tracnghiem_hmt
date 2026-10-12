@@ -420,15 +420,15 @@
 
   /* ---------- Khám răng cá sấu ---------- */
   const CHARS = {
-    croc:  { icon: '🐊', name: 'Cá sấu', skin: '#4caf50', skin2: '#388e3c', skin3: '#1b5e20', in1: '#5d1111', in2: '#b71c1c' },
-    hippo: { icon: '🦛', name: 'Hà mã', skin: '#a98a9a', skin2: '#8a6676', skin3: '#4a2c3a', in1: '#5a0f35', in2: '#c2185b' },
-    shark: { icon: '🦈', name: 'Cá mập', skin: '#6f8ea6', skin2: '#566f85', skin3: '#2c3f50', in1: '#5d1111', in2: '#d32f2f' }
+    croc:  { icon: '🐊', name: 'Cá sấu', skin: '#47bf55', skin2: '#2e9e43', skin3: '#1b6b2e', in1: '#c85a8a', in2: '#ee8fb4' },
+    hippo: { icon: '🦛', name: 'Hà mã', skin: '#2fc2cf', skin2: '#1ea5b3', skin3: '#0b5f6b', in1: '#c85a8a', in2: '#ee8fb4' },
+    shark: { icon: '🦈', name: 'Cá mập', skin: '#2c45b5', skin2: '#22379a', skin3: '#15246b', in1: '#c85a8a', in2: '#ee8fb4' }
   };
   const CHAR_KEYS = Object.keys(CHARS);
-  let crocCfg = Object.assign({ char: 'croc', teeth: 6, penalty: 1 }, store('croc') || {});
+  let crocCfg = Object.assign({ char: 'croc', teeth: 10, penalty: 1 }, store('croc') || {});
   function normCroc(){
     if(!CHARS[crocCfg.char]) crocCfg.char = 'croc';
-    crocCfg.teeth = Math.min(20, Math.max(4, parseInt(crocCfg.teeth, 10) || 6));
+    crocCfg.teeth = Math.min(20, Math.max(8, parseInt(crocCfg.teeth, 10) || 10));
     crocCfg.penalty = Math.min(crocCfg.teeth, Math.max(1, parseInt(crocCfg.penalty, 10) || 1));
   }
   const penaltyLabel = () => (crocCfg.penalty >= crocCfg.teeth ? 'Toàn bộ răng' : String(crocCfg.penalty));

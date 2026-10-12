@@ -771,6 +771,108 @@ footer.credit{ padding:0 78px 0 6px; }
 .manage-toolbar button.secondary{ color: var(--chalk); border-color: var(--board-line); background: var(--glass); }
 .app{ padding-bottom: 96px; }
 </style>
+<style id="ui-v2">
+/* ================= Giao diện v2: gọn, hiện đại (dùng chung biến màu của các chủ đề) ================= */
+body{ -webkit-font-smoothing:antialiased; letter-spacing:-0.005em; }
+.app{ padding-top: max(10px, env(safe-area-inset-top)); }
+
+/* Thanh đầu trang gọn: logo + tên một dòng, dòng người dùng dạng viên thuốc */
+header.top{ text-align:left; margin-bottom:12px; }
+.header-brand{ justify-content:flex-start; gap:12px; margin-bottom:4px; }
+.header-brand img{ width:44px; }
+header.top h1{
+  font-family: var(--font-body); font-weight:800; font-size:1.45rem; letter-spacing:-0.02em;
+  line-height:1.15; text-shadow:none; white-space:nowrap;
+}
+.sun-spin{ font-size:1.15rem; vertical-align:2px; }
+header.top p.sub{ font-size:0.76rem; line-height:1.4; opacity:0.85; margin:0 0 10px; }
+.session-row{
+  justify-content:flex-start; gap:8px; margin-top:0; padding:6px 8px 6px 6px;
+  background: var(--glass); border:1px solid var(--board-line); border-radius:999px;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+#session-info{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; color: var(--chalk); font-size:0.85rem; }
+.session-row .badge{ font-size:0.7rem; padding:3px 10px; white-space:nowrap; }
+.session-row button{ padding:5px 12px; white-space:nowrap; transition: background .2s; }
+.session-row button:hover{ background: var(--glass); color: var(--chalk); }
+
+/* Thanh tab dính phía trên khi cuộn */
+nav.tabs{
+  position:sticky; top:8px; z-index:30; gap:2px; padding:4px; margin-bottom:16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+  background: var(--glass);
+}
+nav.tabs button{ font-size:0.8rem; font-weight:700; padding:10px 2px; letter-spacing:-0.01em; white-space:nowrap; }
+nav.tabs button.active{ box-shadow: 0 3px 10px var(--btn-glow); }
+nav.tabs button{ display:flex; flex-direction:column; align-items:center; gap:2px; line-height:1.1; padding:7px 2px 8px; }
+nav.tabs .ti{ font-size:1.15rem; line-height:1; }
+nav.tabs .tl{ font-size:0.7rem; font-weight:700; }
+.setup-field label:not(.toggle){ }
+nav.tabs button:not(.active):hover{ background: rgba(255,255,255,0.08); color: var(--chalk); }
+
+/* Thẻ nội dung */
+:root{ --radius: 22px; }
+.card{ padding:22px 20px; border:none; box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 16px 36px rgba(0,0,0,0.26); }
+.hero-illus .hero-title{ font-family: var(--font-body); font-weight:800; font-size:1.35rem; letter-spacing:-0.02em; line-height:1.15; }
+.setup-field > label:not(.toggle){ font-size:0.74rem; text-transform:uppercase; letter-spacing:0.06em; color:#7a867f; font-weight:700; }
+select{ border-radius:14px; padding:13px 14px; border-width:1.5px; }
+
+/* Tiến độ và đồng hồ */
+.progress-row{ font-size:0.8rem; }
+.progress-bar{ height:6px; background: rgba(0,0,0,0.07); margin-bottom:10px; }
+.timer-bar{ height:8px; background: rgba(0,0,0,0.07); }
+#q-timer{ font-size:0.85rem; font-variant-numeric: tabular-nums; }
+
+/* Câu hỏi và đáp án */
+.q-cat-tag,.diff-tag{ font-size:0.7rem; padding:4px 10px; letter-spacing:0.01em; }
+.q-text{ font-size:1.14rem; font-weight:700; line-height:1.5; margin:4px 0 20px; letter-spacing:-0.01em; }
+.options{ gap:10px; }
+.option{
+  border-radius:16px; padding:14px 16px; font-size:0.96rem; line-height:1.4; border-width:1.5px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.option:hover:not([disabled]){ transform:none; box-shadow: 0 6px 18px rgba(0,0,0,0.1); }
+.option .bullet{
+  width:28px; height:28px; border:none; font-size:0.8rem;
+  background: color-mix(in srgb, var(--accent) 22%, #fff); color: var(--accent-ink);
+}
+.option.correct .bullet{ background: var(--good); color:#fff; }
+.option.wrong .bullet{ background: var(--bad); color:#fff; }
+
+/* Nút */
+button.primary{ border-radius:16px; padding:14px 22px; font-size:1rem; letter-spacing:-0.01em; }
+button.secondary{ border-radius:14px; padding:12px 18px; }
+.quiz-footer{ margin-top:22px; }
+
+/* Bảng xếp hạng */
+.lb-row{
+  border-radius:18px; padding:12px 14px; margin-bottom:10px; gap:11px;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.16);
+}
+.lb-rank{ width:30px; height:30px; font-size:0.85rem; }
+.lb-row.top1{ background: linear-gradient(135deg, var(--card), color-mix(in srgb, var(--accent) 16%, var(--card))); }
+.lb-name{ font-size:0.95rem; }
+
+/* Nút nổi: nhỏ, kính mờ, bớt che nội dung */
+#music-toggle,#music-picker-btn,#theme-picker-btn{ left:14px; right:auto; box-shadow: 0 6px 18px rgba(0,0,0,0.3); }
+#music-toggle{ width:46px; height:46px; bottom:14px; }
+#music-picker-btn{ width:38px; height:38px; bottom:68px; left:18px; }
+#theme-picker-btn{ width:38px; height:38px; bottom:114px; left:18px; }
+
+/* Phần chân trang */
+footer.credit{ font-size:0.72rem; opacity:0.6; margin-top:22px; padding-bottom:150px; }
+
+/* Cuộn mượt và tôn trọng "giảm chuyển động" */
+html{ scroll-behavior:smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  .sun-spin,.ray{ animation:none !important; }
+  section.view.active{ animation:none; }
+}
+@media (min-width: 720px){
+  .app{ max-width: 560px; }
+}
+</style>
 </head>
 <body>
 <div class="bg-orbs"><span></span><span></span><span></span></div>
@@ -814,11 +916,11 @@ footer.credit{ padding:0 78px 0 6px; }
   </header>
 
   <nav class="tabs">
-    <button data-tab="quiz" class="active">📝 Làm bài</button>
-    <button data-tab="leaderboard">🏆 Xếp hạng</button>
-    <button data-tab="guide">📚 Tài liệu</button>
-    <button data-tab="games">🎮 Chơi</button>
-    <button data-tab="admin" id="tab-admin">⚙ Quản trị</button>
+    <button data-tab="quiz" class="active"><span class="ti">📝</span><span class="tl">Làm bài</span></button>
+    <button data-tab="leaderboard"><span class="ti">🏆</span><span class="tl">Xếp hạng</span></button>
+    <button data-tab="guide"><span class="ti">📚</span><span class="tl">Tài liệu</span></button>
+    <button data-tab="games"><span class="ti">🎮</span><span class="tl">Chơi</span></button>
+    <button data-tab="admin" id="tab-admin"><span class="ti">⚙</span><span class="tl">Quản trị</span></button>
   </nav>
 
   <!-- QUIZ VIEW -->
@@ -1205,16 +1307,16 @@ footer.credit{ padding:0 78px 0 6px; }
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=f9f9e51dcd"></script>
-<script src="firebase-config.js?v=f9f9e51dcd"></script>
-<script src="questions.js?v=f9f9e51dcd"></script>
-<script src="music.js?v=f9f9e51dcd"></script>
-<script src="inverters.js?v=f9f9e51dcd"></script>
-<script src="drawings.js?v=f9f9e51dcd"></script>
-<script src="games.js?v=f9f9e51dcd"></script>
-<script src="app.js?v=f9f9e51dcd"></script>
-<script src="leaderboard.js?v=f9f9e51dcd"></script>
-<script src="auth.js?v=f9f9e51dcd"></script>
-<script src="update.js?v=f9f9e51dcd"></script>
+<script src="version.js?v=420ce7ba67"></script>
+<script src="firebase-config.js?v=420ce7ba67"></script>
+<script src="questions.js?v=420ce7ba67"></script>
+<script src="music.js?v=420ce7ba67"></script>
+<script src="inverters.js?v=420ce7ba67"></script>
+<script src="drawings.js?v=420ce7ba67"></script>
+<script src="games.js?v=420ce7ba67"></script>
+<script src="app.js?v=420ce7ba67"></script>
+<script src="leaderboard.js?v=420ce7ba67"></script>
+<script src="auth.js?v=420ce7ba67"></script>
+<script src="update.js?v=420ce7ba67"></script>
 </body>
 </html>

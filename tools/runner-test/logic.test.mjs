@@ -55,17 +55,29 @@ ok('giàn dây: nhảy/nhảy đôi không qua, trượt qua được', () => {
   run(c, 6, (gg) => { if(gg.dist > 22 && k === 0){ k = 1; return { jump: true, held: true }; } if(k === 1 && gg.vy < 0){ k = 2; return { jump: true, held: true }; } return { held: true }; });
   assert.ok(c.dead && c.cause === 'wire', 'nhảy đôi vẫn chết');
 });
-ok('tòa nhà: đâm thẳng thì thua, nhảy không qua, đổi sang làn trống thì sống, đâm sườn thì thua', () => {
-  const B = (lane) => ({ type: 'building', x: 20, w: 15, y0: 0, y1: 8, lane });
-  const a = blank([B(1)]); run(a, 6); assert.ok(a.dead && a.cause === 'building');
-  const j = blank([B(1)]); L.stepGame(j, DT, { jump: true, held: true }); run(j, 6, (g) => ({ held: true, jump: g.onGround && g.dist < 19 })); assert.ok(j.dead, 'nhảy cũng không qua tòa nhà');
+ok('tòa nhà thấp: đâm thẳng thì thua, nhảy lên mái chạy tiếp rồi rơi xuống đất, né sang làn trống, đâm sườn thì thua', () => {
+  const B = (lane) => ({ type: 'building', x: 20, w: 15, y0: 0, y1: L.BUILDING_H, lane });
+  const a = blank([B(1)]); run(a, 6); assert.ok(a.dead && a.cause === 'building', 'đâm thẳng');
+  const j = blank([B(1)]); let up = false, onRoof = 0;
+  run(j, 6, (g) => { if(g.onGround && g.y === 0 && g.dist > 17.5 && !up){ up = true; return { jump: true, held: true }; } if(g.onGround && g.y > 1) onRoof++; return { held: up }; });
+  assert.ok(!j.dead, 'nhảy lên mái thì sống: ' + j.cause); assert.ok(onRoof > 10, 'chạy trên mái ' + onRoof); assert.ok(j.dist > 40 && j.y === 0 && j.onGround, 'xuống đất sau khi hết mái');
+  const hop = blank([B(1)]); let h1 = false; run(hop, 6, (g) => { if(!h1 && g.dist > 18.2 && g.onGround){ h1 = true; return { jump: true }; } return {}; });
+  assert.ok(!hop.dead, 'nhảy ngắn (chạm nhanh) cũng lên được mái');
   const s = blank([B(1)]); run(s, 0.5); L.stepGame(s, DT, { left: true }); run(s, 6); assert.ok(!s.dead && s.dist > 40, 'né sang làn trống');
   const side = blank([B(0)]); run(side, 1.5); L.stepGame(side, DT, { left: true }); run(side, 2); assert.ok(side.dead && side.cause === 'building', 'rẽ vào sườn tòa nhà');
+});
+ok('tia sét giật: phải đổi làn, nhảy/trượt đều không qua, khiên đỡ được một lần', () => {
+  const Z = () => ({ type: 'zap', x: 20, w: 1.2, y0: 0, y1: 7, lane: 1 });
+  const a = blank([Z()]); run(a, 6); assert.ok(a.dead && a.cause === 'zap', 'đâm thẳng');
+  const j = blank([Z()]); let k = 0; run(j, 6, (g) => { if(!k && g.dist > 18){ k = 1; return { jump: true, held: true }; } return { held: true }; }); assert.ok(j.dead && j.cause === 'zap', 'nhảy không qua');
+  const s = blank([Z()]); let sl = 0; run(s, 6, (g) => { if(!sl && g.dist > 19){ sl = 1; return { slide: true }; } return {}; }); assert.ok(s.dead && s.cause === 'zap', 'trượt không qua');
+  const d = blank([Z()]); run(d, 0.5); L.stepGame(d, DT, { left: true }); run(d, 6); assert.ok(!d.dead && d.dist > 40, 'đổi làn thì qua');
+  const sh = blank([Z()]); sh.shield = true; run(sh, 6); assert.ok(!sh.dead && !sh.shield, 'khiên đỡ một lần');
 });
 ok('khiên cầu chì: chịu một cú va chạm với thùng, bật lại làn cũ khi đâm tòa nhà', () => {
   const g = blank([{ type: 'crate', x: 20, w: 1, y1: 0.9 }, { type: 'crate', x: 40, w: 1, y1: 0.9 }]); g.shield = true;
   run(g, 10); assert.ok(g.dead); assert.ok(g.dist > 38 && g.dist < 41, 'chết ở thùng thứ hai ' + g.dist); assert.equal(g.shield, false);
-  const b = blank([{ type: 'building', x: 20, w: 15, y1: 8, lane: 0 }]); b.shield = true; run(b, 1.5); L.stepGame(b, DT, { left: true }); run(b, 3);
+  const b = blank([{ type: 'building', x: 20, w: 15, y1: L.BUILDING_H, lane: 0 }]); b.shield = true; run(b, 1.5); L.stepGame(b, DT, { left: true }); run(b, 3);
   assert.ok(!b.dead && b.lane === 1 && !b.shield, 'bật lại làn giữa');
 });
 ok('tia nắng: chỉ nhặt đúng làn; nam châm hút từ làn bên; pin sạc nhân đôi điểm', () => {

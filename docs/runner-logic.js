@@ -31,7 +31,9 @@ export const CFG = {
   REACT: 0.25,        // khoảng nghỉ tối thiểu giữa hai cụm chướng ngại (giây × tốc độ)
   GAP_K: 0.6, GAP_ADD: 2,           // khoảng trống giữa hai cụm = GAP_K × tốc độ + GAP_ADD (đủ đổi tới 2 làn)
   BUILD_MIN: 10, BUILD_MAX: 26,     // chiều dài tòa nhà chắn đường (m)
-  UNLOCK: { crate: 0, building: 80, panel: 100, wire: 250, bird: 500 },  // quãng đường (m) bắt đầu xuất hiện
+  ROOF_TOL: 0.25,     // chân cao hơn mái từ mức này trở lên thì không đụng tường (nhảy bám mép mái vẫn lên được)
+  ZAP_W: 1.2, ZAP_WARN: 15,         // tia sét: bề rộng (m); hiện cảnh báo trên đất, giáng xuống khi người chơi còn cách ZAP_WARN m
+  UNLOCK: { crate: 0, building: 80, panel: 100, zap: 150, wire: 250, bird: 500 },  // quãng đường (m) bắt đầu xuất hiện
 };
 
 export const V_JUMP = () => Math.sqrt(2 * CFG.G * CFG.JUMP_H);
@@ -74,7 +76,7 @@ const SPEC = {
   wire:  { w: [0.5, 0.5], y0: 0.95, y1: 6, w_: 2 },    // giàn dây điện: phải trượt
   bird:  { w: [0.8, 0.8], y0: 0.95, y1: 1.65, w_: 2 }, // chim bay thấp: trượt hoặc nhảy hết cỡ
 };
-export const BUILDING_H = 8;
+export const BUILDING_H = 1.3;   // nhà thấp: nhảy lên mái chạy tiếp được (nhảy ngắn ≈ 1,6 m, nhảy hết cỡ 2,8 m)
 /* Vùng người chơi "bận" (bay/trượt) quanh một chướng ngại, tính từ x của nó: [x - rel0, x + rel1] */
 function zoneRel(type, w, v){
   const air = AIR_T() * v, hop = HOP_T() * v;
@@ -107,7 +109,7 @@ function genRow(T){
   const G = CFG.GAP_K * v + CFG.GAP_ADD;
   const z0min = T.prevZ1 + G;
   const roll = r();
-  const kind = T.rows++ === 0 ? 'haz' : T.prevZ1 < CFG.UNLOCK.building ? (roll < 0.3 ? 'coins' : 'haz') : (roll < 0.18 ? 'coins' : roll < 0.6 ? 'haz' : 'build');
+  const kind = T.rows++ === 0 ? 'haz' : T.prevZ1 < CFG.UNLOCK.building ? (roll < 0.3 ? 'coins' : 'haz') : (roll < 0.16 ? 'coins' : roll < 0.5 ? 'haz' : (roll < 0.8 || T.prevZ1 < CFG.UNLOCK.zap) ? 'build' : 'zap');
   const coins = [];
   const addCoin = (x, lane, y) => coins.push({ x: r1(x), lane, y: r1(y), taken: false });
   const line = (x0, lane, n, step, y = 0.9) => { for(let i = 0; i < n; i++) addCoin(x0 + i * step, lane, y); };
@@ -142,7 +144,15 @@ function genRow(T){
     const fl = free[Math.floor(r() * free.length)];
     const n = Math.min(12, Math.floor((end - z0min) / 1.8));
     line(z0min + 1, fl, n, 1.8);
+    for(const h of T.hz.slice(-lanes.length)){ const m = Math.max(2, Math.floor(h.w / 2) - 1); for(let i = 0; i < m; i++) addCoin(h.x + 1.5 + i * ((h.w - 3) / Math.max(1, m - 1)), h.lane, BUILDING_H + 0.9); }   // thưởng cho ai nhảy lên mái
     z0 = z0min; z1 = end;
+  } else if(kind === 'zap'){
+    const k = r() < 0.6 ? 1 : 2;
+    const lanes = [0, 1, 2].sort(() => r() - 0.5).slice(0, k);
+    const free = [0, 1, 2].filter((l) => !lanes.includes(l));
+    for(const lane of lanes) T.hz.push({ type: 'zap', lane, x: r1(z0min), w: CFG.ZAP_W, y0: 0, y1: 7, z0: r1(z0min), z1: r1(z0min + CFG.ZAP_W) });
+    line(z0min - 6, free[Math.floor(r() * free.length)], 5, 1.8);
+    z0 = z0min; z1 = z0min + CFG.ZAP_W;
   } else {
     z0 = z0min; z1 = z0 + 18 + r() * 14;
     const shape = r();
@@ -194,6 +204,18 @@ function tryJump(g){
 }
 function die(g, cause){ g.dead = true; g.cause = cause; g.deadT = 0; g.events.push('die'); }
 
+/* Độ cao mặt đỡ dưới chân: 0 (đất) hoặc mái một tòa nhà nếu chân (ở độ cao fromY) đang ở trên mái hoặc chỉ thấp hơn mái ≤ ROOF_TOL */
+export function floorAt(g, fromY){
+  const hz = g.track.hz, cx = laneX(g.lx), z0 = g.dist - 0.3, z1 = g.dist + 0.3;
+  let f = 0;
+  for(let i = Math.max(0, lowerBound(hz, g.dist - CFG.BUILD_MAX - 6)); i < hz.length && hz[i].x < g.dist + 2; i++){
+    const h = hz[i];
+    if(h.type !== 'building' || h.broken) continue;
+    const hx = laneX(h.lane);
+    if(z1 > h.x && z0 < h.x + h.w && cx + CFG.HB_HALF > hx - CFG.OBS_HALF && cx - CFG.HB_HALF < hx + CFG.OBS_HALF && fromY >= h.y1 - CFG.ROOF_TOL && h.y1 > f) f = h.y1;
+  }
+  return f;
+}
 export function hitboxOf(g, standing){
   const h = (g.sliding && !standing) ? CFG.SLIDE_H : CFG.STAND_H;
   const cx = laneX(g.lx);
@@ -201,7 +223,7 @@ export function hitboxOf(g, standing){
 }
 function overlaps(b, h){
   const hx = laneX(h.lane);
-  return b.z1 > h.x && b.z0 < h.x + h.w && b.x1 > hx - CFG.OBS_HALF && b.x0 < hx + CFG.OBS_HALF && b.y1 > h.y0 && b.y0 < h.y1;
+  return b.z1 > h.x && b.z0 < h.x + h.w && b.x1 > hx - CFG.OBS_HALF && b.x0 < hx + CFG.OBS_HALF && b.y1 > h.y0 && b.y0 < h.y1 - (h.type === 'building' ? CFG.ROOF_TOL : 0);
 }
 function collides(g, standing){
   const b = hitboxOf(g, standing), hz = g.track.hz;
@@ -235,12 +257,17 @@ export function stepGame(g, dt, inp){
   g.lx += Math.max(-st, Math.min(st, dl));
 
   // --- theo chiều đứng ---
+  if(g.onGround && g.y > 0 && floorAt(g, g.y) < g.y - 0.01){   // hết mái nhà: rơi xuống
+    g.onGround = false; g.vy = 0; g.jumps = 1; g.jumpAge = 1; g.cut = true; g.sliding = false; g.slideQ = false;
+  }
   if(!g.onGround){
     g.jumpAge += dt;
     if(g.vy > 0 && !g.held && !g.cut && g.jumpAge >= CFG.JUMP_MIN_T){ g.vy *= CFG.JUMP_CUT; g.cut = true; }
+    const prevY = g.y;
     g.y += g.vy * dt - CFG.G * dt * dt / 2; g.vy -= CFG.G * dt;
-    if(g.y <= 0 && g.vy <= 0){
-      g.y = 0; g.vy = 0; g.onGround = true; g.jumps = 0; g.cut = false;
+    const fl = floorAt(g, prevY);
+    if(g.y <= fl && g.vy <= 0){
+      g.y = fl; g.vy = 0; g.onGround = true; g.jumps = 0; g.cut = false;
       g.events.push('land');
       if(g.slideQ) startSlide(g);
       if(g.jumpBuf > 0){ g.jumpBuf = 0; doJump(g, false); }
@@ -304,6 +331,7 @@ export const finalScore = (kwh, coins) => Math.floor(kwh) + Math.floor(coins / C
 export const isRecord = (score, best) => score > (best || 0);
 
 /* ---------------- Người máy chơi tối ưu (kiểm thử, và chạy thử trong trình duyệt) ---------------- */
+const isBlk = (h) => h.type === 'building' || h.type === 'zap';
 export function createBot(opt = {}){ return { hold: null, air: false, birdMode: opt.birdMode || 'mix' }; }
 export function botStep(g, bot){
   const out = { jump: false, held: false, slide: false, left: false, right: false };
@@ -316,10 +344,10 @@ export function botStep(g, bot){
   const i0 = Math.max(0, windowOf(hz, d - CFG.BUILD_MAX - 6));
   for(let i = i0; i < hz.length && hz[i].x < d + 70; i++){
     const h = hz[i];
-    if(h.type === 'building'){ if(h.x + h.w > d - 0.6 && h.x <= d + 1.5) active.add(h.lane); else if(h.x > d + 1.5 && h.x < sN) sN = h.x; }
+    if(isBlk(h)){ if(h.x + h.w > d - 0.6 && h.x <= d + 1.5) active.add(h.lane); else if(h.x > d + 1.5 && h.x < sN) sN = h.x; }
   }
-  for(let i = i0; i < hz.length && hz[i].x < sN + 6; i++){ const h = hz[i]; if(h.type === 'building' && h.x > d + 1.5 && sN - d < 45) next.add(h.lane); }
-  for(let i = i0; i < hz.length && hz[i].x < Math.min(sN, d + 70); i++){ const h = hz[i]; if(h.type !== 'building' && h.x + h.w > d - 1.0) pending = true; }
+  for(let i = i0; i < hz.length && hz[i].x < sN + 6; i++){ const h = hz[i]; if(isBlk(h) && h.x > d + 1.5 && sN - d < 45) next.add(h.lane); }
+  for(let i = i0; i < hz.length && hz[i].x < Math.min(sN, d + 70); i++){ const h = hz[i]; if(!isBlk(h) && h.x + h.w > d - 1.0) pending = true; }
   const blocked = new Set([...active, ...next]);
   const settled = Math.abs(g.lx - g.lane) < 0.1;
   if(blocked.has(g.lane) && settled && !pending){
@@ -334,7 +362,7 @@ export function botStep(g, bot){
   if(!g.onGround || !settled || g.dead) return out;
   for(let i = i0; i < hz.length && hz[i].x < d + 60; i++){
     const h = hz[i];
-    if(h.type === 'building' || h.lane !== g.lane || h.botDone || h.x + h.w < d - 0.3) continue;
+    if(isBlk(h) || h.lane !== g.lane || h.botDone || h.x + h.w < d - 0.3) continue;
     const c = h.x + h.w / 2, air = AIR_T() * v, hop = HOP_T() * v;
     let act, trig;
     if(h.type === 'crate' || h.type === 'panel'){ act = 'hop'; trig = c - hop / 2; }

@@ -285,6 +285,35 @@ function makePanel(T){
   const shard = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.04, 0.5), T.panelBroken); shard.position.set(0.55, 0.05, 1.1); shard.rotation.set(0.05, 0.5, 0.2); g.add(shard);
   return g;
 }
+function makeZap(T){
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.82, 28), new THREE.MeshBasicMaterial({ color: '#ffe14a', transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; g.add(ring);
+  const dot = new THREE.Mesh(new THREE.CircleGeometry(0.46, 20), new THREE.MeshBasicMaterial({ color: '#ff3b2e', transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false })); dot.rotation.x = -Math.PI / 2; dot.position.y = 0.06; g.add(dot);
+  const seg = 14, mkLine = (color, op) => { const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array((seg + 1) * 3), 3)); const l = new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: op, fog: false })); l.frustumCulled = false; g.add(l); return l; };
+  const bolts = [mkLine('#ffffff', 1), mkLine('#9fe8ff', 0.85), mkLine('#6ac8ff', 0.7)];
+  const glow = new THREE.Sprite(T.glowCyan); glow.scale.set(3.4, 3.4, 1); glow.position.y = 0.6; g.add(glow);
+  const core = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 8), new THREE.MeshBasicMaterial({ color: '#bfeeff', transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })); core.position.y = 4; g.add(core);
+  g.userData = { ring, dot, bolts, glow, core, seg };
+  return g;
+}
+function zapShape(o, on, t){
+  const u = o.userData;
+  u.ring.visible = u.dot.visible = !on || true;
+  u.ring.material.opacity = on ? 0.9 : 0.45 + 0.4 * Math.abs(Math.sin(t * 8));
+  u.dot.material.opacity = on ? 0.8 : 0.25 + 0.3 * Math.abs(Math.sin(t * 8));
+  u.glow.visible = u.core.visible = on; u.bolts.forEach((b) => { b.visible = on; });
+  if(!on) return;
+  u.bolts.forEach((b, k) => {
+    const p = b.geometry.attributes.position; let x = 0, z = 0;
+    for(let i = 0; i <= u.seg; i++){
+      const f = i / u.seg, y = 8.5 * (1 - f); if(i > 0 && i < u.seg){ x += (Math.random() - 0.5) * 1.1; z += (Math.random() - 0.5) * 0.4; x *= 0.78; }
+      else { x = 0; z = 0; }
+      p.setXYZ(i, x + (k - 1) * 0.07, y, z);
+    }
+    p.needsUpdate = true; b.material.opacity = (k === 0 ? 1 : 0.8) * (Math.random() < 0.18 ? 0.25 : 1);
+  });
+  u.glow.material.opacity = 0.6 + Math.random() * 0.4; u.core.material.opacity = 0.2 + Math.random() * 0.3;
+}
 function makeWire(T){
   const g = new THREE.Group();
   for(const x of [-0.95, 0.95]){ const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 3.7, 8), T.metal); pole.position.set(x, 1.85, 0); g.add(pole); }
@@ -498,15 +527,16 @@ export function runner(container, opt = {}){
   // tòa nhà gắn pin mặt trời chắn đường (thay cho toa tàu)
   const BT = buildingTex(false), BF = buildingTex(true); [BT.map, BT.emi, BF.map, BF.emi].forEach(keep);
   const bldTints = ['#ffffff', '#f2e4d2', '#dbe6f2'];
-  const topMat = Lm('#8d8f94');
+  const roofTex = keep(canvasTex(128, 128, (c, w, h) => { c.fillStyle = '#c9d2dc'; c.fillRect(0, 0, w, h); const g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#2c6fd0'); g.addColorStop(1, '#16397f'); c.fillStyle = g; c.fillRect(5, 5, w - 10, h - 10); c.strokeStyle = 'rgba(225,238,255,.75)'; c.lineWidth = 2; for(let i = 1; i < 4; i++){ c.beginPath(); c.moveTo(5 + (w - 10) * i / 4, 5); c.lineTo(5 + (w - 10) * i / 4, h - 5); c.stroke(); c.beginPath(); c.moveTo(5, 5 + (h - 10) * i / 4); c.lineTo(w - 5, 5 + (h - 10) * i / 4); c.stroke(); } c.fillStyle = 'rgba(255,255,255,.14)'; c.beginPath(); c.moveTo(5, 5); c.lineTo(w * 0.6, 5); c.lineTo(w * 0.2, h - 5); c.lineTo(5, h - 5); c.fill(); }, { repeat: true }));
   const bldSlots = [];
   for(let i = 0; i < 8; i++){
     const sm = BT.map.clone(), se = BT.emi.clone(); sm.needsUpdate = se.needsUpdate = true; own.push(sm, se);
     const sideMats = bldTints.map((t) => keep(new THREE.MeshLambertMaterial({ map: sm, emissiveMap: se, emissive: '#ffffff', emissiveIntensity: 0, color: t })));
     const frontMats = bldTints.map((t) => keep(new THREE.MeshLambertMaterial({ map: BF.map, emissiveMap: BF.emi, emissive: '#ffffff', emissiveIntensity: 0, color: t })));
+    const rt = roofTex.clone(); rt.needsUpdate = true; own.push(rt); const topMat = keep(new THREE.MeshLambertMaterial({ map: rt }));
     const mesh = new THREE.Mesh(geoms.unit, [sideMats[0], sideMats[0], topMat, topMat, frontMats[0], frontMats[0]]);
     mesh.visible = false; scene.add(mesh);
-    bldSlots.push({ mesh, sm, se, sideMats, frontMats, mats: bldTints.map((_, t) => [sideMats[t], sideMats[t], topMat, topMat, frontMats[t], frontMats[t]]) });
+    bldSlots.push({ mesh, sm, se, rt, sideMats, frontMats, mats: bldTints.map((_, t) => [sideMats[t], sideMats[t], topMat, topMat, frontMats[t], frontMats[t]]) });
   }
   /* ---------- Mặt trời, mây, sao: gắn vào camera nên luôn nằm đúng vị trí trên màn hình ---------- */
   scene.add(camera);
@@ -537,9 +567,9 @@ export function runner(container, opt = {}){
   const boostRing = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.04, 6, 40), keep(new THREE.MeshBasicMaterial({ color: '#7dff7a', transparent: true, opacity: 0.55, fog: false }))); boostRing.visible = false; scene.add(boostRing);
 
   /* ---------- Pool vật cản, tia nắng, vật phẩm ---------- */
-  const pools = { crate: [], panel: [], wire: [], bird: [], item: { magnet: [], shield: [], boost: [] } };
+  const pools = { crate: [], panel: [], wire: [], bird: [], zap: [], item: { magnet: [], shield: [], boost: [] } };
   const mk = (n, f, arr) => { for(let i = 0; i < n; i++){ const o = f(); o.visible = false; scene.add(o); arr.push(o); } };
-  mk(14, () => makeCrate(TEX), pools.crate); mk(10, () => makePanel(TEX), pools.panel); mk(10, () => makeWire(TEX), pools.wire); mk(10, () => makeBird(TEX), pools.bird);
+  mk(14, () => makeCrate(TEX), pools.crate); mk(10, () => makePanel(TEX), pools.panel); mk(10, () => makeWire(TEX), pools.wire); mk(10, () => makeBird(TEX), pools.bird); mk(6, () => makeZap(TEX), pools.zap);
   for(const t of ['magnet', 'shield', 'boost']) mk(3, () => makeItem(t, TEX), pools.item[t]);
   const coinGeo = (() => { const g = new THREE.CylinderGeometry(0.34, 0.34, 0.08, 20); g.rotateX(Math.PI / 2); return g; })();
   const coinMats = [keep(new THREE.MeshLambertMaterial({ color: '#ffb020', emissive: '#ff8a00', emissiveIntensity: 0.7 })), keep(new THREE.MeshLambertMaterial({ map: Tx.coin, emissive: '#ffa000', emissiveMap: Tx.coin, emissiveIntensity: 0.6 })), keep(new THREE.MeshLambertMaterial({ map: Tx.coin, emissive: '#ffa000', emissiveMap: Tx.coin, emissiveIntensity: 0.6 }))];
@@ -618,7 +648,7 @@ export function runner(container, opt = {}){
       </div>
     </div>
     <div class="rn-scr rn-menu">
-      <div class="rn-title"><h2>⚡ Chạy năng lượng</h2><p>Vuốt trái/phải = đổi làn · chạm hoặc vuốt lên = nhảy (chạm lần nữa = nhảy đôi) · vuốt xuống = trượt</p></div>
+      <div class="rn-title"><h2>⚡ Chạy năng lượng</h2><p>Vuốt trái/phải = đổi làn · chạm hoặc vuốt lên = nhảy (chạm lần nữa = nhảy đôi; nhảy lên mái nhà thấp để chạy trên đó) · vuốt xuống = trượt · tránh tia sét giật</p></div>
       <div class="rn-bottom">
         <div class="rn-chars" role="group" aria-label="Chọn nhân vật">
           <button class="rn-char" data-g="m">👷‍♂️ Nam</button><button class="rn-char" data-g="f">👷‍♀️ Nữ</button>
@@ -805,7 +835,7 @@ export function runner(container, opt = {}){
     for(const b of backdrop){ b.m.position.set(b.x, b.h / 2 - 0.1, 20 - ((((b.s - d) % 192) + 192) % 192)); }
     for(const p of poles){ p.g.position.set(p.x, 0, 20 - ((((p.s - d) % 198) + 198) % 198)); }
     glowMat.opacity = night * 0.7; coneMat.opacity = night * 0.035; lampMat.color.set(night > 0.3 ? '#fff0b0' : '#555');
-    const used = { crate: 0, panel: 0, wire: 0, bird: 0, building: 0 };
+    const used = { crate: 0, panel: 0, wire: 0, bird: 0, zap: 0, building: 0 };
     const hz = T.hz;
     for(let i = Math.max(0, L.windowOf(hz, d - CFG.BUILD_MAX - 8)); i < hz.length && hz[i].x < d + DRAW; i++){
       const h = hz[i]; if(h.broken || h.x + h.w < d - 8) continue;
@@ -813,14 +843,15 @@ export function runner(container, opt = {}){
       if(h.type === 'building'){
         const sl = bldSlots[used.building++]; if(!sl) continue;
         const t = Math.floor(h.x) % 3;
-        sl.mesh.material = sl.mats[t]; sl.mesh.visible = true; sl.mesh.position.set(x, 3.75, zc); sl.mesh.scale.set(1.7, 7.5, h.w);
-        sl.sm.repeat.set(h.w / 6, 1); sl.se.repeat.set(h.w / 6, 1);
+        sl.mesh.material = sl.mats[t]; sl.mesh.visible = true; sl.mesh.position.set(x, L.BUILDING_H / 2, zc); sl.mesh.scale.set(1.7, L.BUILDING_H, h.w);
+        sl.sm.repeat.set(h.w / 6, 1); sl.se.repeat.set(h.w / 6, 1); sl.rt.repeat.set(1, Math.max(1, h.w / 1.7));
         continue;
       }
       const o = pools[h.type][used[h.type]++]; if(!o) continue;
       o.visible = true; o.position.set(x, 0, zc);
       if(h.type === 'crate') o.scale.set(1, 1, h.w);
       else if(h.type === 'wire'){ const sp = o.userData.spark; sp.material.opacity = Math.random() < 0.5 ? 1 : 0.3; sp.position.set((Math.random() - 0.5) * 1.6, 0.95 + Math.random() * 0.1, 0); }
+      else if(h.type === 'zap'){ zapShape(o, h.x - d < CFG.ZAP_WARN, tClock); }
       else if(h.type === 'bird'){ o.position.y = 1.3 + Math.sin(tClock * 6 + h.x) * 0.06; const f = Math.sin(tClock * 22 + h.x) * 0.9; o.userData.wl.rotation.z = f; o.userData.wr.rotation.z = -f; }
     }
     for(const t in used){ if(t === 'building'){ for(let j = used[t]; j < bldSlots.length; j++) bldSlots[j].mesh.visible = false; } else for(let j = used[t]; j < pools[t].length; j++) pools[t][j].visible = false; }
@@ -872,7 +903,7 @@ export function runner(container, opt = {}){
     const px = L.laneX(g.lx);
     ch.root.rotation.y = pose.yaw; ch.body.rotation.z = pose.roll;
     ch.root.position.set(px, Math.max(g.y, -4), 0);
-    shadow.position.set(px, 0.04, 0);
+    shadow.position.set(px, L.floorAt(g, g.y) + 0.04, 0);
     shadow.visible = g.y > -0.2; const sc = (female() ? 0.9 : 1) * 1.0 * (1 - clamp(g.y / 5, 0, 0.6)); shadow.scale.set(1.2 * sc, 1.2 * sc, 1);
     shadow.material.opacity = 0.7 - clamp(g.y / 6, 0, 0.45);
     const cy = g.y + 0.9;

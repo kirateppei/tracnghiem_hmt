@@ -630,6 +630,7 @@ function showResult(){
 function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
 /* ---------- Báo câu hỏi sai ---------- */
+const REPORT_EMAIL = 'kirateppei@gmail.com';   // nơi nhận báo lỗi dự phòng khi Firestore chưa cho ghi
 let reportQ = null;
 function openReport(q){
   if(!q || !session){ return; }
@@ -654,7 +655,16 @@ async function sendReport(){
     showToast('Đã gửi báo lỗi. Cảm ơn bạn!');
     closeReport();
   }catch(e){
-    showToast(e && e.code === 'permission-denied' ? 'Chưa gửi được: quản trị viên cần cập nhật luật Firestore (xem HUONG_DAN.md).' : 'Không gửi được, kiểm tra mạng rồi thử lại.');
+    if(e && e.code === 'permission-denied'){
+      // Luật Firestore chưa có phần báo lỗi: chuyển sang gửi bằng chia sẻ/email để vẫn báo được cho quản trị viên
+      const text = `Báo câu hỏi sai (mã ${q.id}) từ ${session.name}\n\nCâu hỏi: ${q.question}\n\nGhi chú: ${note}`;
+      closeReport();
+      if(navigator.share){ navigator.share({ title: 'Báo câu hỏi sai', text }).catch(() => {}); }
+      else{ location.href = 'mailto:' + REPORT_EMAIL + '?subject=' + encodeURIComponent('Báo câu hỏi sai ' + q.id) + '&body=' + encodeURIComponent(text); }
+      showToast('Chọn ứng dụng để gửi báo lỗi cho quản trị viên.');
+    }else{
+      showToast('Không gửi được, kiểm tra mạng rồi thử lại.');
+    }
   }finally{ btn.disabled = false; }
 }
 document.getElementById('review-list').addEventListener('click', (e) => {

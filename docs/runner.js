@@ -889,7 +889,7 @@ export function runner(container, opt = {}){
   }
   async function submitBest(rec){      // mọi ván có điểm đều gửi; bên gắn game quyết định bảng nào (tháng/năm/tất cả) mà điểm lọt top 10
     if(!opt.submitScore || !opt.me || !opt.me.uid) return 'none';
-    try{ const r = await opt.submitScore(rec); return r === 'skip' ? 'skip' : 'ok'; }catch(e){ return 'denied'; }
+    try{ const r = await opt.submitScore(rec); return r === 'skip' ? 'skip' : 'ok'; }catch(e){ try{ console.warn('Run now: HMT - không ghi được điểm lên bảng xếp hạng:', e && (e.code || e.message)); }catch(_){} return 'denied'; }
   }
 
   /* ---------- Điều khiển ---------- */
@@ -1142,7 +1142,7 @@ export function runner(container, opt = {}){
       if(!alive || screen !== 'over') return;
       const n = $('rn-onote');
       if(r === 'ok') n.textContent = '🏆 Điểm của bạn lọt top 100 bảng xếp hạng!';
-      else if(r === 'denied' && rec) n.textContent = 'Kỷ lục đã lưu trên máy này.';
+      else if(r === 'denied') n.textContent = '⚠ Chưa ghi được lên bảng xếp hạng (mạng hoặc luật Firestore chưa dán). ' + (rec ? 'Kỷ lục vẫn lưu trên máy này.' : '');
     });
   }
 

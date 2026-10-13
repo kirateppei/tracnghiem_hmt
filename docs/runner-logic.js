@@ -33,8 +33,9 @@ export const CFG = {
   GAP_K: 0.46, GAP_ADD: 1.4,           // khoảng trống giữa hai cụm = GAP_K × tốc độ + GAP_ADD (đủ đổi tới 2 làn)
   BUILD_MIN: 10, BUILD_MAX: 26,     // chiều dài tòa nhà chắn đường (m)
   ROOF_TOL: 0.25,     // chân cao hơn mái từ mức này trở lên thì không đụng tường (nhảy bám mép mái vẫn lên được)
+  BIRD_FAR: 46, BIRD_NEAR: 12, BIRD_CRY: 44,   // kền kền bắt đầu bay ngang khi còn cách BIRD_FAR m, vào đúng làn khi còn BIRD_NEAR m, kêu khi còn BIRD_CRY m
   ZAP_W: 1.2, ZAP_WARN: 15,         // tia sét: bề rộng (m); hiện cảnh báo trên đất, giáng xuống khi người chơi còn cách ZAP_WARN m
-  UNLOCK: { crate: 0, building: 50, panel: 60, zap: 90, tray: 75, wire: 140, bird: 260 },  // quãng đường (m) bắt đầu xuất hiện
+  UNLOCK: { crate: 0, building: 50, panel: 60, zap: 90, tray: 75, wire: 140, bird: 110 },  // quãng đường (m) bắt đầu xuất hiện
 };
 
 export const V_JUMP = () => Math.sqrt(2 * CFG.G * CFG.JUMP_H);
@@ -75,7 +76,7 @@ const SPEC = {
   crate: { w: [1.2, 1.6], y0: 0, y1: 0.9, w_: 4 },     // biến tần: nhảy qua hoặc nhảy lên mặt trên chạy tiếp
   panel: { w: [2.2, 2.2], y0: 0, y1: 0.55, w_: 2 },    // tấm pin vỡ: nhảy
   wire:  { w: [0.5, 0.5], y0: 0.95, y1: 6, w_: 2 },    // giàn dây điện: phải trượt
-  bird:  { w: [0.8, 0.8], y0: 0.95, y1: 1.65, w_: 2 }, // chim bay thấp: trượt hoặc nhảy hết cỡ
+  bird:  { w: [0.9, 0.9], y0: 0.95, y1: 1.65, w_: 6 }, // kền kền bay ngang qua đường (lao vào làn trước mặt): trượt hoặc nhảy hết cỡ; hay xuất hiện nhất
 };
 export const BUILDING_H = 1.3;   // nhà thấp: nhảy lên mái chạy tiếp được (nhảy ngắn ≈ 1,6 m, nhảy hết cỡ 2,8 m)
 /* Vùng người chơi "bận" (bay/trượt) quanh một chướng ngại, tính từ x của nó: [x - rel0, x + rel1] */
@@ -125,7 +126,7 @@ function genRow(T){
   } else if(kind === 'haz'){
     const k = r() < 0.3 ? 1 : (r() < 0.7 || diff < 0.15) ? 2 : 3;
     const lanes = [0, 1, 2].sort(() => r() - 0.5).slice(0, k);
-    const list = lanes.map((lane) => { const type = pickType(r, z0min); const sp = SPEC[type]; return { type, lane, w: r1(lerp(sp.w[0], sp.w[1], r())), y0: sp.y0, y1: sp.y1 }; });
+    const list = lanes.map((lane) => { const type = pickType(r, z0min); const sp = SPEC[type]; return { type, lane, w: r1(lerp(sp.w[0], sp.w[1], r())), y0: sp.y0, y1: sp.y1, dir: r() < 0.5 ? -1 : 1 }; });
     // căn tâm cụm tại c sao cho vùng bay/trượt bắt đầu đúng z0min
     let lo = 1e9;
     for(const h of list){ const [a] = zoneRel(h.type, h.w, v); lo = Math.min(lo, -a - h.w / 2); }

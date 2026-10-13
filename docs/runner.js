@@ -417,15 +417,27 @@ function makeWire(T){
   g.userData.spark = spark; return g;
 }
 function makeBird(T){
+  // kền kền: thân nâu sẫm, đầu trọc hồng xám, cổ lông trắng, mỏ quặp, cánh rộng có lông xòe; hướng về +z; cánh vỗ (userData.wl / wr)
   const g = new THREE.Group();
-  const bodyM = new THREE.MeshLambertMaterial({ color: '#4b5565' });
-  const b = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 10), bodyM); b.scale.set(0.9, 0.85, 1.3); g.add(b);
-  const h = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), bodyM); h.position.set(0, 0.1, 0.33); g.add(h);
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 6), T.beak); beak.rotation.x = Math.PI / 2; beak.position.set(0, 0.08, 0.5); g.add(beak);
-  for(const s of [-1, 1]){ const e = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), T.dark); e.position.set(s * 0.09, 0.15, 0.42); g.add(e); }
-  const tailM = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.3), bodyM); tailM.position.set(0, 0, -0.45); g.add(tailM);
-  const wing = (s) => { const w = new THREE.Group(); w.position.set(s * 0.12, 0.1, 0); const m = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.03, 0.34), bodyM); m.position.x = s * 0.28; w.add(m); g.add(w); return w; };
+  const bodyM = new THREE.MeshLambertMaterial({ color: '#3a2f2a' }), wingM = new THREE.MeshLambertMaterial({ color: '#2b221e' }), skinM = new THREE.MeshLambertMaterial({ color: '#c9a6a0' }), ruffM = new THREE.MeshLambertMaterial({ color: '#efe8dc' });
+  const b = new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 10), bodyM); b.scale.set(0.85, 0.8, 1.5); g.add(b);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, 0.3, 8), skinM); neck.position.set(0, 0.16, 0.42); neck.rotation.x = 0.7; g.add(neck);
+  const ruff = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.055, 8, 14), ruffM); ruff.position.set(0, 0.08, 0.34); ruff.rotation.x = Math.PI / 2 - 0.5; g.add(ruff);
+  const h = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), skinM); h.scale.set(0.9, 0.95, 1.15); h.position.set(0, 0.27, 0.56); g.add(h);
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.2, 8), new THREE.MeshLambertMaterial({ color: '#d9b84a' })); beak.rotation.x = Math.PI / 2 + 0.35; beak.position.set(0, 0.23, 0.72); g.add(beak);
+  const hook = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), new THREE.MeshLambertMaterial({ color: '#2a2a2a' })); hook.position.set(0, 0.18, 0.8); g.add(hook);
+  for(const s of [-1, 1]){ const e = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), new THREE.MeshLambertMaterial({ color: '#e8372a' })); e.position.set(s * 0.085, 0.3, 0.63); g.add(e); const br = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.015, 0.03), T.dark); br.position.set(s * 0.085, 0.34, 0.64); br.rotation.z = -s * 0.4; g.add(br); }
+  const tail = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.03, 0.4), bodyM); tail.position.set(0, -0.02, -0.55); tail.rotation.x = 0.15; g.add(tail);
+  const feet = [-0.07, 0.07].map((x) => { const f = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.04), new THREE.MeshLambertMaterial({ color: '#8a7f78' })); f.position.set(x, -0.22, 0.05); g.add(f); return f; });
+  // cánh: thân cánh + ba lông xòe ở đầu cánh
+  const wing = (s) => {
+    const w = new THREE.Group(); w.position.set(s * 0.18, 0.08, 0.05);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.035, 0.5), wingM); m.position.set(s * 0.43, 0, 0); w.add(m);
+    for(let k = 0; k < 4; k++){ const fe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.025, 0.1), wingM); fe.position.set(s * (0.98 + k * 0.03), 0, -0.2 + k * 0.14); fe.rotation.y = s * (-0.25 + k * 0.1); w.add(fe); }
+    g.add(w); return w;
+  };
   g.userData.wl = wing(1); g.userData.wr = wing(-1);
+  g.scale.setScalar(1.25);
   return g;
 }
 function makeBike(T){
@@ -984,7 +996,13 @@ export function runner(container, opt = {}){
       else if(h.type === 'wire'){ const sp = o.userData.spark; sp.material.opacity = Math.random() < 0.5 ? 1 : 0.3; sp.position.set((Math.random() - 0.5) * 1.6, 0.95 + Math.random() * 0.1, 0); }
       else if(h.type === 'tray'){ const u = o.userData; u.left.visible = h.lane === 0; u.right.visible = h.lane === 2; u.sign.visible = u.signB.visible = h.lane === 1; }
       else if(h.type === 'zap'){ zapShape(o, h.x - d < CFG.ZAP_WARN, tClock); }
-      else if(h.type === 'bird'){ o.position.y = 1.3 + Math.sin(tClock * 6 + h.x) * 0.06; const f = Math.sin(tClock * 22 + h.x) * 0.9; o.userData.wl.rotation.z = f; o.userData.wr.rotation.z = -f; }
+      else if(h.type === 'bird'){   // kền kền bay ngang từ ngoài đường lao vào làn trước mặt người chơi, kêu khi tới gần
+        const dd = h.x - d, s0 = clamp((CFG.BIRD_FAR - dd) / (CFG.BIRD_FAR - CFG.BIRD_NEAR), 0, 1), s = s0 * s0 * (3 - 2 * s0), ex = L.laneX(h.lane), sx = ex - (h.dir || 1) * 7.5;
+        o.position.x = sx + (ex - sx) * s; o.position.y = 1.3 + Math.sin(tClock * 6 + h.x) * 0.07 + Math.sin(s * Math.PI) * 0.25;
+        o.rotation.y = (1 - s) * (h.dir || 1) * Math.PI / 2; o.rotation.z = -(1 - s) * (h.dir || 1) * 0.35 * Math.sin(tClock * 9);
+        const f = Math.sin(tClock * (s < 1 ? 16 : 22) + h.x) * 0.9; o.userData.wl.rotation.z = f; o.userData.wr.rotation.z = -f;
+        if(!h.cried && dd < CFG.BIRD_CRY && dd > 0 && screen === 'play'){ h.cried = true; vultureCry(); }
+      }
     }
     for(const t in used){ if(t === 'building'){ for(let j = used[t]; j < bldSlots.length; j++) bldSlots[j].mesh.visible = false; } else for(let j = used[t]; j < pools[t].length; j++) pools[t][j].visible = false; }
     let ci = 0;
@@ -1068,6 +1086,10 @@ export function runner(container, opt = {}){
   }
 
   /* ---------- Sự kiện (âm thanh/hiệu ứng) ---------- */
+  function vultureCry(){   // tiếng kền kền: tiếng rít cao tụt dần, kèm tiếng xào xạc cánh
+    for(let i = 0; i < 9; i++) snd.beep(2300 - i * 150 + (i % 2) * 90, 0.075, 'sawtooth', 0.055, i * 0.055);
+    snd.beep(900, 0.25, 'square', 0.03, 0.2); snd.noise(0.35, 0.07); snd.buzz(20);
+  }
   function handleEvents(){
     const ev = G.events; if(!ev.length) return;
     for(const e of ev){

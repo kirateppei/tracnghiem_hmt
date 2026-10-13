@@ -124,7 +124,7 @@ ok('chướng ngại mở khoá đúng theo quãng đường', () => {
   const t = L.createTrack(7); t.ensure(4000);
   const first = (ty) => Math.min(...t.hz.filter((h) => h.type === ty).map((h) => h.x));
   console.log('     lần đầu: thùng', first('crate'), ' nhà', first('building'), ' pin vỡ', first('panel'), ' dây', first('wire'), ' chim', first('bird'));
-  assert.ok(first('building') >= 50 && first('panel') >= 60 - 30 && first('wire') >= 140 - 30 && first('bird') >= 260 - 30);
+  assert.ok(first('building') >= 50 && first('panel') >= 60 - 30 && first('wire') >= 140 - 30 && first('bird') >= 110 - 30);
 });
 ok('sinh đường: các cụm không chồng nhau, luôn còn ≥ 1 làn không bị nhà chắn, nhà dài 10–26 m', () => {
   const t = L.createTrack(3); t.ensure(8000);

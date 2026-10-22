@@ -948,6 +948,17 @@ html{ scroll-behavior:smooth; }
 }
 </style>
 <style id="ui-v3">
+  #remind-body{ display:grid; gap:10px; padding-top:6px; }
+  .rm-switch{ display:flex; align-items:center; gap:10px; cursor:pointer; }
+  .rm-switch input{ position:absolute; opacity:0; width:0; height:0; }
+  .rm-slider{ flex:0 0 46px; height:26px; border-radius:99px; background:rgba(127,127,127,.35); position:relative; transition:background .2s; }
+  .rm-slider::after{ content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition:transform .2s; }
+  .rm-switch input:checked + .rm-slider{ background:linear-gradient(90deg,#f59e0b,#ec4899); }
+  .rm-switch input:checked + .rm-slider::after{ transform:translateX(20px); }
+  .rm-switch input:focus-visible + .rm-slider{ outline:2px solid #f59e0b; outline-offset:2px; }
+  .rm-time{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .rm-time input{ font:inherit; padding:6px 10px; border-radius:10px; border:1px solid rgba(127,127,127,.4); background:transparent; color:inherit; }
+
 /* ================= Giao diện v3 "Nắng mới": trẻ trung, nhiều màu, kiểu ứng dụng điện thoại ================= */
 :root{ --font-body:'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif; --font-display:'Be Vietnam Pro', system-ui, sans-serif; --radius:24px; --nav-h:72px; }
 /* chủ đề mặc định mới */
@@ -1231,6 +1242,7 @@ body:has(#view-games.gm-fs) #mascot, body:has(#gm-runner-full) #mascot{ display:
       <button id="btn-review-wrong" class="secondary" style="width:100%; margin-top:8px; display:none;" onclick="startWrongReview()">🔁 Ôn lại câu đã sai</button>
       <p class="setup-hint" id="setup-total-hint"></p>
       <details class="stats-panel" id="stats-panel"><summary>📈 Tiến độ của bạn</summary><div id="stats-body"></div></details>
+      <details class="stats-panel" id="remind-panel"><summary>🔔 Nhắc học mỗi ngày</summary><div id="remind-body"></div></details>
     </div>
 
     <div id="quiz-empty" class="card empty" style="display:none;">
@@ -1571,17 +1583,18 @@ body:has(#view-games.gm-fs) #mascot, body:has(#gm-runner-full) #mascot{ display:
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=b4f30f2f2f"></script>
-<script src="firebase-config.js?v=b4f30f2f2f"></script>
-<script src="questions.js?v=b4f30f2f2f"></script>
-<script src="music.js?v=b4f30f2f2f"></script>
-<script src="inverters.js?v=b4f30f2f2f"></script>
-<script src="drawings.js?v=b4f30f2f2f"></script>
-<script src="games.js?v=b4f30f2f2f"></script>
-<script src="app.js?v=b4f30f2f2f"></script>
-<script src="leaderboard.js?v=b4f30f2f2f"></script>
-<script src="auth.js?v=b4f30f2f2f"></script>
-<script src="update.js?v=b4f30f2f2f"></script>
-<script src="mascot.js?v=b4f30f2f2f"></script>
+<script src="version.js?v=df9fa01947"></script>
+<script src="firebase-config.js?v=df9fa01947"></script>
+<script src="questions.js?v=df9fa01947"></script>
+<script src="music.js?v=df9fa01947"></script>
+<script src="inverters.js?v=df9fa01947"></script>
+<script src="drawings.js?v=df9fa01947"></script>
+<script src="games.js?v=df9fa01947"></script>
+<script src="app.js?v=df9fa01947"></script>
+<script src="leaderboard.js?v=df9fa01947"></script>
+<script src="auth.js?v=df9fa01947"></script>
+<script src="update.js?v=df9fa01947"></script>
+<script src="mascot.js?v=df9fa01947"></script>
+  <script src="reminder.js?v=df9fa01947"></script>
 </body>
 </html>

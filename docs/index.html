@@ -1093,7 +1093,7 @@ body:has(#view-games.gm-fs) #mascot, body:has(#gm-runner-full) #mascot{ display:
 .mc-ava .ms-m{ display:none; } .mc-ava .ms-m-happy{ display:inline; }
 .mc-title{ flex:1; min-width:0; } .mc-title b{ display:block; font-size:1.02rem; } .mc-title small{ display:block; opacity:.9; font-size:.72rem; }
 .mc-head button{ width:34px; height:34px; border-radius:12px; border:none; background:rgba(255,255,255,.2); color:#fff; font-size:1rem; cursor:pointer; }
-.mc-list{ flex:1; overflow-y:auto; padding:14px 12px 6px; background:linear-gradient(#F7F5FF,#FFF8F2); -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+.mc-list{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:14px 12px 6px; background:linear-gradient(#F7F5FF,#FFF8F2); -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
 .mc-msg{ max-width:86%; margin:0 0 10px; padding:10px 13px; border-radius:18px; font-size:.88rem; line-height:1.5; animation:v3in .25s; word-wrap:break-word; }
 .mc-msg.bot{ background:#fff; border:1px solid #ECE8FA; border-bottom-left-radius:6px; box-shadow:0 4px 12px rgba(60,40,140,.06); }
 .mc-msg.me{ margin-left:auto; background:linear-gradient(135deg,#6B3FD8,#9B5BFF); color:#fff; border-bottom-right-radius:6px; }
@@ -1112,6 +1112,8 @@ body:has(#view-games.gm-fs) #mascot, body:has(#gm-runner-full) #mascot{ display:
 .mc-act{ display:inline-block; margin:8px 6px 0 0; border:none; border-radius:999px; padding:7px 12px; font:inherit; font-size:.8rem; font-weight:800; color:#fff; background:linear-gradient(135deg,#FF8A3D,#FF4F8B); cursor:pointer; box-shadow:0 6px 14px rgba(255,90,120,.3); }
 .mc-chips{ display:flex; gap:6px; overflow-x:auto; padding:8px 10px 2px; background:#FFF8F2; scrollbar-width:none; }
 .mc-chips::-webkit-scrollbar{ display:none; }
+.mc-head, .mc-chips, .mc-form{ flex:none; }
+.mc-chips button{ white-space:nowrap; line-height:1.2; }
 .mc-chips button{ flex:none; border:1.5px solid #E6DEFF; background:#fff; color:#4B2FB0; border-radius:999px; padding:7px 11px; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; }
 .mc-form{ display:flex; gap:8px; padding:10px; background:#FFF8F2; border-top:1px solid #F1ECE4; }
 .mc-form input{ flex:1; min-width:0; border:2px solid #E6DEFF; border-radius:999px; padding:10px 14px; font:inherit; font-size:.9rem; outline:none; color:#1D1B3A; background:#fff; }
@@ -1583,18 +1585,18 @@ body:has(#view-games.gm-fs) #mascot, body:has(#gm-runner-full) #mascot{ display:
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=df9fa01947"></script>
-<script src="firebase-config.js?v=df9fa01947"></script>
-<script src="questions.js?v=df9fa01947"></script>
-<script src="music.js?v=df9fa01947"></script>
-<script src="inverters.js?v=df9fa01947"></script>
-<script src="drawings.js?v=df9fa01947"></script>
-<script src="games.js?v=df9fa01947"></script>
-<script src="app.js?v=df9fa01947"></script>
-<script src="leaderboard.js?v=df9fa01947"></script>
-<script src="auth.js?v=df9fa01947"></script>
-<script src="update.js?v=df9fa01947"></script>
-<script src="mascot.js?v=df9fa01947"></script>
-  <script src="reminder.js?v=df9fa01947"></script>
+<script src="version.js?v=cc55b1ef49"></script>
+<script src="firebase-config.js?v=cc55b1ef49"></script>
+<script src="questions.js?v=cc55b1ef49"></script>
+<script src="music.js?v=cc55b1ef49"></script>
+<script src="inverters.js?v=cc55b1ef49"></script>
+<script src="drawings.js?v=cc55b1ef49"></script>
+<script src="games.js?v=cc55b1ef49"></script>
+<script src="app.js?v=cc55b1ef49"></script>
+<script src="leaderboard.js?v=cc55b1ef49"></script>
+<script src="auth.js?v=cc55b1ef49"></script>
+<script src="update.js?v=cc55b1ef49"></script>
+<script src="mascot.js?v=cc55b1ef49"></script>
+  <script src="reminder.js?v=cc55b1ef49"></script>
 </body>
 </html>

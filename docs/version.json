@@ -1,7 +1,7 @@
 {
-  "version": "df9fa01947",
-  "date": "2026-10-22T05:30:34Z",
-  "notes": "Nhắc học mỗi ngày (thông báo trên app Android, file lịch cho trình duyệt)",
+  "version": "cc55b1ef49",
+  "date": "2026-10-22T07:34:06Z",
+  "notes": "Sửa mất chữ ở các nút gợi ý trong khung chat Nắng",
   "apk": {
     "version": "1.2.0",
     "url": "https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk",

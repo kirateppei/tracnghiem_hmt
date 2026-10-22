@@ -1,2 +1,2 @@
-window.APP_VERSION = "cc55b1ef49";
-window.APP_DATE = "2026-10-22T07:34:06Z";
+window.APP_VERSION = "e869cbfbbc";
+window.APP_DATE = "2026-10-22T07:50:30Z";

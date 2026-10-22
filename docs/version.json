@@ -1,7 +1,7 @@
 {
-  "version": "cc55b1ef49",
-  "date": "2026-10-22T07:34:06Z",
-  "notes": "Sửa mất chữ ở các nút gợi ý trong khung chat Nắng",
+  "version": "e869cbfbbc",
+  "date": "2026-10-22T07:50:30Z",
+  "notes": "Danh sách hệ khách lẻ + bảng vật tư (chỉ quản trị viên)",
   "apk": {
     "version": "1.2.0",
     "url": "https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk",

@@ -948,6 +948,35 @@ html{ scroll-behavior:smooth; }
 }
 </style>
 <style id="ui-v3">
+  .kl-section .toc-num{ background:linear-gradient(135deg,#6B3FD8,#FF4F8B); color:#fff; }
+  .kl-section:not(.open) .toc-body{ display:none; }
+  .kl-section .toc-inner, #kl-modal .modal{ color:var(--card-ink); }
+  .kl-bar{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+  .kl-bar > *{ flex:1; min-width:140px; text-align:center; cursor:pointer; }
+  .kl-file{ display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:16px; font-weight:700; font-size:.9rem; border:1.5px solid var(--line); color:var(--card-ink); }
+  .kl-sum{ font-size:.82rem; opacity:.85; margin:8px 0; line-height:1.6; }
+  .kl-q{ width:100%; box-sizing:border-box; padding:10px 14px; border-radius:14px; border:1px solid rgba(127,127,127,.35); font:inherit; margin:6px 0 10px; background:transparent; color:inherit; }
+  .kl-list{ display:grid; gap:10px; }
+  @media (min-width:821px){ .kl-list{ grid-template-columns:1fr 1fr; } }
+  .kl-card{ border:1px solid rgba(127,127,127,.25); border-radius:16px; padding:12px; background:color-mix(in srgb, var(--accent, #9B5BFF) 5%, transparent); }
+  .kl-top{ display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+  .kl-kwp{ flex:none; font-weight:800; color:#F59E0B; }
+  .kl-line{ font-size:.85rem; margin-top:4px; word-break:break-word; } .kl-line a{ color:inherit; }
+  .kl-tags{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .kl-tags span{ font-size:.76rem; padding:4px 9px; border-radius:99px; background:rgba(127,127,127,.14); }
+  .kl-acts{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; } .kl-acts button{ padding:7px 12px; font-size:.82rem; }
+  .kl-form{ display:grid; gap:8px; max-height:65vh; overflow:auto; }
+  .kl-form label{ display:grid; gap:3px; font-size:.8rem; font-weight:700; }
+  .kl-form input{ font:inherit; font-weight:400; padding:8px 10px; border-radius:10px; border:1px solid rgba(127,127,127,.4); }
+  .kl-del{ color:#E5484D !important; }
+  .kl-mat{ max-height:88vh; overflow:auto; }
+  .kl-tbl-wrap{ overflow-x:auto; margin-top:10px; }
+  .kl-tbl{ width:100%; border-collapse:collapse; font-size:.8rem; }
+  .kl-tbl th, .kl-tbl td{ border-bottom:1px solid rgba(127,127,127,.25); padding:6px 5px; text-align:left; vertical-align:top; }
+  .kl-tbl th{ position:sticky; top:0; background:color-mix(in srgb, var(--accent, #9B5BFF) 18%, #fff); }
+  .kl-sec td{ font-weight:800; background:rgba(127,127,127,.1); }
+  .kl-qty{ font-weight:800; text-align:right !important; white-space:nowrap; } .kl-miss{ color:#E5484D; }
+
   #remind-body{ display:grid; gap:10px; padding-top:6px; }
   .rm-switch{ display:flex; align-items:center; gap:10px; cursor:pointer; }
   .rm-switch input{ position:absolute; opacity:0; width:0; height:0; }
@@ -1585,18 +1614,19 @@ body:has(#view-games.gm-fs) #mascot, body:has(#gm-runner-full) #mascot{ display:
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=cc55b1ef49"></script>
-<script src="firebase-config.js?v=cc55b1ef49"></script>
-<script src="questions.js?v=cc55b1ef49"></script>
-<script src="music.js?v=cc55b1ef49"></script>
-<script src="inverters.js?v=cc55b1ef49"></script>
-<script src="drawings.js?v=cc55b1ef49"></script>
-<script src="games.js?v=cc55b1ef49"></script>
-<script src="app.js?v=cc55b1ef49"></script>
-<script src="leaderboard.js?v=cc55b1ef49"></script>
-<script src="auth.js?v=cc55b1ef49"></script>
-<script src="update.js?v=cc55b1ef49"></script>
-<script src="mascot.js?v=cc55b1ef49"></script>
-  <script src="reminder.js?v=cc55b1ef49"></script>
+<script src="version.js?v=e869cbfbbc"></script>
+<script src="firebase-config.js?v=e869cbfbbc"></script>
+<script src="questions.js?v=e869cbfbbc"></script>
+<script src="music.js?v=e869cbfbbc"></script>
+<script src="inverters.js?v=e869cbfbbc"></script>
+<script src="drawings.js?v=e869cbfbbc"></script>
+<script src="games.js?v=e869cbfbbc"></script>
+<script src="app.js?v=e869cbfbbc"></script>
+<script src="leaderboard.js?v=e869cbfbbc"></script>
+<script src="auth.js?v=e869cbfbbc"></script>
+<script src="update.js?v=e869cbfbbc"></script>
+<script src="mascot.js?v=e869cbfbbc"></script>
+  <script src="reminder.js?v=e869cbfbbc"></script>
+  <script src="khachle.js?v=e869cbfbbc"></script>
 </body>
 </html>

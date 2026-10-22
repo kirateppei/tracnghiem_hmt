@@ -129,6 +129,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ---------- Tài liệu nội bộ chỉ quản trị viên (danh sách hệ khách lẻ: tên, SĐT, địa chỉ) ----------
+    match /private_docs/{id} {
+      allow read, write: if isAdmin();
+    }
+
     // ---------- Câu hỏi do quản trị viên thêm, sửa, xoá ----------
     match /custom_questions/{id} {
       allow read: if isMember();

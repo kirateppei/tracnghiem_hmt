@@ -1231,6 +1231,7 @@ let dbNS = null; // Firestore (firebase.firestore()) sau khi đăng nhập; null
 
 /* ---------- Giao diện (theme) ---------- */
 const APP_THEMES = [
+  { id:'nangmoi', name:'Nắng mới (mặc định)', swatch:'linear-gradient(135deg,#6B3FD8,#FF4F8B 60%,#FFC93C)' },
   { id:'chalk',   name:'Bảng đen',       swatch:'linear-gradient(135deg,#1B3A2F,#2F7A5A)' },
   { id:'sunrise', name:'Bình minh',      swatch:'linear-gradient(135deg,#FFB347,#FF5E62)' },
   { id:'ocean',   name:'Đại dương',      swatch:'linear-gradient(135deg,#062858,#3DDCFF)' },
@@ -1238,7 +1239,7 @@ const APP_THEMES = [
   { id:'forest',  name:'Rừng xanh',      swatch:'linear-gradient(135deg,#0E3B2A,#7CE38B)' },
   { id:'minimal', name:'Tối giản sáng',  swatch:'linear-gradient(135deg,#F6F8FC,#9DBBFF)' },
 ];
-let currentThemeId = (function(){ try{ return localStorage.getItem('quiz-app-theme'); }catch(e){ return null; } })() || 'chalk';
+let currentThemeId = (function(){ try{ return localStorage.getItem('quiz-app-theme'); }catch(e){ return null; } })() || 'nangmoi';
 
 function applyTheme(id){
   currentThemeId = id;
@@ -1246,7 +1247,7 @@ function applyTheme(id){
   else { document.documentElement.setAttribute('data-app-theme', id); }
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta){
-    const colors = { chalk:'#1B3A2F', sunrise:'#FF7A4A', ocean:'#062858', sunset:'#2A0E55', forest:'#0E3B2A', minimal:'#EEF2F7' };
+    const colors = { nangmoi:'#1A1550', chalk:'#1B3A2F', sunrise:'#FF7A4A', ocean:'#062858', sunset:'#2A0E55', forest:'#0E3B2A', minimal:'#EEF2F7' };
     meta.setAttribute('content', colors[id] || '#1B3A2F');
   }
   try{ localStorage.setItem('quiz-app-theme', id); }catch(e){}

@@ -948,6 +948,13 @@ html{ scroll-behavior:smooth; }
 }
 </style>
 <style id="ui-v3">
+  .track-line{ display:flex; gap:6px; align-items:stretch; }
+  .track-line .track-row{ flex:1; min-width:0; }
+  .track-mini{ flex:none; width:38px; border:1.5px solid var(--line); background:transparent; border-radius:12px; cursor:pointer; margin-bottom:9px; }
+  .track-my-title{ font-weight:800; font-size:.85rem; margin:12px 0 6px; color:var(--card-ink); }
+  .track-add{ display:block; text-align:center; padding:11px; border-radius:14px; border:2px dashed var(--accent, #9B5BFF); color:var(--card-ink); font-weight:700; cursor:pointer; }
+  #music-track-list{ max-height:70vh; overflow:auto; }
+
   .kl-section .toc-num{ background:linear-gradient(135deg,#6B3FD8,#FF4F8B); color:#fff; }
   .kl-section:not(.open) .toc-body{ display:none; }
   .kl-section .toc-inner, #kl-modal .modal{ color:var(--card-ink); }
@@ -1614,19 +1621,19 @@ body:has(#view-games.gm-fs) #mascot, body:has(#gm-runner-full) #mascot{ display:
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=e869cbfbbc"></script>
-<script src="firebase-config.js?v=e869cbfbbc"></script>
-<script src="questions.js?v=e869cbfbbc"></script>
-<script src="music.js?v=e869cbfbbc"></script>
-<script src="inverters.js?v=e869cbfbbc"></script>
-<script src="drawings.js?v=e869cbfbbc"></script>
-<script src="games.js?v=e869cbfbbc"></script>
-<script src="app.js?v=e869cbfbbc"></script>
-<script src="leaderboard.js?v=e869cbfbbc"></script>
-<script src="auth.js?v=e869cbfbbc"></script>
-<script src="update.js?v=e869cbfbbc"></script>
-<script src="mascot.js?v=e869cbfbbc"></script>
-  <script src="reminder.js?v=e869cbfbbc"></script>
-  <script src="khachle.js?v=e869cbfbbc"></script>
+<script src="version.js?v=e8526d116a"></script>
+<script src="firebase-config.js?v=e8526d116a"></script>
+<script src="questions.js?v=e8526d116a"></script>
+<script src="music.js?v=e8526d116a"></script>
+<script src="inverters.js?v=e8526d116a"></script>
+<script src="drawings.js?v=e8526d116a"></script>
+<script src="games.js?v=e8526d116a"></script>
+<script src="app.js?v=e8526d116a"></script>
+<script src="leaderboard.js?v=e8526d116a"></script>
+<script src="auth.js?v=e8526d116a"></script>
+<script src="update.js?v=e8526d116a"></script>
+<script src="mascot.js?v=e8526d116a"></script>
+  <script src="reminder.js?v=e8526d116a"></script>
+  <script src="khachle.js?v=e8526d116a"></script>
 </body>
 </html>

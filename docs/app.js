@@ -1950,13 +1950,80 @@ const MUSIC_ICONS = { quiz_master:'🏆', quiz_countdown:'⏳', thinking_timer:'
 let musicOn = false;
 let currentTrackId = (function(){ try{ return localStorage.getItem('quiz-app-music-track'); }catch(e){ return null; } })() || 'quiz_master';
 
-function getTrackById(id){ return MUSIC_TRACKS.find(t => t.id === id) || MUSIC_TRACKS[0]; }
+/* Nhạc của người dùng: chọn file trên máy, lưu trong IndexedDB của máy đó (không tải lên máy chủ) */
+let MY_TRACKS = [];
+const MY_MUSIC_MAX = 30 * 1024 * 1024;
+function myMusicDb(){
+  return new Promise((ok, no) => {
+    if(!window.indexedDB){ no(new Error('no idb')); return; }
+    const rq = indexedDB.open('hmt-my-music', 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore('tracks', { keyPath: 'id' });
+    rq.onsuccess = () => ok(rq.result); rq.onerror = () => no(rq.error);
+  });
+}
+async function myMusicTx(mode, fn){
+  const db = await myMusicDb();
+  return new Promise((ok, no) => {
+    const tx = db.transaction('tracks', mode), st = tx.objectStore('tracks');
+    let out; const r = fn(st); if(r) r.onsuccess = () => { out = r.result; };
+    tx.oncomplete = () => { db.close(); ok(out); }; tx.onerror = tx.onabort = () => { db.close(); no(tx.error); };
+  });
+}
+const myTracksReady = myMusicTx('readonly', (st) => st.getAll())
+  .then((rows) => { MY_TRACKS = (rows || []).sort((a, b) => a.added - b.added); })
+  .catch(() => { MY_TRACKS = []; });
+function trackSrc(t){
+  if(t.blob){ if(!t.url) t.url = URL.createObjectURL(t.blob); return t.url; }
+  return t.src || ('data:audio/mpeg;base64,' + t.b64);
+}
+function niceTrackName(file){
+  return file.name.replace(/\.[^.]+$/, '')
+    .replace(/^[0-9a-f]{8}-/i, '')                                   // tiền tố khi tải lên
+    .replace(/YTSave\.to_?|YouTube_Media_?|y2mate\.com\s*-?/gi, '')    // tên web tải nhạc
+    .replace(/^[A-Za-z0-9_-]{11}_{2,}-?/, '')                         // mã video YouTube
+    .replace(/_\d+_vbr$|_\d{2,3}kbps$|\(\d{2,3}kbps\)/gi, '')
+    .replace(/\s+-\s+/g, ' – ').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60) || 'Bài của tôi';
+}
+async function addMyTracks(files){
+  let n = 0;
+  for(const f of files){
+    if(!/^audio\//.test(f.type) && !/\.(mp3|m4a|aac|ogg|wav|opus|flac)$/i.test(f.name)){ showToast(`"${f.name}" không phải file nhạc.`); continue; }
+    if(f.size > MY_MUSIC_MAX){ showToast(`"${f.name}" quá lớn (tối đa 30 MB).`); continue; }
+    const t = { id: 'my_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: niceTrackName(f), blob: f, added: Date.now() };
+    try{ await myMusicTx('readwrite', (st) => st.put(t)); MY_TRACKS.push(t); n++; }
+    catch(e){ showToast('Không lưu được nhạc trên máy này (bộ nhớ đầy hoặc chế độ ẩn danh).'); }
+  }
+  if(n){ showToast(`Đã thêm ${n} bài vào Nhạc của bạn.`); selectTrack(MY_TRACKS[MY_TRACKS.length - 1].id); }
+  else renderMusicTrackList();
+}
+async function renameMyTrack(id){
+  const t = MY_TRACKS.find(x => x.id === id); if(!t) return;
+  const name = prompt('Tên bài nhạc:', t.name); if(!name || !name.trim()) return;
+  t.name = name.trim().slice(0, 60);
+  try{ await myMusicTx('readwrite', (st) => st.put({ id: t.id, name: t.name, blob: t.blob, added: t.added })); }catch(e){}
+  renderMusicTrackList();
+}
+async function deleteMyTrack(id){
+  const t = MY_TRACKS.find(x => x.id === id); if(!t || !confirm(`Xoá "${t.name}" khỏi máy này?`)) return;
+  try{ await myMusicTx('readwrite', (st) => st.delete(id)); }catch(e){}
+  if(t.url) URL.revokeObjectURL(t.url);
+  MY_TRACKS = MY_TRACKS.filter(x => x.id !== id);
+  if(currentTrackId === id){
+    const audio = document.getElementById('bg-music'), wasOn = musicOn;
+    audio.pause(); delete audio.dataset.trackId;
+    currentTrackId = MUSIC_TRACKS[0].id; try{ localStorage.setItem('quiz-app-music-track', currentTrackId); }catch(e){}
+    if(wasOn) selectTrack(currentTrackId);
+  }
+  renderMusicTrackList();
+}
+
+function getTrackById(id){ return MUSIC_TRACKS.find(t => t.id === id) || MY_TRACKS.find(t => t.id === id) || MUSIC_TRACKS[0]; }
 
 function loadCurrentTrackIntoAudio(){
   const audio = document.getElementById('bg-music');
   const track = getTrackById(currentTrackId);
   if(audio.dataset.trackId !== track.id){
-    audio.src = track.src || ('data:audio/mpeg;base64,' + track.b64);
+    audio.src = trackSrc(track);
     audio.dataset.trackId = track.id;
   }
 }
@@ -1980,6 +2047,10 @@ function toggleMusic(){
 // Tự bật nhạc nền ngay sau khi người dùng đăng nhập (bấm nút đăng nhập đã tính
 // là một thao tác chạm của người dùng, nên trình duyệt cho phép phát âm thanh).
 function autoStartMusic(){
+  if(/^my_/.test(currentTrackId) && !MY_TRACKS.find(x => x.id === currentTrackId)){ myTracksReady.then(autoStartMusic2); return; }
+  autoStartMusic2();
+}
+function autoStartMusic2(){
   // Mặc định luôn BẬT nhạc nền mỗi lần đăng nhập. Người dùng vẫn có thể tắt bằng nút 🎵
   // trong lúc dùng; lần đăng nhập sau nhạc lại tự bật.
   const audio = document.getElementById('bg-music');
@@ -2007,13 +2078,19 @@ function openMusicPicker(){
 function closeMusicPicker(){ document.getElementById('music-modal-backdrop').classList.remove('show'); }
 function renderMusicTrackList(){
   const wrap = document.getElementById('music-track-list');
-  wrap.innerHTML = MUSIC_TRACKS.map(t => `
+  const row = (t, mine) => `
+    <div class="track-line">
     <button class="track-row ${t.id === currentTrackId ? 'active' : ''}" onclick="selectTrack('${t.id}')">
-      <span class="track-icon">${MUSIC_ICONS[t.id] || '🎵'}</span>
-      <span style="flex:1;">${escapeHtml(t.name)}</span>
+      <span class="track-icon">${mine ? '💿' : (MUSIC_ICONS[t.id] || '🎵')}</span>
+      <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(t.name)}</span>
       <span style="font-size:0.75rem; color:#8a9089;">${t.id === currentTrackId ? (musicOn ? 'Đang phát' : 'Đã chọn') : ''}</span>
-    </button>`).join('') +
-    `<p class="form-hint" style="margin-top:6px;">Chạm vào bài để nghe ngay. Bấm nút 🎵 để bật/tắt nhạc.</p>`;
+    </button>${mine ? `<button class="track-mini" title="Đổi tên" onclick="renameMyTrack('${t.id}')">✏️</button><button class="track-mini" title="Xoá" onclick="deleteMyTrack('${t.id}')">🗑</button>` : ''}
+    </div>`;
+  wrap.innerHTML = MUSIC_TRACKS.map(t => row(t, false)).join('') +
+    `<div class="track-my-title">💿 Nhạc của bạn</div>` +
+    (MY_TRACKS.length ? MY_TRACKS.map(t => row(t, true)).join('') : '') +
+    `<label class="track-add">➕ Thêm nhạc từ máy<input type="file" accept="audio/*,.mp3,.m4a" multiple hidden onchange="addMyTracks([...this.files]); this.value='';"></label>` +
+    `<p class="form-hint" style="margin-top:6px;">Chạm vào bài để nghe ngay. Bấm nút 🎵 để bật/tắt nhạc. Nhạc của bạn chỉ lưu trên máy này, không tải lên mạng.</p>`;
 }
 function selectTrack(id){
   currentTrackId = id;

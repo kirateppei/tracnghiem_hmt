@@ -278,11 +278,13 @@
   /* ---------- AI thật: Gemini qua Firebase AI Logic (gói miễn phí, dùng chính dự án Firebase của app) ----------
      Không có khoá API trong mã: Firebase giữ khoá. Cần bật một lần trong Firebase Console: Build → AI Logic → Get started → Gemini Developer API.
      Nếu chưa bật, hết lượt miễn phí hoặc mất mạng: Nắng tự quay về trả lời từ tài liệu có sẵn. */
-  const AI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
+  // Google ngừng dần các đời model cũ (2.5 đã đóng với dự án mới): dùng tên "-latest" để tự lên đời, kèm bản cố định dự phòng
+  const AI_MODELS = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
   const AI_DAILY = 40;                 // số câu hỏi AI mỗi người mỗi ngày (giữ trong hạn mức miễn phí của cả công ty)
   const AI_SYS = `Bạn là "Nắng", linh vật trợ lý của Công ty TNHH Hiệp Minh Thịnh (HMT) – công ty lắp đặt, vận hành điện năng lượng mặt trời ở Việt Nam – trong ứng dụng trắc nghiệm nội bộ cho nhân viên kỹ thuật.
 Quy tắc:
 - Luôn trả lời bằng tiếng Việt, thân thiện, ngắn gọn (thường dưới 120 từ), có thể dùng 1–2 emoji. Dùng gạch đầu dòng khi liệt kê bước.
+- Chỉ chào ở câu trả lời đầu tiên của cuộc trò chuyện; các câu sau vào thẳng nội dung, không lặp lời chào.
 - Chuyên môn: điện mặt trời, tấm pin, biến tần (inverter) các hãng, pin lưu trữ, đấu nối AC/DC, giám sát, đo kiểm, an toàn điện, làm việc trên mái.
 - Nếu có phần NGỮ CẢNH từ tài liệu/ngân hàng câu hỏi của HMT thì ưu tiên dùng và không mâu thuẫn với nó. Nếu không chắc chắn, nói rõ là không chắc và khuyên xem tài liệu của hãng.
 - Về an toàn điện: luôn nhắc ngắt nguồn AC và DC, đo kiểm tra không điện áp, trang bị bảo hộ; không bao giờ khuyên làm việc khi đang có điện.
@@ -303,7 +305,8 @@ Quy tắc:
   function aiFail(err){
     const msg = String((err && (err.code || err.message)) || err || '');
     try{ console.warn('Nắng AI lỗi:', msg); }catch(e){}
-    if(/api-not-enabled|not been used|disabled|PERMISSION_DENIED|403|API_KEY|forbidden/i.test(msg)) aiOff = 'setup';
+    if(/not found|404|no longer available/i.test(msg)) aiOff = 'err';
+    else if(/api-not-enabled|not been used|disabled|PERMISSION_DENIED|403|API_KEY|forbidden/i.test(msg)) aiOff = 'setup';
     else if(/quota|429|RESOURCE_EXHAUSTED|rate/i.test(msg)) aiOff = 'quota';
     else if(/network|fetch|Failed to fetch|offline|timeout/i.test(msg)) aiOff = 'net';
     else aiOff = 'err';
@@ -343,7 +346,7 @@ Quy tắc:
         return out.trim();
       }catch(e){
         lastErr = e;
-        if(!/not found|404|is not supported|unsupported model|empty/i.test(String(e && (e.message || e)))) break;   // chỉ đổi model khi model không có
+        if(!/not found|404|no longer available|is not supported|unsupported model|empty/i.test(String(e && (e.message || e)))) break;   // chỉ đổi model khi model không có
       }
     }
     throw lastErr || new Error('ai');

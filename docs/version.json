@@ -1,7 +1,7 @@
 {
-  "version": "d5d545dff8",
-  "date": "2026-10-30T08:30:00Z",
-  "notes": "Nắng AI dùng model Gemini mới (bản 2.5 đã ngừng)",
+  "version": "178ab8266f",
+  "date": "2026-10-30T08:42:06Z",
+  "notes": "Nắng gợi ý tài liệu liên quan chính xác hơn",
   "apk": {
     "version": "1.2.0",
     "url": "https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk",

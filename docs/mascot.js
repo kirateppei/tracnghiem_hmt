@@ -184,19 +184,34 @@
     else bot(`Tiếc ghê, đáp án đúng là <b>${'ABCDEF'[q.correct]}</b>. 💪` + ex + `<button type="button" class="mc-act" data-act="again">📝 Thử câu khác</button>`, 'sad');
   }
 
+  // Từ quá chung chung: không đủ để chọn tài liệu nếu đứng một mình
+  const GENERIC = new Set(['kiem', 'tra', 'lam', 'xem', 'biet', 'muon', 'can', 'phai', 'neu', 'nen', 'thuc', 'hien', 'buoc', 'luc', 'khi', 'vi', 'tai', 'do', 'nhung', 'cac', 'nhieu', 'it', 'tot', 'dung', 'sai', 'tiep', 'sau', 'truoc', 'roi', 'gio', 'day', 'kia', 'ay', 'duoc', 'bao', 'lau', 'tai', 'sao', 'thong', 'tin', 'huong', 'dan', 'chi', 'tiet', 'cu', 'the', 'ro', 'hon', 'them', 'nua', 'nguyen', 'nhan', 'xu', 'ly', 'sua', 'khac', 'phuc', 'chua', 'dat', 'on', 'ok', 'van', 'cung', 'luon', 'hay', 'gap', 'thuong', 'xay', 'ra']);
+  let prevTerms = [];
   function docHits(qn){
     try{
       if(typeof buildDocIndex !== 'function') return [];
       if(!docIndex) docIndex = buildDocIndex();
-      const terms = qn.split(/\s+/).filter((t) => t.length >= 2 && !STOP.has(t));
-      if(!terms.length) return [];
-      let hits = docIndex.filter((e) => terms.every((t) => e.norm.includes(t)));
-      if(!hits.length){   // nới lỏng: chấm điểm theo số từ khoá khớp
-        hits = docIndex.map((e) => ({ e, s: terms.filter((t) => e.norm.includes(t)).length })).filter((x) => x.s >= Math.max(1, Math.ceil(terms.length * 0.6))).sort((a, b) => b.s - a.s).map((x) => x.e);
-      }
-      return hits.slice(0, 3).map((e) => ({ e, terms }));
+      let terms = qn.split(/\s+/).filter((t) => t.length >= 2 && !STOP.has(t));
+      let key = terms.filter((t) => !GENERIC.has(t));
+      // câu hỏi nối tiếp ("vậy kiểm tra thế nào?"): mượn từ khoá của câu trước
+      if(key.length === 0 && prevTerms.length){ key = prevTerms.slice(); terms = terms.concat(prevTerms); }
+      if(!key.length) return [];
+      prevTerms = key.slice(0, 6);
+      // so khớp NGUYÊN TỪ (tránh "chua" khớp nhầm "chuan"), cụm 2 từ đi liền nhau được cộng điểm
+      const has = (e, w) => { if(!e.flat) e.flat = ' ' + e.norm.split(/[^a-z0-9]+/).filter(Boolean).join(' ') + ' '; return e.flat.includes(' ' + w + ' ') || (w.length >= 5 && e.flat.includes(' ' + w)); };
+      const bigrams = []; for(let i = 0; i + 1 < terms.length; i++) if(!GENERIC.has(terms[i]) || !GENERIC.has(terms[i + 1])) bigrams.push(terms[i] + ' ' + terms[i + 1]);
+      const tt = (e) => { if(e.tflat == null) e.tflat = ' ' + dsNormT(e.title).split(/[^a-z0-9]+/).filter(Boolean).join(' ') + ' '; return key.filter((w) => e.tflat.includes(' ' + w + ' ')).length; };
+      let need = key.length === 1 ? 1 : Math.max(2, Math.ceil(key.length * 0.6));
+      const base = docIndex.map((e) => { const k = key.filter((w) => has(e, w)).length; return { e, k, b: k >= 2 ? bigrams.filter((g) => has(e, g)).length : 0 }; });
+      if(key.length >= 4 && !base.some((x) => x.k >= need)) need = Math.max(2, Math.ceil(key.length * 0.4));   // nới lỏng khi câu dài
+      const hits = base
+        .filter((x) => x.k >= need)
+        .map((x) => Object.assign(x, { t: tt(x.e) }))
+        .sort((x, y) => (y.b - x.b) || (y.k - x.k) || (y.t - x.t));
+      return hits.slice(0, 3).map((x) => ({ e: x.e, terms }));
     }catch(e){ return []; }
   }
+  const dsNormT = (s) => (typeof dsNorm === 'function' ? dsNorm(s) : String(s || '').toLowerCase());
   const STOP = new Set(['la', 'gi', 'cua', 'cho', 'toi', 'minh', 'ban', 'em', 'anh', 'chi', 'nao', 'nhu', 'the', 'va', 'voi', 'co', 'khong', 'ko', 'hay', 'thi', 'ma', 'de', 'cach', 'sao', 'bi', 'duoc', 'nhe', 'a', 'oi', 'nang', 'hoi', 'giup', 'xin', 'vay', 'nay', 'mot', 'cai', 'trong', 've']);
   let lastHits = [];
   function openDoc(i){
@@ -206,8 +221,9 @@
     setTimeout(() => { window.__docHits = lastHits.map((x) => x.e); if(typeof openDocHit === 'function') openDocHit(i); }, 200);
   }
   function bankHit(qn){
-    const terms = qn.split(/\s+/).filter((t) => t.length >= 2 && !STOP.has(t));
-    if(!terms.length) return null;
+    let terms = qn.split(/\s+/).filter((t) => t.length >= 2 && !STOP.has(t));
+    if(!terms.some((t) => !GENERIC.has(t))) terms = terms.concat(prevTerms);   // câu nối tiếp: dùng từ khoá câu trước
+    if(!terms.some((t) => !GENERIC.has(t))) return null;
     let best = null, bs = 0;
     for(const q of bankQuestions()){
       if(!q || !q.question) continue;

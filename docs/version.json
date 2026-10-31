@@ -1,7 +1,7 @@
 {
-  "version": "010ec2c65b",
-  "date": "2026-10-31T12:31:13Z",
-  "notes": "Thi thử tách 2 bài: mức Dễ và mức Khó",
+  "version": "605dc40a89",
+  "date": "2026-10-31T12:46:11Z",
+  "notes": "Phần Thi riêng: đề trộn Dễ/TB/Khó, chấm thang 10, bảng điểm thi",
   "apk": {
     "version": "1.2.0",
     "url": "https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk",

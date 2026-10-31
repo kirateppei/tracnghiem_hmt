@@ -315,7 +315,7 @@ const RESUME_MAX_AGE = 12 * 3600 * 1000;
 function resumeKey(){ return 'hmt-resume-' + ((session && session.uid) || 'guest'); }
 function saveProgress(){
   if(!quizOrder || !quizOrder.length) return;
-  try{ localStorage.setItem(resumeKey(), JSON.stringify({ ids: quizOrder.map((q) => q.id), answers, score, review: quizReview, exam: quizExam, examLevel, deadline: examDeadline, anon: quizAnon, ts: Date.now() })); }catch(e){}
+  try{ localStorage.setItem(resumeKey(), JSON.stringify({ ids: quizOrder.map((q) => q.id), answers, score, review: quizReview, exam: quizExam, examLevel, examStartedAt, deadline: examDeadline, anon: quizAnon, ts: Date.now() })); }catch(e){}
 }
 function clearProgress(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
 function loadProgress(){
@@ -337,7 +337,7 @@ function resumeQuiz(){
   const order = p.ids.map((id) => byId.get(String(id))).filter(Boolean);
   if(order.length !== p.ids.length){ showToast('Một số câu hỏi đã bị xoá nên không tiếp tục được bài cũ.'); clearProgress(); updateResumeBanner(); return; }
   quizOrder = order; answers = p.answers; score = p.score || 0;
-  quizReview = !!p.review; quizExam = !!p.exam; examLevel = EXAM_LEVELS[p.examLevel] ? p.examLevel : 'de'; quizAnon = !!p.anon; currentIndex = answers.length;
+  quizReview = !!p.review; quizExam = !!p.exam; examLevel = EXAMS[p.examLevel] ? p.examLevel : 'de'; examStartedAt = p.examStartedAt || p.ts || Date.now(); quizAnon = !!p.anon; currentIndex = answers.length;
   document.getElementById('quiz-setup').style.display = 'none';
   document.getElementById('quiz-empty').style.display = 'none';
   document.getElementById('quiz-result').style.display = 'none';
@@ -385,9 +385,58 @@ function startStarReview(){
 let quizReview = false;
 let quizExam = false;
 const EXAM_COUNT = 40, EXAM_MINUTES = 45, EXAM_PASS = 80;
-// Hai bài thi thử: chỉ lấy câu đúng mức độ, không dùng câu Cực khó / Xuất sắc
+// Phần THI (khác luyện trắc nghiệm): mỗi đề trộn 3 mức Dễ / Trung bình / Khó theo tỉ lệ,
+// không dùng câu Cực khó / Xuất sắc. Chấm thang 10, câu khó được nhiều điểm hơn.
+const EXAMS = {
+  de:  { name: 'Dễ',  mix: { de: 0.5, tb: 0.35, kho: 0.15 } },
+  kho: { name: 'Khó', mix: { de: 0.2, tb: 0.4,  kho: 0.4  } },
+};
 const EXAM_LEVELS = { de: 'Dễ', kho: 'Khó' };
-let examLevel = 'de';
+const EXAM_POINTS = { de: 1, tb: 1.5, kho: 2 };
+const EXAM_TIER_NAME = { de: 'Dễ', tb: 'Trung bình', kho: 'Khó' };
+let examLevel = 'de', examStartedAt = 0;
+function examMixCounts(level, total){
+  const mix = EXAMS[level].mix, keys = Object.keys(mix);
+  const raw = keys.map((k) => ({ k, v: mix[k] * total })), out = {};
+  raw.forEach((r) => { out[r.k] = Math.floor(r.v); });
+  let left = total - Object.values(out).reduce((a, b) => a + b, 0);
+  raw.sort((a, b) => (b.v % 1) - (a.v % 1)).forEach((r) => { if(left > 0){ out[r.k]++; left--; } });
+  return out;
+}
+function buildExam(level, total){
+  const want = examMixCounts(level, total);
+  let picked = [];
+  Object.keys(want).forEach((k) => {
+    const pool = questions.filter((q) => (q.difficulty || 'tb') === k);
+    picked = picked.concat(pickQuestions(pool, Math.min(want[k], pool.length)));
+  });
+  // thiếu câu ở một mức: bù bằng câu mức gần nhất (vẫn trong Dễ / TB / Khó)
+  if(picked.length < total){
+    const used = new Set(picked.map((q) => q.id));
+    const rest = questions.filter((q) => ['de', 'tb', 'kho'].includes(q.difficulty || 'tb') && !used.has(q.id));
+    picked = picked.concat(pickQuestions(rest, Math.min(total - picked.length, rest.length)));
+  }
+  const order = { de: 0, tb: 1, kho: 2 };   // đề đi từ dễ đến khó
+  return shuffle(picked).sort((a, b) => order[a.difficulty || 'tb'] - order[b.difficulty || 'tb']);
+}
+function examScore(){
+  const by = { de: { n: 0, c: 0 }, tb: { n: 0, c: 0 }, kho: { n: 0, c: 0 } };
+  let got = 0, max = 0, correct = 0;
+  quizOrder.forEach((q, i) => {
+    const k = by[q.difficulty] ? q.difficulty : 'tb', pts = EXAM_POINTS[k], ok = !!(answers[i] && answers[i].isCorrect);
+    by[k].n++; max += pts; if(ok){ by[k].c++; got += pts; correct++; }
+  });
+  const score = max ? Math.round(got / max * 1000) / 100 : 0;
+  return { score, correct, total: quizOrder.length, by };
+}
+function examGrade(s){
+  if(s >= 9) return { t: 'Xuất sắc', e: '🏆' };
+  if(s >= 8) return { t: 'Giỏi', e: '🥇' };
+  if(s >= 6.5) return { t: 'Khá', e: '👍' };
+  if(s >= 5) return { t: 'Đạt', e: '✅' };
+  return { t: 'Chưa đạt', e: '📚' };
+}
+const fmtScore = (s) => s.toFixed(2).replace(/\.?0+$/, '').replace('.', ',');
 let examInterval = null, examDeadline = 0;
 function stopExamTimer(){ if(examInterval){ clearInterval(examInterval); examInterval = null; } }
 function examTick(){
@@ -398,12 +447,12 @@ function examTick(){
   if(left <= 0){ stopExamTimer(); showToast('Hết giờ thi thử!'); showResult(); }
 }
 function startExam(level){
-  level = EXAM_LEVELS[level] ? level : 'de';
-  const pool = questions.filter((q) => (q.difficulty || 'tb') === level);
-  if(pool.length < 10){ showToast(`Chưa đủ câu hỏi mức ${EXAM_LEVELS[level]} để thi thử.`); return; }
+  level = EXAMS[level] ? level : 'de';
+  const usable = questions.filter((q) => ['de', 'tb', 'kho'].includes(q.difficulty || 'tb'));
+  if(usable.length < 10){ showToast('Chưa đủ câu hỏi để tạo đề thi.'); return; }
   quizAnon = !!document.getElementById('setup-anon').checked;
-  quizReview = false; quizExam = true; examLevel = level;
-  quizOrder = pickQuestions(pool, Math.min(EXAM_COUNT, pool.length));
+  quizReview = false; quizExam = true; examLevel = level; examStartedAt = Date.now();
+  quizOrder = buildExam(level, Math.min(EXAM_COUNT, usable.length));
   currentIndex = 0; score = 0; answers = [];
   document.getElementById('quiz-setup').style.display = 'none';
   document.getElementById('quiz-empty').style.display = 'none';
@@ -690,6 +739,8 @@ function renderReview(){
 }
 function toggleReviewAll(){ reviewAll = !reviewAll; renderReview(); }
 
+let lastWasExam = false;
+function retryLast(){ if(lastWasExam) startExam(examLevel); else startQuiz(); }
 function showResult(){
   clearProgress();
   stopTimer(); const wasExam = quizExam; stopExamTimer();
@@ -707,19 +758,29 @@ function showResult(){
       ring.style.transition = ''; ring.style.strokeDashoffset = String(327*(1 - pct/100));
     }); });
   }
-  if(pct >= 80) launchConfetti();
+  if(pct >= 80 && !wasExam) launchConfetti();
   let msg;
   if(pct === 100) msg = `Xuất sắc, ${session.name}! Trọn vẹn điểm số 🎉`;
   else if(pct >= 80) msg = `Rất tốt, ${session.name}! Gần như hoàn hảo.`;
   else if(pct >= 50) msg = `Khá ổn, ${session.name}, cố gắng thêm nhé.`;
   else msg = `${session.name} cần ôn lại thêm một chút.`;
-  document.getElementById('result-msg').textContent = wasExam
-    ? `${pct >= EXAM_PASS ? '✅ ĐẠT' : '❌ CHƯA ĐẠT'} bài thi ${EXAM_LEVELS[examLevel]} (yêu cầu ${EXAM_PASS}%) · ${score}/${total} câu${answers.length < total ? ` · bỏ trống ${total - answers.length}` : ''}`
-    : `${msg} (${pct}%)`;
+  const eb = document.getElementById('exam-break'); if(eb) eb.innerHTML = '';
+  lastWasExam = wasExam;
+  if(wasExam){
+    const ex = examScore(), g = examGrade(ex.score);
+    document.getElementById('result-fraction').textContent = fmtScore(ex.score);
+    document.getElementById('result-pct').textContent = 'điểm / 10';
+    if(ring) requestAnimationFrame(() => requestAnimationFrame(() => { ring.style.strokeDashoffset = String(327 * (1 - ex.score / 10)); }));
+    document.getElementById('result-msg').textContent = `${g.e} ${g.t} · Bài thi ${EXAMS[examLevel].name} · đúng ${ex.correct}/${ex.total} câu${answers.length < total ? ` · bỏ trống ${total - answers.length}` : ''}`;
+    if(eb) eb.innerHTML = ['de', 'tb', 'kho'].filter((k) => ex.by[k].n).map((k) => `<div class="eb-row"><span>${EXAM_TIER_NAME[k]} <small>(${EXAM_POINTS[k].toString().replace('.', ',')} đ/câu)</small></span><span class="eb-bar"><i style="width:${Math.round(ex.by[k].c / ex.by[k].n * 100)}%"></i></span><b>${ex.by[k].c}/${ex.by[k].n}</b></div>`).join('');
+    if(ex.score >= 8) launchConfetti();
+    if(window.Exam) Exam.submit({ exam: examLevel, score: ex.score, correct: ex.correct, total: ex.total, dur: Math.max(0, Math.round((Date.now() - examStartedAt) / 1000)), anon: quizAnon });
+  } else document.getElementById('result-msg').textContent = `${msg} (${pct}%)`;
 
   reviewAll = false; renderReview();
 
-  if(quizReview){ showToast('Lượt ôn câu sai không tính vào bảng xếp hạng.'); }
+  if(wasExam){ /* điểm thi ghi vào bảng điểm thi riêng (exam.js) */ }
+  else if(quizReview){ showToast('Lượt ôn câu sai không tính vào bảng xếp hạng.'); }
   else submitLeaderboardEntry({
     name: session.name,
     anon: quizAnon,
@@ -727,7 +788,7 @@ function showResult(){
     score: score,
     total: total,
     pct: pct,
-    category: wasExam ? 'Thi thử · ' + EXAM_LEVELS[examLevel] : (function(){
+    category: (function(){
       const dsel = document.getElementById('setup-difficulty');
       const label = dsel.selectedOptions[0] ? dsel.selectedOptions[0].textContent : 'Tất cả mức độ';
       return label;

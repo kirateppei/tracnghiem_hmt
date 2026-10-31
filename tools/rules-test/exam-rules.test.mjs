@@ -1,0 +1,27 @@
+// Kiểm thử luật exam_results (bảng điểm thi).
+import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
+import { readFileSync } from 'node:fs';
+import { serverTimestamp, collection, addDoc, getDocs, query, orderBy, where, limit, Timestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+const env = await initializeTestEnvironment({ projectId: 'demo-hmt', firestore: { rules: readFileSync('firestore.rules', 'utf8'), host: '127.0.0.1', port: 8089 } });
+const me = env.authenticatedContext('uA', { email: 'a@x.com', email_verified: true }).firestore();
+const other = env.authenticatedContext('uB', { email: 'b@x.com', email_verified: true }).firestore();
+const anon = env.unauthenticatedContext().firestore();
+const good = (uid, o = {}) => ({ uid, name: 'An', exam: 'de', score: 8.25, correct: 33, total: 40, dur: 1500, ts: serverTimestamp(), ...o });
+let pass = 0, fail = 0;
+const t = async (name, fn) => { try { await fn(); pass++; console.log('ok  ', name); } catch (e) { fail++; console.log('LỖI', name, '->', String(e.message || e).split('\n')[0].slice(0, 140)); } };
+const C = (db) => collection(db, 'exam_results');
+await t('ghi điểm thi hợp lệ (đề Dễ)', () => assertSucceeds(addDoc(C(me), good('uA'))));
+await t('ghi điểm thi đề Khó, điểm nguyên 10', () => assertSucceeds(addDoc(C(me), good('uA', { exam: 'kho', score: 10, correct: 40 }))));
+await t('kèm ảnh Google hợp lệ', () => assertSucceeds(addDoc(C(me), good('uA', { photo: 'https://lh3.googleusercontent.com/a/x' }))));
+await t('mạo danh uid -> chặn', () => assertFails(addDoc(C(other), good('uA'))));
+await t('điểm > 10 -> chặn', () => assertFails(addDoc(C(me), good('uA', { score: 10.5 }))));
+await t('đúng nhiều hơn tổng -> chặn', () => assertFails(addDoc(C(me), good('uA', { correct: 41 }))));
+await t('đề lạ -> chặn', () => assertFails(addDoc(C(me), good('uA', { exam: 'cuckho' }))));
+await t('trường lạ -> chặn', () => assertFails(addDoc(C(me), { ...good('uA'), hack: 1 })));
+await t('ts giả -> chặn', () => assertFails(addDoc(C(me), good('uA', { ts: Timestamp.fromDate(new Date(2020, 1, 1)) }))));
+await t('đọc bảng theo ts (tháng)', async () => { const s = await assertSucceeds(getDocs(query(C(other), where('ts', '>=', Timestamp.fromDate(new Date(2020, 0, 1))), orderBy('ts', 'desc'), limit(1000)))); if (s.size < 3) throw new Error('chỉ thấy ' + s.size); });
+await t('sửa điểm -> chặn', async () => { const s = await getDocs(query(C(me), limit(1))); await assertFails(updateDoc(s.docs[0].ref, { score: 10 })); });
+await t('xoá (không phải quản trị) -> chặn', async () => { const s = await getDocs(query(C(me), limit(1))); await assertFails(deleteDoc(s.docs[0].ref)); });
+await t('chưa đăng nhập đọc -> chặn', () => assertFails(getDocs(query(C(anon), limit(5)))));
+console.log('\nđạt', pass, ' lỗi', fail);
+await env.cleanup(); process.exit(fail ? 1 : 0);

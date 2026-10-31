@@ -1,0 +1,17 @@
+Q = [
+("real:kyo4105","Dụng cụ đo lường","de","Thiết bị trong ảnh (Kyoritsu 4105A) dùng để đo gì?",
+ ["Điện trở tiếp địa (điện trở nối đất)","Điện trở cách điện của dây DC","Điện áp chuỗi pin","Nhiệt độ bề mặt"],
+ "Máy có thang 20/200/2000 Ω và chế độ EARTH VOLTAGE, dùng với cọc phụ theo phương pháp 3 cực."),
+("real:kyo4105","Vận hành & bảo trì","tb","Máy trong ảnh hiển thị 16,37 Ω khi đo hệ tiếp địa chống sét có yêu cầu thiết kế không quá 10 Ω. Kết luận nào đúng?",
+ ["Chưa đạt yêu cầu, cần bổ sung cọc/giảm điện trở rồi đo lại","Đạt vì nhỏ hơn 20 Ω","Đạt vì máy đang ở thang 20 Ω","Không đánh giá được vì đơn vị là Ω"],
+ "So sánh trực tiếp với giá trị thiết kế: 16,37 Ω lớn hơn 10 Ω nên chưa đạt."),
+("real:kyo4105","Dụng cụ đo lường","tb","Trước khi đo điện trở đất, vì sao nên xoay máy trong ảnh sang vị trí EARTH VOLTAGE trước?",
+ ["Để kiểm tra điện áp nhiễu trên hệ tiếp địa; điện áp này cao thì kết quả đo điện trở sẽ sai","Để sạc pin cho máy","Để đo điện áp lưới 220 V","Để tắt máy an toàn"],
+ "Hướng dẫn của máy yêu cầu điện áp đất đủ thấp (thường dưới khoảng 10 V) thì phép đo điện trở mới chính xác."),
+("real:kyo4105","Dụng cụ đo lường","tb","Đang đo ở thang 20 Ω mà màn hình máy trong ảnh báo vượt thang. Cần làm gì?",
+ ["Chuyển sang thang lớn hơn (200 Ω) rồi bấm đo lại","Chuyển về EARTH VOLTAGE và đọc kết quả","Kết luận điện trở đất bằng 0","Rút bớt cọc phụ"],
+ "Vượt thang nghĩa là điện trở lớn hơn giới hạn của thang đang chọn; chọn thang cao hơn để đọc được giá trị."),
+("real:kyo4105","Dụng cụ đo lường","kho","Máy đo đất trong ảnh có 3 dây đo màu xanh lá, vàng, đỏ. Cách đấu đúng theo phương pháp 3 cực là gì?",
+ ["Xanh lá (E) vào cọc tiếp địa cần đo, vàng (P) vào cọc phụ đo áp ở giữa, đỏ (C) vào cọc phụ dòng xa nhất","Đỏ vào cọc tiếp địa, xanh vào cọc xa nhất","Cả ba dây vào cùng cọc tiếp địa","Vàng vào cọc tiếp địa, đỏ và xanh vào cùng một cọc phụ"],
+ "E – P – C thẳng hàng: E là cọc cần đo, P là cọc áp ở giữa, C là cọc dòng ở xa nhất (theo hướng dẫn của Kyoritsu)."),
+]

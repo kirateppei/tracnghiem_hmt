@@ -1,7 +1,7 @@
 {
-  "version": "3ce8cb20e2",
-  "date": "2026-10-31T13:55:17Z",
-  "notes": "Giảm câu tính toán còn 284 câu",
+  "version": "52ccdfc088",
+  "date": "2026-10-31T13:57:22Z",
+  "notes": "Thêm 5 câu hỏi máy đo điện trở đất Kyoritsu 4105A",
   "apk": {
     "version": "1.2.0",
     "url": "https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk",

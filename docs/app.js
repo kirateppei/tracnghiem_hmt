@@ -1679,10 +1679,11 @@ const CHECK_KEY = 'hmt-checklist';
 function loadCheck(){ try{ const c = JSON.parse(localStorage.getItem(CHECK_KEY) || '{}'); return c && typeof c === 'object' ? c : {}; }catch(e){ return {}; } }
 function saveCheck(c){ try{ localStorage.setItem(CHECK_KEY, JSON.stringify(c)); }catch(e){} }
 function checklistHtml(){
-  const c = loadCheck(); const done = c.done || {};
+  const c = loadCheck(); const done = c.done || {}, notes = c.notes || {};
   return `<div class="card">
     <label class="calc-f" style="margin-bottom:10px;"><span>Tên công trình</span><input id="ck-name" type="text" maxlength="80" placeholder="Ví dụ: Nhà anh Nam, 5kW" value="${escapeHtml(c.name || '')}" oninput="ckSaveName(this.value)"></label>
-    ${CHECKLIST.map((g, gi) => `<div class="st-title">${escapeHtml(g.t)}</div>${g.items.map((it, ii) => `<label class="ck-item"><input type="checkbox" ${done[gi + '-' + ii] ? 'checked' : ''} onchange="ckToggle('${gi}-${ii}', this.checked)"><span>${escapeHtml(it)}</span></label>`).join('')}`).join('')}
+    ${CHECKLIST.map((g, gi) => `<div class="st-title">${escapeHtml(g.t)}</div>${g.items.map((it, ii) => { const k = gi + '-' + ii, note = notes[k] || ''; return `<div class="ck-row"><label class="ck-item"><input type="checkbox" ${done[k] ? 'checked' : ''} onchange="ckToggle('${k}', this.checked)"><span>${escapeHtml(it)}</span></label><button type="button" class="ck-note-btn ${note ? 'has' : ''}" id="ck-nb-${k}" onclick="ckNoteToggle('${k}')" aria-label="Ghi chú cho mục này" title="Ghi chú">📝</button></div><textarea class="ck-note" id="ck-note-${k}" rows="2" maxlength="300" placeholder="Ghi chú: số đo, vấn đề gặp phải…" oninput="ckSaveNote('${k}', this.value)" ${note ? '' : 'hidden'}>${escapeHtml(note)}</textarea>`; }).join('')}`).join('')}
+    <label class="calc-f" style="margin-top:12px;"><span>📝 Ghi chú chung cho công trình</span><textarea id="ck-gnote" class="ck-note" rows="3" maxlength="1000" placeholder="Ví dụ: mái tôn cũ cần gia cố, chủ nhà hẹn bàn giao thứ 7…" oninput="ckSaveNote('_', this.value)">${escapeHtml(notes._ || '')}</textarea></label>
     <div id="ck-progress" class="form-hint" style="margin-top:10px;"></div>
     <div style="display:flex; gap:8px; margin-top:8px;"><button class="secondary" type="button" style="flex:1;" onclick="ckReset()">Bỏ chọn hết</button><button class="primary" type="button" style="flex:1;" onclick="ckShare()">Chia sẻ</button></div>
     <p class="form-hint">Danh sách chung để tham khảo; theo sách hướng dẫn của từng model và quy định tại công trình.</p>
@@ -1691,12 +1692,16 @@ function checklistHtml(){
 function ckCount(){ const done = loadCheck().done || {}; const total = CHECKLIST.reduce((n, g) => n + g.items.length, 0); return { n: Object.keys(done).filter((k) => done[k]).length, total }; }
 function ckUpdate(){ const el = document.getElementById('ck-progress'); if(el){ const { n, total } = ckCount(); el.textContent = `Đã hoàn thành ${n}/${total} mục`; } }
 function ckToggle(key, on){ const c = loadCheck(); c.done = c.done || {}; if(on) c.done[key] = 1; else delete c.done[key]; saveCheck(c); ckUpdate(); }
+function ckSaveNote(key, v){ const c = loadCheck(); c.notes = c.notes || {}; v = String(v || '').slice(0, key === '_' ? 1000 : 300); if(v.trim()) c.notes[key] = v; else delete c.notes[key]; saveCheck(c); const b = document.getElementById('ck-nb-' + key); if(b) b.classList.toggle('has', !!v.trim()); }
+function ckNoteToggle(key){ const a = document.getElementById('ck-note-' + key); if(!a) return; a.hidden = !a.hidden; if(!a.hidden) a.focus(); }
 function ckSaveName(v){ const c = loadCheck(); c.name = v.slice(0, 80); saveCheck(c); }
 function ckReset(){ const c = loadCheck(); c.done = {}; saveCheck(c); document.querySelectorAll('.ck-item input').forEach((i) => { i.checked = false; }); ckUpdate(); }
 function ckText(){
   const c = loadCheck(), done = c.done || {};
   const lines = [`Checklist lắp đặt${c.name ? ' · ' + c.name : ''}`];
-  CHECKLIST.forEach((g, gi) => { lines.push('', g.t); g.items.forEach((it, ii) => lines.push((done[gi + '-' + ii] ? '☑ ' : '☐ ') + it)); });
+  const notes = c.notes || {};
+  CHECKLIST.forEach((g, gi) => { lines.push('', g.t); g.items.forEach((it, ii) => { const k = gi + '-' + ii; lines.push((done[k] ? '☑ ' : '☐ ') + it); if(notes[k]) lines.push('   📝 ' + notes[k].replace(/\s*\n\s*/g, ' / ')); }); });
+  if(notes._) lines.push('', '📝 Ghi chú chung: ' + notes._);
   const { n, total } = ckCount(); lines.push('', `Hoàn thành ${n}/${total} mục`);
   return lines.join('\n');
 }

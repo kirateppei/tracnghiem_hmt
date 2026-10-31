@@ -935,6 +935,12 @@ footer.credit{ font-size:0.72rem; opacity:0.6; margin-top:22px; padding-bottom:1
 .calc-res.ok{ background:var(--good-bg); } .calc-res.bad{ background:var(--bad-bg); } .calc-res.warn{ background:#FFF3D6; }
 .ck-item{ display:flex; gap:10px; align-items:flex-start; padding:7px 0; font-size:0.88rem; line-height:1.45; cursor:pointer; }
 .ck-item input{ width:20px; height:20px; margin-top:1px; flex:none; accent-color: var(--brand-green); }
+.ck-row{ display:flex; align-items:flex-start; gap:6px; }
+.ck-row .ck-item{ flex:1; min-width:0; }
+.ck-note-btn{ flex:none; width:34px; height:34px; margin-top:2px; border-radius:10px; border:1px solid var(--line); background:transparent; cursor:pointer; opacity:.45; font-size:.95rem; }
+.ck-note-btn.has{ opacity:1; border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.ck-note{ width:100%; box-sizing:border-box; margin:2px 0 8px 30px; width:calc(100% - 30px); font:inherit; font-size:.85rem; padding:8px 10px; border-radius:10px; border:1px solid var(--line); background:transparent; color:inherit; resize:vertical; }
+#ck-gnote{ margin-left:0; width:100%; }
 
 /* Cuộn mượt và tôn trọng "giảm chuyển động" */
 html{ scroll-behavior:smooth; }
@@ -1621,19 +1627,19 @@ body:has(#view-games.gm-fs) #mascot, body:has(#gm-runner-full) #mascot{ display:
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=178ab8266f"></script>
-<script src="firebase-config.js?v=178ab8266f"></script>
-<script src="questions.js?v=178ab8266f"></script>
-<script src="music.js?v=178ab8266f"></script>
-<script src="inverters.js?v=178ab8266f"></script>
-<script src="drawings.js?v=178ab8266f"></script>
-<script src="games.js?v=178ab8266f"></script>
-<script src="app.js?v=178ab8266f"></script>
-<script src="leaderboard.js?v=178ab8266f"></script>
-<script src="auth.js?v=178ab8266f"></script>
-<script src="update.js?v=178ab8266f"></script>
-<script src="mascot.js?v=178ab8266f"></script>
-  <script src="reminder.js?v=178ab8266f"></script>
-  <script src="khachle.js?v=178ab8266f"></script>
+<script src="version.js?v=ec5f3e4170"></script>
+<script src="firebase-config.js?v=ec5f3e4170"></script>
+<script src="questions.js?v=ec5f3e4170"></script>
+<script src="music.js?v=ec5f3e4170"></script>
+<script src="inverters.js?v=ec5f3e4170"></script>
+<script src="drawings.js?v=ec5f3e4170"></script>
+<script src="games.js?v=ec5f3e4170"></script>
+<script src="app.js?v=ec5f3e4170"></script>
+<script src="leaderboard.js?v=ec5f3e4170"></script>
+<script src="auth.js?v=ec5f3e4170"></script>
+<script src="update.js?v=ec5f3e4170"></script>
+<script src="mascot.js?v=ec5f3e4170"></script>
+  <script src="reminder.js?v=ec5f3e4170"></script>
+  <script src="khachle.js?v=ec5f3e4170"></script>
 </body>
 </html>

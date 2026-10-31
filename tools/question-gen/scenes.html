@@ -169,6 +169,12 @@ const SC = {
   clip: () => chart(curve((t) => Math.min(0.78, bell(t) * 1.05)), 'Công suất biến tần trong ngày (trời nắng đẹp)'),
   trip: () => chart(curve((t) => (t > 11.2 && t < 13.6) ? 0 : bell(t) * 0.85), 'Công suất biến tần trong ngày (trời nắng đẹp)'),
   cloudy: () => chart(curve((t) => bell(t) * (0.35 + 0.5 * Math.abs(Math.sin(t * 7.3) * Math.cos(t * 2.1)))), 'Công suất biến tần trong ngày'),
+  earth3p: () => S(`<rect width="800" height="500" fill="#cfe8ff"/><rect x="0" y="300" width="800" height="200" fill="#a8875e"/><rect x="0" y="292" width="800" height="12" fill="#6fa04a"/>
+     ${[[90, 'E', '#2fb34a', 'Cọc tiếp địa'], [430, 'P', '#f5d000', 'Cọc phụ P'], [720, 'C', '#e02424', 'Cọc phụ C']].map(([x, n, c, lb], i) => `<rect x="${x - 5}" y="${i ? 270 : 250}" width="10" height="${i ? 90 : 170}" fill="#777"/>${T(x, i ? 255 : 235, 18, n, '#111', 800, 'middle')}${T(x, 395 + (i ? 0 : 40), 14, lb, '#2a1d10', 700, 'middle')}`).join('')}
+     <rect x="40" y="40" width="200" height="130" rx="14" fill="#f2b705" stroke="#c48f00" stroke-width="3"/><rect x="58" y="58" width="164" height="60" rx="6" fill="#b9c7a8"/>${T(212, 102, 34, '8.6 Ω', '#1a2412', 800, 'end')}${T(140, 150, 13, 'EARTH TESTER', '#5a4100', 700, 'middle')}
+     <path d="M90,170 C90,210 92,230 90,250" stroke="#2fb34a" stroke-width="4" fill="none"/><path d="M180,170 C260,230 380,240 430,270" stroke="#f5d000" stroke-width="4" fill="none"/><path d="M220,160 C400,190 640,220 720,270" stroke="#e02424" stroke-width="4" fill="none"/>
+     <line x1="95" y1="470" x2="425" y2="470" stroke="#2a1d10" stroke-width="2"/><line x1="435" y1="470" x2="715" y2="470" stroke="#2a1d10" stroke-width="2"/>
+     ${T(260, 462, 15, 'khoảng 5–10 m', '#2a1d10', 700, 'middle')}${T(575, 462, 15, 'khoảng 5–10 m', '#2a1d10', 700, 'middle')}${T(400, 30, 15, 'Hình mô phỏng: đo điện trở tiếp địa phương pháp 3 cực (E – P – C thẳng hàng)', '#1d2433', 700, 'middle')}`),
   wires: () => S(`<rect width="800" height="500" fill="#f2efe9"/>${[['A', '#8b5a2b'], ['B', '#1e5bd8'], ['C', 'stripe'], ['D', '#111']].map(([n, c], i) => `<g transform="translate(0,${90 + i * 95})">${c === 'stripe' ? `<rect x="120" y="0" width="560" height="34" rx="17" fill="#2fb34a"/>${Array.from({ length: 14 }, (_, k) => `<rect x="${130 + k * 40}" y="0" width="18" height="34" fill="#f5d000"/>`).join('')}` : `<rect x="120" y="0" width="560" height="34" rx="17" fill="${c}"/>`}${T(80, 26, 26, n, '#222', 800, 'middle')}</g>`).join('')}`),
 };
 

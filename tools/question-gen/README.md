@@ -18,3 +18,4 @@ Hình là mô phỏng, không phải ảnh chụp thật. Có ảnh/video thật
 ## hq208–hq216: hệ hybrid LuxPower/Senergy, đọc app giám sát (`hyb_q.py`; ảnh công trình đã làm mờ mặt người, bản đồ, dấu thời gian; ảnh lắp đặt đã cắt số điện thoại quảng cáo).
 ## hq217–hq229: tủ tụ bù, tủ phân phối ACB/MCCB, phát quang và phun cỏ nhà máy (`site_q.py`; ảnh công trình đã làm mờ bản đồ, dấu thời gian, cắt watermark Timemark).
 ## hq230–hq239: máy đo cách điện Hioki IR4053, đo kiểm tại biến tần, đào rãnh, Huawei đang vận hành, đo AC (`site_q2.py`; đã làm mờ mặt người, GPS, bản đồ, cắt dấu thời gian).
+## hq240–hq305: 66 câu từ ảnh công trình thật (`site_q3.py`): phòng biến tần, tủ điện, MBA, hệ Solis hybrid, tủ gom chuỗi, Sungrow + app, đầu MC4 cháy/nứt, tấm pin vỡ/cháy, phát quang, đo cách điện, đo nhiệt. Đã làm mờ mặt người, GPS, bản đồ, dấu thời gian/địa điểm; bỏ ảnh trùng.

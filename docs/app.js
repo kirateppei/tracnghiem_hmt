@@ -315,7 +315,7 @@ const RESUME_MAX_AGE = 12 * 3600 * 1000;
 function resumeKey(){ return 'hmt-resume-' + ((session && session.uid) || 'guest'); }
 function saveProgress(){
   if(!quizOrder || !quizOrder.length) return;
-  try{ localStorage.setItem(resumeKey(), JSON.stringify({ ids: quizOrder.map((q) => q.id), answers, score, review: quizReview, exam: quizExam, deadline: examDeadline, anon: quizAnon, ts: Date.now() })); }catch(e){}
+  try{ localStorage.setItem(resumeKey(), JSON.stringify({ ids: quizOrder.map((q) => q.id), answers, score, review: quizReview, exam: quizExam, examLevel, deadline: examDeadline, anon: quizAnon, ts: Date.now() })); }catch(e){}
 }
 function clearProgress(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
 function loadProgress(){
@@ -337,7 +337,7 @@ function resumeQuiz(){
   const order = p.ids.map((id) => byId.get(String(id))).filter(Boolean);
   if(order.length !== p.ids.length){ showToast('Một số câu hỏi đã bị xoá nên không tiếp tục được bài cũ.'); clearProgress(); updateResumeBanner(); return; }
   quizOrder = order; answers = p.answers; score = p.score || 0;
-  quizReview = !!p.review; quizExam = !!p.exam; quizAnon = !!p.anon; currentIndex = answers.length;
+  quizReview = !!p.review; quizExam = !!p.exam; examLevel = EXAM_LEVELS[p.examLevel] ? p.examLevel : 'de'; quizAnon = !!p.anon; currentIndex = answers.length;
   document.getElementById('quiz-setup').style.display = 'none';
   document.getElementById('quiz-empty').style.display = 'none';
   document.getElementById('quiz-result').style.display = 'none';
@@ -385,6 +385,9 @@ function startStarReview(){
 let quizReview = false;
 let quizExam = false;
 const EXAM_COUNT = 40, EXAM_MINUTES = 45, EXAM_PASS = 80;
+// Hai bài thi thử: chỉ lấy câu đúng mức độ, không dùng câu Cực khó / Xuất sắc
+const EXAM_LEVELS = { de: 'Dễ', kho: 'Khó' };
+let examLevel = 'de';
 let examInterval = null, examDeadline = 0;
 function stopExamTimer(){ if(examInterval){ clearInterval(examInterval); examInterval = null; } }
 function examTick(){
@@ -394,11 +397,13 @@ function examTick(){
   if(bar){ bar.style.width = (left / (EXAM_MINUTES * 60) * 100) + '%'; bar.classList.toggle('warn', left <= 300); }
   if(left <= 0){ stopExamTimer(); showToast('Hết giờ thi thử!'); showResult(); }
 }
-function startExam(){
-  if(questions.length < 10){ showToast('Chưa đủ câu hỏi để thi thử.'); return; }
+function startExam(level){
+  level = EXAM_LEVELS[level] ? level : 'de';
+  const pool = questions.filter((q) => (q.difficulty || 'tb') === level);
+  if(pool.length < 10){ showToast(`Chưa đủ câu hỏi mức ${EXAM_LEVELS[level]} để thi thử.`); return; }
   quizAnon = !!document.getElementById('setup-anon').checked;
-  quizReview = false; quizExam = true;
-  quizOrder = pickWeightedByDifficulty(questions, Math.min(EXAM_COUNT, questions.length));
+  quizReview = false; quizExam = true; examLevel = level;
+  quizOrder = pickQuestions(pool, Math.min(EXAM_COUNT, pool.length));
   currentIndex = 0; score = 0; answers = [];
   document.getElementById('quiz-setup').style.display = 'none';
   document.getElementById('quiz-empty').style.display = 'none';
@@ -566,7 +571,7 @@ function renderQuestion(){
   const myIndex = currentIndex; // chụp lại để đối chiếu khi video kết thúc (tránh tính giờ nhầm câu)
   document.getElementById('q-explain-box').classList.remove('show');
   document.getElementById('q-counter').textContent = `Câu ${currentIndex+1}/${quizOrder.length}`;
-  document.getElementById('q-score-live').textContent = quizExam ? 'Thi thử' : `Điểm: ${score}`;
+  document.getElementById('q-score-live').textContent = quizExam ? 'Thi · ' + EXAM_LEVELS[examLevel] : `Điểm: ${score}`;
   { const rb = document.getElementById('report-btn'); if(rb) rb.style.display = 'none'; }
   document.getElementById('progress-fill').style.width = `${(currentIndex/quizOrder.length)*100}%`;
   document.getElementById('q-cat-tag').textContent = q.category || 'Khác';
@@ -633,7 +638,7 @@ function selectAnswer(idx){
   answers.push({ id: q.id, question: q.question, options: q.options, chosen: idx, correct: q.correct, isCorrect, explanation: q.explanation });
   recordWrongAnswer(q.id, isCorrect); recordStat(q, isCorrect); saveProgress();
   try{ navigator.vibrate && navigator.vibrate(isCorrect ? 20 : [40, 40, 40]); }catch(e){}
-  document.getElementById('q-score-live').textContent = quizExam ? 'Thi thử' : `Điểm: ${score}`;
+  document.getElementById('q-score-live').textContent = quizExam ? 'Thi · ' + EXAM_LEVELS[examLevel] : `Điểm: ${score}`;
   document.getElementById('next-btn').disabled = false;
   if(quizExam){ document.getElementById('q-explain-box').classList.remove('show'); } else showExplanationBox(q, isCorrect);
   const rb = document.getElementById('report-btn'); if(rb) rb.style.display = quizExam ? 'none' : 'inline-block';
@@ -709,7 +714,7 @@ function showResult(){
   else if(pct >= 50) msg = `Khá ổn, ${session.name}, cố gắng thêm nhé.`;
   else msg = `${session.name} cần ôn lại thêm một chút.`;
   document.getElementById('result-msg').textContent = wasExam
-    ? `${pct >= EXAM_PASS ? '✅ ĐẠT' : '❌ CHƯA ĐẠT'} thi thử (yêu cầu ${EXAM_PASS}%) · ${score}/${total} câu${answers.length < total ? ` · bỏ trống ${total - answers.length}` : ''}`
+    ? `${pct >= EXAM_PASS ? '✅ ĐẠT' : '❌ CHƯA ĐẠT'} bài thi ${EXAM_LEVELS[examLevel]} (yêu cầu ${EXAM_PASS}%) · ${score}/${total} câu${answers.length < total ? ` · bỏ trống ${total - answers.length}` : ''}`
     : `${msg} (${pct}%)`;
 
   reviewAll = false; renderReview();
@@ -722,7 +727,7 @@ function showResult(){
     score: score,
     total: total,
     pct: pct,
-    category: wasExam ? 'Thi thử' : (function(){
+    category: wasExam ? 'Thi thử · ' + EXAM_LEVELS[examLevel] : (function(){
       const dsel = document.getElementById('setup-difficulty');
       const label = dsel.selectedOptions[0] ? dsel.selectedOptions[0].textContent : 'Tất cả mức độ';
       return label;

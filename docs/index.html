@@ -1281,7 +1281,8 @@ body:has(#view-games.gm-fs) #mascot, body:has(#gm-runner-full) #mascot{ display:
       <div id="first-tip" class="tip-card" style="display:none;">👋 <b>Mới dùng?</b> <b>Làm bài</b> để luyện và tích điểm · <b>Xếp hạng</b> so với đồng nghiệp · <b>Tài liệu</b> có hướng dẫn biến tần, bản vẽ và công cụ tính nhanh · <b>Chơi</b> để giải trí.<button type="button" class="ghost" onclick="dismissTip()">Đã hiểu</button></div>
       <div id="resume-row" style="display:none; margin-bottom:10px;"><button class="primary" id="resume-btn" style="width:100%;" onclick="resumeQuiz()">▶ Tiếp tục bài đang làm</button></div>
       <button class="primary" style="width:100%;" onclick="startQuiz()">Bắt đầu làm bài</button>
-      <button id="btn-exam" class="secondary" style="width:100%; margin-top:8px;" onclick="startExam()">🎓 Thi thử (40 câu · 45 phút)</button>
+      <div id="btn-exam" style="display:flex; gap:8px; margin-top:8px;"><button class="secondary" style="flex:1;" onclick="startExam('de')">🎓 Thi mức Dễ</button><button class="secondary" style="flex:1;" onclick="startExam('kho')">🎓 Thi mức Khó</button></div>
+      <p class="setup-hint" style="margin:4px 0 0;">Bài thi: 40 câu · 45 phút · đạt từ 80%</p>
       <button id="btn-star-review" class="secondary" style="width:100%; margin-top:8px; display:none;" onclick="startStarReview()">⭐ Ôn câu đã đánh dấu</button>
       <button id="btn-review-wrong" class="secondary" style="width:100%; margin-top:8px; display:none;" onclick="startWrongReview()">🔁 Ôn lại câu đã sai</button>
       <p class="setup-hint" id="setup-total-hint"></p>
@@ -1627,19 +1628,19 @@ body:has(#view-games.gm-fs) #mascot, body:has(#gm-runner-full) #mascot{ display:
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="version.js?v=ec5f3e4170"></script>
-<script src="firebase-config.js?v=ec5f3e4170"></script>
-<script src="questions.js?v=ec5f3e4170"></script>
-<script src="music.js?v=ec5f3e4170"></script>
-<script src="inverters.js?v=ec5f3e4170"></script>
-<script src="drawings.js?v=ec5f3e4170"></script>
-<script src="games.js?v=ec5f3e4170"></script>
-<script src="app.js?v=ec5f3e4170"></script>
-<script src="leaderboard.js?v=ec5f3e4170"></script>
-<script src="auth.js?v=ec5f3e4170"></script>
-<script src="update.js?v=ec5f3e4170"></script>
-<script src="mascot.js?v=ec5f3e4170"></script>
-  <script src="reminder.js?v=ec5f3e4170"></script>
-  <script src="khachle.js?v=ec5f3e4170"></script>
+<script src="version.js?v=010ec2c65b"></script>
+<script src="firebase-config.js?v=010ec2c65b"></script>
+<script src="questions.js?v=010ec2c65b"></script>
+<script src="music.js?v=010ec2c65b"></script>
+<script src="inverters.js?v=010ec2c65b"></script>
+<script src="drawings.js?v=010ec2c65b"></script>
+<script src="games.js?v=010ec2c65b"></script>
+<script src="app.js?v=010ec2c65b"></script>
+<script src="leaderboard.js?v=010ec2c65b"></script>
+<script src="auth.js?v=010ec2c65b"></script>
+<script src="update.js?v=010ec2c65b"></script>
+<script src="mascot.js?v=010ec2c65b"></script>
+  <script src="reminder.js?v=010ec2c65b"></script>
+  <script src="khachle.js?v=010ec2c65b"></script>
 </body>
 </html>

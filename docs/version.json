@@ -1,7 +1,7 @@
 {
-  "version": "ec5f3e4170",
-  "date": "2026-10-31T03:32:25Z",
-  "notes": "Checklist lắp đặt: thêm ghi chú từng mục và ghi chú chung",
+  "version": "010ec2c65b",
+  "date": "2026-10-31T12:31:13Z",
+  "notes": "Thi thử tách 2 bài: mức Dễ và mức Khó",
   "apk": {
     "version": "1.2.0",
     "url": "https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk",

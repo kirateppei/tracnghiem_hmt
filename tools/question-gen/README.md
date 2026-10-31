@@ -15,3 +15,4 @@ Hình là mô phỏng, không phải ảnh chụp thật. Có ảnh/video thật
 ## hq188–hq193: súng đo nhiệt hồng ngoại Hioki FT3700 (`meter_q3.py`, ảnh sản phẩm do công ty gửi).
 ## hq194–hq198: máy đo điện trở đất Kyoritsu 4105A (`meter_q4.py`, ảnh sản phẩm do công ty gửi).
 ## hq199–hq207: nhận biết và sử dụng biến tần Huawei, GoodWe (`inv_q.py`, ảnh sản phẩm đã cắt bỏ logo và huy hiệu của đại lý).
+## hq208–hq216: hệ hybrid LuxPower/Senergy, đọc app giám sát (`hyb_q.py`; ảnh công trình đã làm mờ mặt người, bản đồ, dấu thời gian; ảnh lắp đặt đã cắt số điện thoại quảng cáo).

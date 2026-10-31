@@ -17,3 +17,4 @@ Hình là mô phỏng, không phải ảnh chụp thật. Có ảnh/video thật
 ## hq199–hq207: nhận biết và sử dụng biến tần Huawei, GoodWe (`inv_q.py`, ảnh sản phẩm đã cắt bỏ logo và huy hiệu của đại lý).
 ## hq208–hq216: hệ hybrid LuxPower/Senergy, đọc app giám sát (`hyb_q.py`; ảnh công trình đã làm mờ mặt người, bản đồ, dấu thời gian; ảnh lắp đặt đã cắt số điện thoại quảng cáo).
 ## hq217–hq229: tủ tụ bù, tủ phân phối ACB/MCCB, phát quang và phun cỏ nhà máy (`site_q.py`; ảnh công trình đã làm mờ bản đồ, dấu thời gian, cắt watermark Timemark).
+## hq230–hq239: máy đo cách điện Hioki IR4053, đo kiểm tại biến tần, đào rãnh, Huawei đang vận hành, đo AC (`site_q2.py`; đã làm mờ mặt người, GPS, bản đồ, cắt dấu thời gian).

@@ -1,7 +1,7 @@
 {
-  "version": "f99c946631",
-  "date": "2026-10-31T13:47:41Z",
-  "notes": "Thêm 6 câu hỏi ampe kìm đo điện áp DC (ảnh thật)",
+  "version": "c3c36de851",
+  "date": "2026-10-31T13:54:02Z",
+  "notes": "Thêm 6 câu hỏi súng đo nhiệt hồng ngoại",
   "apk": {
     "version": "1.2.0",
     "url": "https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk",

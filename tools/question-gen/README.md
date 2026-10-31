@@ -12,3 +12,4 @@ Hình là mô phỏng, không phải ảnh chụp thật. Có ảnh/video thật
 - 2 câu dùng hình mô phỏng `earth3p` (đo điện trở đất 3 cực).
 
 ## hq182–hq187: ảnh thật ampe kìm SEW 3900 CL đo điện áp DC tại cực tủ pin (`meter_q2.py`, chạy bằng build2.py đổi tên file câu hỏi).
+## hq188–hq193: súng đo nhiệt hồng ngoại Hioki FT3700 (`meter_q3.py`, ảnh sản phẩm do công ty gửi).

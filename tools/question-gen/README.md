@@ -10,3 +10,5 @@ Hình là mô phỏng, không phải ảnh chụp thật. Có ảnh/video thật
 - `meter_q.py`: 30 câu (1 câu trùng đã bỏ) về ampe kìm, máy đo cách điện, camera nhiệt, máy đo điện trở đất.
 - 14 câu dùng **ảnh thật từ công trình** do công ty gửi (đã cắt bỏ dấu thời gian/địa điểm, làm mờ bản đồ, tọa độ GPS và khuôn mặt người) — ảnh gốc không lưu trong repo; 1 ảnh máy Kyoritsu 3005A là ảnh sản phẩm.
 - 2 câu dùng hình mô phỏng `earth3p` (đo điện trở đất 3 cực).
+
+## hq182–hq187: ảnh thật ampe kìm SEW 3900 CL đo điện áp DC tại cực tủ pin (`meter_q2.py`, chạy bằng build2.py đổi tên file câu hỏi).

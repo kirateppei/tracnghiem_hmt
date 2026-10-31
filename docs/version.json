@@ -1,7 +1,7 @@
 {
-  "version": "c3c36de851",
-  "date": "2026-10-31T13:54:02Z",
-  "notes": "Thêm 6 câu hỏi súng đo nhiệt hồng ngoại",
+  "version": "3ce8cb20e2",
+  "date": "2026-10-31T13:55:17Z",
+  "notes": "Giảm câu tính toán còn 284 câu",
   "apk": {
     "version": "1.2.0",
     "url": "https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk",

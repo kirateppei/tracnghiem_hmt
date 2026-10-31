@@ -1,0 +1,196 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+body{margin:0;background:#fff;font-family:'DejaVu Sans',Arial,sans-serif}
+#stage{width:800px;height:500px;position:relative;overflow:hidden}
+svg{display:block}
+</style></head><body><div id="stage"></div>
+<script>
+const W = 800, H = 500;
+const S = (inner, bg = '#EEF2F5') => `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${bg}"/>${inner}</svg>`;
+const T = (x, y, s, txt, fill = '#1d2433', w = 400, anchor = 'start') => `<text x="${x}" y="${y}" font-size="${s}" font-weight="${w}" fill="${fill}" text-anchor="${anchor}" font-family="DejaVu Sans, Arial">${txt}</text>`;
+
+// ---- màn hình biến tần (thân máy + LCD) ----
+function inverter(lines, led = 'red', extra = ''){
+  const ledC = { red: '#ff3b3b', green: '#22d36b', yellow: '#ffc21a', off: '#555' }[led];
+  return S(`
+  <defs><linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset="1" stop-color="#cfd5db"/></linearGradient>
+  <linearGradient id="lcd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b3a5c"/><stop offset="1" stop-color="#0d2238"/></linearGradient></defs>
+  <rect x="0" y="0" width="800" height="500" fill="#d9dee3"/>
+  <rect x="0" y="380" width="800" height="120" fill="#c5ccd2"/>
+  <rect x="150" y="30" width="500" height="440" rx="26" fill="url(#body)" stroke="#9aa3ab" stroke-width="3"/>
+  <rect x="150" y="30" width="500" height="60" rx="26" fill="#e1e6ea"/>
+  ${T(400, 70, 22, 'SOLAR INVERTER  6kW', '#5b6670', 700, 'middle')}
+  <rect x="210" y="120" width="380" height="210" rx="10" fill="#2a2f35"/>
+  <rect x="224" y="134" width="352" height="182" rx="6" fill="url(#lcd)"/>
+  ${lines.map((l, i) => T(240, 172 + i * 38, l.s || 24, l.t, l.c || '#cfe8ff', l.w || 600)).join('')}
+  <circle cx="260" cy="370" r="11" fill="${led === 'green' ? ledC : '#3a3f45'}"/><circle cx="300" cy="370" r="11" fill="${led === 'yellow' ? ledC : '#3a3f45'}"/><circle cx="340" cy="370" r="11" fill="${led === 'red' ? ledC : '#3a3f45'}"/>
+  ${led !== 'off' ? `<circle cx="${{ green: 260, yellow: 300, red: 340 }[led]}" cy="370" r="20" fill="${ledC}" opacity=".25"/>` : ''}
+  ${T(240, 405, 14, 'RUN      COM      FAULT', '#5b6670', 600)}
+  <rect x="460" y="352" width="44" height="34" rx="6" fill="#bfc6cc"/><rect x="514" y="352" width="44" height="34" rx="6" fill="#bfc6cc"/>
+  <rect x="230" y="470" width="30" height="30" fill="#333"/><rect x="290" y="470" width="30" height="30" fill="#333"/><rect x="520" y="470" width="40" height="30" fill="#555"/>
+  ${extra}`);
+}
+
+// ---- tấm pin (lưới cell) ----
+function panel(x, y, cols, rows, cw, ch, fill = '#13243d', gap = 2, frame = '#b8c0c8'){
+  let s = `<rect x="${x - 8}" y="${y - 8}" width="${cols * (cw + gap) + 14}" height="${rows * (ch + gap) + 14}" rx="4" fill="${frame}"/>`;
+  for(let r = 0; r < rows; r++) for(let c = 0; c < cols; c++){
+    s += `<rect x="${x + c * (cw + gap)}" y="${y + r * (ch + gap)}" width="${cw}" height="${ch}" fill="${typeof fill === 'function' ? fill(c, r) : fill}"/>`;
+    s += `<line x1="${x + c * (cw + gap) + cw / 3}" y1="${y + r * (ch + gap)}" x2="${x + c * (cw + gap) + cw / 3}" y2="${y + r * (ch + gap) + ch}" stroke="#3a5276" stroke-width="1" opacity=".5"/><line x1="${x + c * (cw + gap) + 2 * cw / 3}" y1="${y + r * (ch + gap)}" x2="${x + c * (cw + gap) + 2 * cw / 3}" y2="${y + r * (ch + gap) + ch}" stroke="#3a5276" stroke-width="1" opacity=".5"/>`;
+  }
+  return s;
+}
+function heat(t){ // 0..1 -> màu camera nhiệt (tím-đỏ-vàng-trắng)
+  const stops = [[0, [30, 10, 80]], [0.35, [150, 20, 140]], [0.6, [230, 70, 30]], [0.82, [255, 190, 30]], [1, [255, 255, 230]]];
+  for(let i = 1; i < stops.length; i++){ if(t <= stops[i][0]){ const [a, ca] = stops[i - 1], [b, cb] = stops[i], k = (t - a) / (b - a); return `rgb(${ca.map((v, j) => Math.round(v + (cb[j] - v) * k)).join(',')})`; } }
+  return 'rgb(255,255,230)';
+}
+function thermalScale(lo, hi){
+  let s = ''; for(let i = 0; i < 40; i++) s += `<rect x="740" y="${60 + i * 9}" width="22" height="9" fill="${heat(1 - i / 40)}"/>`;
+  return s + T(730, 52, 16, hi + '°C', '#fff', 700, 'end') + T(730, 430, 16, lo + '°C', '#fff', 700, 'end') + T(30, 470, 15, 'Ảnh nhiệt mô phỏng · trời nắng, hệ đang phát điện', '#d9d0f0', 400);
+}
+function meter(display, mode, unit, note = ''){
+  return S(`<rect width="800" height="500" fill="#e9ecef"/>
+  <rect x="250" y="20" width="300" height="460" rx="40" fill="#f2b705" stroke="#c48f00" stroke-width="4"/>
+  <rect x="275" y="45" width="250" height="410" rx="26" fill="#2b2f33"/>
+  <rect x="295" y="70" width="210" height="110" rx="8" fill="#b9c7a8"/>
+  ${T(495, 92, 16, mode, '#2c3a1e', 700, 'end')}
+  ${T(495, 160, 52, display, '#1a2412', 700, 'end')}
+  ${T(495, 176, 15, unit, '#2c3a1e', 700, 'end')}
+  <circle cx="400" cy="290" r="70" fill="#3d434a" stroke="#666" stroke-width="3"/>
+  <rect x="394" y="225" width="12" height="60" rx="5" fill="#ddd" transform="rotate(-35 400 290)"/>
+  ${T(320, 240, 16, 'V⎓', '#fff', 700)}${T(450, 240, 16, 'V~', '#fff', 700)}${T(300, 300, 16, 'Ω', '#fff', 700)}${T(480, 300, 16, 'A', '#fff', 700)}
+  <circle cx="320" cy="410" r="16" fill="#111" stroke="#c00" stroke-width="4"/><circle cx="400" cy="410" r="16" fill="#111" stroke="#222" stroke-width="4"/><circle cx="480" cy="410" r="16" fill="#111" stroke="#c00" stroke-width="4"/>
+  ${T(320, 446, 13, 'VΩ', '#fff', 600, 'middle')}${T(400, 446, 13, 'COM', '#fff', 600, 'middle')}${T(480, 446, 13, '10A', '#fff', 600, 'middle')}
+  ${note}`);
+}
+function roof(inner, sky = '#bfe3ff'){
+  return S(`<rect width="800" height="500" fill="${sky}"/><polygon points="0,500 0,230 800,140 800,500" fill="#8a9aa6"/>
+  ${Array.from({ length: 30 }, (_, i) => `<line x1="${i * 30}" y1="${230 - i * 3}" x2="${i * 30 - 60}" y2="500" stroke="#7a8a96" stroke-width="3"/>`).join('')}${inner}`, sky);
+}
+function chart(points, title, note = ''){
+  const x0 = 70, y0 = 420, w = 680, h = 320;
+  let path = points.map((p, i) => `${i ? 'L' : 'M'}${x0 + p[0] / 24 * w},${y0 - p[1] * h}`).join(' ');
+  let grid = ''; for(let i = 0; i <= 4; i++) grid += `<line x1="${x0}" x2="${x0 + w}" y1="${y0 - i * h / 4}" y2="${y0 - i * h / 4}" stroke="#e3e7ec"/>` + T(x0 - 10, y0 - i * h / 4 + 5, 13, (i * 2.5).toFixed(1).replace('.0', '') + ' kW', '#7a8590', 400, 'end');
+  for(let hh = 0; hh <= 24; hh += 4) grid += T(x0 + hh / 24 * w, y0 + 24, 13, `${String(hh).padStart(2, '0')}:00`, '#7a8590', 400, 'middle');
+  return S(`<rect width="800" height="500" fill="#fff"/>${T(70, 50, 22, title, '#1d2433', 700)}${grid}
+  <path d="${path} L${x0 + w},${y0} L${x0},${y0} Z" fill="#ffb54733"/><path d="${path}" fill="none" stroke="#f08a00" stroke-width="3.5"/>${note}`, '#fff');
+}
+function curve(fn, a = 5.5, b = 18.5){ const p = [[0, 0], [a, 0]]; for(let t = a; t <= b; t += 0.1) p.push([t, fn(t)]); p.push([b, 0], [24, 0]); return p; }
+const bell = (t) => Math.max(0, Math.sin(Math.PI * (t - 5.5) / 13));
+
+const SC = {
+  // 1-6 màn hình biến tần
+  inv_iso: () => inverter([{ t: 'FAULT', c: '#ff7b7b', s: 28, w: 800 }, { t: 'PV Isolation Low' }, { t: 'Riso: 0.08 MΩ', c: '#9fc3e8' }, { t: '06:12  12/07', c: '#7fa6cc', s: 18 }], 'red'),
+  inv_ovp: () => inverter([{ t: 'FAULT', c: '#ff7b7b', s: 28, w: 800 }, { t: 'Grid Over Voltage' }, { t: 'Vac: 258.6 V', c: '#9fc3e8' }, { t: '11:47  03/04', c: '#7fa6cc', s: 18 }], 'red'),
+  inv_rev: () => inverter([{ t: 'FAULT', c: '#ff7b7b', s: 28, w: 800 }, { t: 'PV2 Reverse' }, { t: 'PV2: -402 V', c: '#9fc3e8' }, { t: 'Check DC wiring', c: '#7fa6cc', s: 18 }], 'red'),
+  inv_wait: () => inverter([{ t: 'Waiting...', c: '#ffe08a', s: 28, w: 800 }, { t: 'PV1: 168 V' }, { t: 'Checking 45 s', c: '#9fc3e8' }, { t: '05:41  20/10', c: '#7fa6cc', s: 18 }], 'yellow'),
+  inv_temp: () => inverter([{ t: 'WARNING', c: '#ffd36b', s: 28, w: 800 }, { t: 'Over Temp Derating' }, { t: 'Temp: 78 °C', c: '#9fc3e8' }, { t: 'Pac: 3.9 / 6.0 kW', c: '#7fa6cc', s: 18 }], 'yellow',
+      `<g opacity=".9">${[0, 1, 2].map((i) => `<path d="M${120 + i * 18},420 q-10,-25 0,-50 q10,-25 0,-50" stroke="#ff9a3c" stroke-width="4" fill="none"/>`).join('')}</g><circle cx="720" cy="70" r="40" fill="#ffcf3d"/>`),
+  inv_nogrid: () => inverter([{ t: 'FAULT', c: '#ff7b7b', s: 28, w: 800 }, { t: 'No Grid / Grid Lost' }, { t: 'Vac: 0.0 V', c: '#9fc3e8' }, { t: 'Fac: 0.00 Hz', c: '#7fa6cc', s: 18 }], 'red'),
+  inv_bms: () => inverter([{ t: 'ALARM', c: '#ff7b7b', s: 28, w: 800 }, { t: 'BMS Comm. Fail' }, { t: 'Battery: --- %', c: '#9fc3e8' }, { t: 'Check CAN/RS485', c: '#7fa6cc', s: 18 }], 'red'),
+  inv_ok: () => inverter([{ t: 'Normal', c: '#7dffb0', s: 28, w: 800 }, { t: 'Pac: 5.42 kW' }, { t: 'E-Today: 21.6 kWh', c: '#9fc3e8' }, { t: '11:05  15/03', c: '#7fa6cc', s: 18 }], 'green'),
+  // 7-10 ảnh nhiệt / EL
+  th_hot: () => S(`${panel(110, 60, 6, 10, 90, 36, (c, r) => heat(c === 3 && r === 4 ? 1 : (c === 3 && (r === 3 || r === 5)) || (r === 4 && (c === 2 || c === 4)) ? 0.62 : 0.3 + ((c * 7 + r * 3) % 5) / 60), 2, '#2a1a4a')}
+     <circle cx="${110 + 3 * 92 + 45}" cy="${60 + 4 * 38 + 18}" r="34" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="6 4"/>${T(110 + 3 * 92 + 90, 60 + 4 * 38 + 10, 18, 'Sp1 96.4°C', '#fff', 700)}${T(140, 50, 16, 'Sp2 48.1°C', '#fff', 700)}${thermalScale(35, 100)}`, '#140b2e'),
+  th_mc4: () => S(`<path d="M60,250 C200,240 260,260 330,250" stroke="${heat(.35)}" stroke-width="18" fill="none"/><rect x="330" y="228" width="80" height="44" rx="10" fill="${heat(.97)}"/><rect x="410" y="232" width="70" height="36" rx="8" fill="${heat(.85)}"/><path d="M480,250 C560,245 650,262 720,250" stroke="${heat(.4)}" stroke-width="18" fill="none"/>
+     <path d="M60,350 C200,340 260,360 330,350" stroke="${heat(.32)}" stroke-width="18" fill="none"/><rect x="330" y="328" width="80" height="44" rx="10" fill="${heat(.36)}"/><rect x="410" y="332" width="70" height="36" rx="8" fill="${heat(.34)}"/><path d="M480,350 C560,345 650,362 720,350" stroke="${heat(.33)}" stroke-width="18" fill="none"/>
+     ${T(330, 215, 18, 'A: 112°C', '#fff', 700)}${T(330, 318, 18, 'B: 44°C', '#fff', 700)}${T(60, 120, 22, 'Hai đầu nối MC4 trên cùng một chuỗi', '#fff', 700)}${thermalScale(30, 115)}`, '#140b2e'),
+  th_sub: () => S(`${panel(110, 60, 6, 10, 90, 36, (c, r) => heat(c >= 4 ? 0.66 + ((r * 3) % 4) / 60 : 0.3 + ((c * 7 + r * 3) % 5) / 60), 2, '#2a1a4a')}${T(110, 50, 16, 'Một dải 1/3 tấm nóng đều hơn phần còn lại khoảng 15°C', '#fff', 700)}${thermalScale(35, 80)}`, '#140b2e'),
+  el_crack: () => S(`${panel(120, 50, 6, 10, 88, 36, (c, r) => (c === 2 && r === 6) || (c === 4 && r === 2) ? '#1a1a1a' : '#9a9a9a', 3, '#333')}
+     <path d="M${120 + 2 * 91},${50 + 5 * 39 + 4} l30,22 l25,-10 l33,20" stroke="#111" stroke-width="3" fill="none"/><path d="M${120 + 1 * 91 + 10},${50 + 7 * 39} l60,14 l40,-6" stroke="#222" stroke-width="2.5" fill="none"/>
+     <path d="M${120 + 4 * 91 + 5},${50 + 1 * 39 + 30} l40,8 l35,-4" stroke="#111" stroke-width="2.5" fill="none"/>${T(120, 470, 15, 'Ảnh EL (điện phát quang) mô phỏng: chụp trong tối khi bơm dòng vào tấm pin', '#ccc', 400)}`, '#050505'),
+  // 11-13 bề mặt tấm pin
+  bird: () => roof(`<g transform="translate(130,40) skewX(-8)">${panel(0, 0, 6, 10, 82, 34, '#16294a', 2)}</g>
+     ${[[250, 150, 14], [262, 160, 8], [430, 260, 16], [445, 270, 7], [330, 330, 12], [520, 120, 10]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * .7}" fill="#f4f1e8"/><ellipse cx="${x + 3}" cy="${y + 2}" rx="${r * .4}" ry="${r * .3}" fill="#6b6555"/>`).join('')}`),
+  shade: () => roof(`<g transform="translate(130,40) skewX(-8)">${panel(0, 0, 6, 10, 82, 34, '#16294a', 2)}</g>
+     <path d="M80,40 C140,80 200,60 260,140 C300,200 230,260 280,330 L120,360 L60,200 Z" fill="#0c1424" opacity=".55"/>
+     <rect x="0" y="0" width="70" height="500" fill="#4a3b2a"/><circle cx="40" cy="60" r="110" fill="#2f6b2f"/><circle cx="90" cy="150" r="80" fill="#3a7a35"/>`),
+  dirtedge: () => roof(`<g transform="translate(120,60)">${panel(0, 0, 6, 10, 84, 32, '#16294a', 2)}
+     <rect x="-6" y="${10 * 34 - 34}" width="${6 * 86 + 10}" height="40" fill="#8a6a3c" opacity=".75"/><rect x="-6" y="${10 * 34 - 10}" width="${6 * 86 + 10}" height="14" fill="#5e4a2a" opacity=".9"/></g>
+     ${T(120, 470, 16, 'Tấm pin lắp gần như nằm phẳng trên mái', '#1d2433', 700)}`),
+  snail: () => S(`${panel(140, 50, 5, 8, 100, 46, '#16294a', 3)}
+     ${[[180, 90], [300, 200], [420, 120], [520, 300], [260, 330]].map(([x, y]) => `<path d="M${x},${y} q20,10 35,-6 q15,-12 40,8 q12,10 30,-2" stroke="#8a7a52" stroke-width="3" fill="none" opacity=".9"/>`).join('')}
+     ${T(140, 470, 16, 'Mặt kính nhìn gần, chụp sau vài năm vận hành', '#555', 600)}`, '#dfe6ec'),
+  // 14 đầu MC4 cháy
+  mc4burn: () => S(`<path d="M40,260 C150,250 220,262 290,256" stroke="#1b1b1b" stroke-width="22" fill="none"/>
+     <rect x="290" y="226" width="110" height="60" rx="14" fill="#2a2a2a"/><rect x="300" y="236" width="20" height="40" rx="4" fill="#3b3b3b"/>
+     <path d="M400,230 q30,-14 60,4 q20,14 50,-4 l0,56 q-30,14 -60,-2 q-25,-12 -50,4 Z" fill="#4b2f1a"/><path d="M410,240 q25,-8 40,4 q20,14 40,-2" stroke="#8a5a2a" stroke-width="4" fill="none"/>
+     <ellipse cx="455" cy="252" rx="34" ry="18" fill="#1a0f08" opacity=".7"/><path d="M510,256 C580,250 660,264 760,256" stroke="#1b1b1b" stroke-width="22" fill="none"/>
+     <path d="M440,226 q-10,-30 8,-60 q14,-24 0,-50" stroke="#777" stroke-width="5" fill="none" opacity=".5"/>
+     ${T(400, 420, 18, 'Đầu nối MC4 phát hiện khi kiểm tra định kỳ', '#444', 700, 'middle')}`, '#e8e2d8'),
+  // 16-18 đồng hồ
+  m_neg: () => meter('-412.6', 'DC  AUTO', 'V', T(20, 250, 18, 'Đo Voc chuỗi PV3', '#333', 700) + T(20, 280, 14, 'que đỏ: dây nhãn (+)', '#c00', 600) + T(20, 302, 14, 'que đen: dây nhãn (−)', '#222', 600)),
+  m_zero: () => meter('0.4', 'DC  AUTO', 'V', T(20, 250, 18, 'Đo Voc chuỗi PV1', '#333', 700) + T(20, 280, 14, 'lúc 10:30, trời nắng', '#555', 600) + T(20, 302, 14, 'chuỗi khác ~420 V', '#555', 600)),
+  m_acmode: () => S(`<rect width="800" height="500" fill="#e9ecef"/>
+     <path d="M0,300 C200,290 300,310 800,300" stroke="#c0392b" stroke-width="16" fill="none"/>${T(30, 60, 18, 'Kẹp ampe kìm vào dây DC (+) chuỗi PV2', '#333', 700) + T(30, 88, 16, 'App biến tần đang báo dòng PV2 = 9.6 A', '#555', 600)}
+     <path d="M330,300 a70,70 0 1,1 140,0 a70,70 0 1,1 -140,0" fill="none" stroke="#f2b705" stroke-width="22"/>
+     <rect x="345" y="360" width="110" height="130" rx="18" fill="#f2b705"/><rect x="360" y="375" width="80" height="50" rx="6" fill="#b9c7a8"/>
+     ${T(432, 394, 12, 'AC', '#2c3a1e', 700, 'end')}${T(432, 418, 26, '0.03', '#1a2412', 700, 'end')}${T(400, 470, 14, 'A~', '#5a4100', 700, 'middle')}`),
+  // 19-21 an toàn
+  signs: () => S(`${[['A', 120, '#ffcf00', '<path d="M0,-38 L8,-6 L-4,-4 L6,30 L-12,-2 L0,-4 Z" fill="#111"/>'], ['B', 320, '#ffcf00', '<path d="M0,-40 C22,-14 26,6 18,22 C12,34 -12,34 -18,22 C-26,6 -10,-8 -6,-22 C-2,-10 4,-4 6,0 C8,-14 4,-28 0,-40 Z" fill="#111"/>'], ['C', 520, '#ffcf00', '<rect x="-6" y="-34" width="12" height="40" fill="#111"/><circle cy="20" r="7" fill="#111"/>']]
+       .map(([n, x, c, icon]) => `<g transform="translate(${x + 80},250)"><polygon points="0,-110 105,75 -105,75" fill="${c}" stroke="#111" stroke-width="10" stroke-linejoin="round"/><g transform="translate(0,10)">${icon}</g></g>${T(x + 80, 380, 30, n, '#111', 800, 'middle')}`).join('')}
+     ${T(400, 450, 18, 'Ba biển cảnh báo dán trên công trình', '#444', 600, 'middle')}`, '#f6f6f2'),
+  roofnoharness: () => roof(`<g transform="translate(330,120)"><circle cx="40" cy="20" r="18" fill="#f1c39a"/><path d="M18,10 q22,-28 44,0 Z" fill="#ffffff" stroke="#888"/>
+     <rect x="18" y="38" width="44" height="70" rx="10" fill="#ff7a1a"/><rect x="22" y="108" width="14" height="60" fill="#334"/><rect x="44" y="108" width="14" height="60" fill="#334"/>
+     <rect x="0" y="45" width="18" height="50" rx="8" fill="#ff7a1a"/><rect x="62" y="45" width="18" height="50" rx="8" fill="#ff7a1a"/><rect x="-2" y="92" width="20" height="16" rx="5" fill="#f5d000"/><rect x="62" y="92" width="20" height="16" rx="5" fill="#f5d000"/></g>
+     ${T(30, 470, 18, 'Kỹ thuật viên làm việc sát mép mái cao 7 m', '#1d2433', 700)}<rect x="0" y="232" width="800" height="6" fill="#5d6d78" transform="rotate(-6.4 0 232)"/>`),
+  ladder: () => S(`<rect width="800" height="500" fill="#cfe8ff"/><rect x="420" y="90" width="380" height="410" fill="#d9c7a7"/><rect x="400" y="80" width="400" height="24" fill="#8a3a2a"/>
+     <rect x="0" y="460" width="800" height="40" fill="#8fa37a"/>
+     <g><line x1="390" y1="460" x2="408" y2="110" stroke="#7a7f86" stroke-width="10"/><line x1="350" y1="460" x2="368" y2="110" stroke="#7a7f86" stroke-width="10"/>${Array.from({ length: 11 }, (_, i) => `<line x1="${352 + i * 1.65}" y1="${440 - i * 32}" x2="${392 + i * 1.65}" y2="${440 - i * 32}" stroke="#7a7f86" stroke-width="6"/>`).join('')}</g>
+     ${T(40, 120, 20, 'Thang nhôm dựng để lên mái', '#1d2433', 700)}${T(40, 150, 16, '(chân thang đặt trên nền đất mềm, không ai giữ)', '#444', 600)}`),
+  // 22-27 lắp đặt
+  cableloose: () => roof(`<g transform="translate(160,30)">${panel(0, 0, 6, 6, 82, 30, '#16294a', 2)}</g>
+     <path d="M360,232 C380,330 300,360 340,420 C370,470 470,430 520,470" stroke="#111" stroke-width="7" fill="none"/><path d="M380,232 C410,320 330,380 380,430 C420,480 500,450 560,480" stroke="#b01e1e" stroke-width="7" fill="none"/>
+     ${T(30, 470, 18, 'Dây DC sau khi lắp xong một dãy pin', '#1d2433', 700)}`),
+  tiewhite: () => S(`<rect width="800" height="500" fill="#a9b6c0"/><rect x="0" y="200" width="800" height="40" fill="#c9d1d8"/>${T(20, 190, 16, 'Thanh ray nhôm', '#334', 600)}
+     <path d="M0,280 C300,270 500,290 800,280" stroke="#111" stroke-width="14" fill="none"/><path d="M0,305 C300,295 500,315 800,305" stroke="#a01818" stroke-width="14" fill="none"/>
+     ${[150, 380, 610].map((x, i) => i === 1 ? `<path d="M${x},200 q-6,40 0,80" stroke="#eeeae0" stroke-width="7" fill="none"/><path d="M${x + 4},320 q14,20 8,40" stroke="#eeeae0" stroke-width="7" fill="none"/><path d="M${x - 2},300 l6,4" stroke="#eeeae0" stroke-width="7"/>` : `<rect x="${x - 6}" y="196" width="12" height="122" rx="4" fill="#eeeae0" stroke="#bbb"/><path d="M${x - 2},250 l4,0" stroke="#c9c2b0"/>`).join('')}
+     ${T(20, 460, 17, 'Dây rút nhựa màu trắng sau 2 năm ngoài trời', '#223', 700)}`),
+  invsun: () => S(`<rect width="800" height="500" fill="#cfe8ff"/><circle cx="700" cy="70" r="46" fill="#ffd23d"/><rect x="0" y="0" width="320" height="500" fill="#e9dcc8"/><rect x="0" y="440" width="800" height="60" fill="#b9b0a0"/>
+     ${[0, 1, 2].map((i) => `<line x1="${650 - i * 40}" y1="${110 + i * 10}" x2="${330 - i * 20}" y2="${200 + i * 30}" stroke="#ffd23d" stroke-width="4" stroke-dasharray="10 8"/>`).join('')}
+     <rect x="120" y="150" width="170" height="230" rx="14" fill="#eef1f4" stroke="#9aa3ab" stroke-width="3"/><rect x="150" y="180" width="110" height="60" rx="4" fill="#1b3a5c"/>${T(205, 218, 14, '58 °C', '#ffd36b', 700, 'middle')}
+     ${T(340, 300, 18, 'Biến tần treo tường hướng Tây,', '#1d2433', 700)}${T(340, 326, 18, 'không mái che, nắng chiều chiếu thẳng', '#1d2433', 700)}`),
+  invtight: () => S(`<rect width="800" height="500" fill="#ece6dc"/><rect x="0" y="0" width="800" height="70" fill="#d8cfc0"/>${T(400, 45, 18, 'Phòng kỹ thuật kín, không quạt thông gió', '#3a3a3a', 700, 'middle')}
+     ${[0, 1, 2].map((i) => `<rect x="${170 + i * 160}" y="130" width="150" height="230" rx="12" fill="#eef1f4" stroke="#9aa3ab" stroke-width="3"/><rect x="${195 + i * 160}" y="160" width="100" height="56" rx="4" fill="#1b3a5c"/>`).join('')}
+     ${T(400, 410, 18, 'Ba biến tần treo sát nhau, khe hở chỉ khoảng 1 cm', '#3a3a3a', 700, 'middle')}`),
+  rows: () => S(`<rect width="800" height="500" fill="#ffd9a8"/><circle cx="90" cy="380" r="38" fill="#ffb347"/><rect x="0" y="390" width="800" height="110" fill="#9a9a8a"/>
+     ${[200, 470].map((x) => `<polygon points="${x},390 ${x + 170},270 ${x + 190},282 ${x + 20},400" fill="#16294a"/><line x1="${x + 160}" y1="285" x2="${x + 160}" y2="392" stroke="#666" stroke-width="5"/>`).join('')}
+     <polygon points="390,398 640,398 600,330 470,300" fill="#000" opacity=".35"/>
+     ${T(400, 470, 17, 'Hai dãy pin trên sân thượng lúc 7 giờ sáng tháng 12', '#3a2a1a', 700, 'middle')}`),
+  // 30-31
+  spd: () => S(`<rect width="800" height="500" fill="#e4e7ea"/><rect x="100" y="140" width="600" height="20" fill="#aaa"/>${T(100, 120, 18, 'Tủ điện DC: thiết bị chống sét (SPD) sau mùa mưa bão', '#333', 700)}
+     ${[0, 1, 2].map((i) => `<rect x="${220 + i * 120}" y="160" width="100" height="220" rx="8" fill="#f7f7f5" stroke="#999" stroke-width="2"/><rect x="${245 + i * 120}" y="250" width="50" height="26" rx="4" fill="${i === 1 ? '#e02424' : '#2fb34a'}"/>${T(270 + i * 120, 320, 14, 'SPD ' + (i + 1), '#333', 700, 'middle')}`).join('')}
+     ${T(400, 430, 16, 'Cửa sổ báo trạng thái trên mặt SPD', '#555', 600, 'middle')}`),
+  battbulge: () => S(`<rect width="800" height="500" fill="#e8e6e1"/><path d="M220,120 Q400,80 580,120 L590,400 Q400,440 210,400 Z" fill="#f4f4f2" stroke="#999" stroke-width="3"/>
+     <rect x="300" y="170" width="200" height="40" rx="6" fill="#2b2f33"/>${T(400, 197, 16, 'LiFePO4 51.2V', '#9fe0b0', 700, 'middle')}${T(400, 470, 17, 'Khối pin lưu trữ: vỏ phồng lên, sờ thấy nóng', '#333', 700, 'middle')}
+     <path d="M200,120 l0,280" stroke="#c00" stroke-width="2" stroke-dasharray="6 6"/><path d="M600,120 l0,280" stroke="#c00" stroke-width="2" stroke-dasharray="6 6"/>`),
+  // 33-35 biểu đồ
+  clip: () => chart(curve((t) => Math.min(0.78, bell(t) * 1.05)), 'Công suất biến tần trong ngày (trời nắng đẹp)'),
+  trip: () => chart(curve((t) => (t > 11.2 && t < 13.6) ? 0 : bell(t) * 0.85), 'Công suất biến tần trong ngày (trời nắng đẹp)'),
+  cloudy: () => chart(curve((t) => bell(t) * (0.35 + 0.5 * Math.abs(Math.sin(t * 7.3) * Math.cos(t * 2.1)))), 'Công suất biến tần trong ngày'),
+  wires: () => S(`<rect width="800" height="500" fill="#f2efe9"/>${[['A', '#8b5a2b'], ['B', '#1e5bd8'], ['C', 'stripe'], ['D', '#111']].map(([n, c], i) => `<g transform="translate(0,${90 + i * 95})">${c === 'stripe' ? `<rect x="120" y="0" width="560" height="34" rx="17" fill="#2fb34a"/>${Array.from({ length: 14 }, (_, k) => `<rect x="${130 + k * 40}" y="0" width="18" height="34" fill="#f5d000"/>`).join('')}` : `<rect x="120" y="0" width="560" height="34" rx="17" fill="${c}"/>`}${T(80, 26, 26, n, '#222', 800, 'middle')}</g>`).join('')}`),
+};
+
+
+const SV = {
+  // lá cây che dần một cell → điểm nóng xuất hiện (ảnh nhiệt)
+  vid_hotspot: (k, n) => { const p = k / (n - 1), lx = 700 - p * 269; const hot = Math.max(0, (p - 0.45) / 0.55);
+    return S(`${panel(110, 60, 6, 10, 90, 36, (c, r) => heat(c === 3 && r === 4 ? 0.32 + hot * 0.68 : 0.3 + ((c * 7 + r * 3) % 5) / 60), 2, '#2a1a4a')}
+    <g transform="translate(${lx},${60 + 4 * 38 - 6}) rotate(${-20 + p * 25})"><ellipse rx="34" ry="16" fill="#0d0820"/><line x1="-34" y1="0" x2="40" y2="4" stroke="#0d0820" stroke-width="4"/></g>
+    ${T(110, 50, 16, 'Sp1 ' + (49 + hot * 47).toFixed(1) + '°C', '#fff', 700)}${thermalScale(35, 100).replace(/<text[^>]*>Ảnh nhiệt[^<]*<\/text>/, '')}${T(30, 470, 15, 'Video nhiệt mô phỏng · phút thứ ' + Math.round(p * 20) + ' · trời nắng, hệ đang phát điện', '#d9d0f0', 400)}`, '#140b2e'); },
+  // biến tần nhảy lỗi quá áp lưới rồi tự chạy lại, lặp đi lặp lại vào buổi trưa
+  vid_trip: (k, n) => { const ph = Math.floor(k / (n / 6)) % 3, clock = ['11:42', '11:44', '11:49', '11:58', '12:00', '12:05'][Math.min(5, Math.floor(k / (n / 6)))];
+    const st = [[{ t: 'Normal', c: '#7dffb0', s: 28, w: 800 }, { t: 'Pac: 5.61 kW' }, { t: 'Vac: 252.4 V', c: '#9fc3e8' }], [{ t: 'FAULT', c: '#ff7b7b', s: 28, w: 800 }, { t: 'Grid Over Voltage' }, { t: 'Vac: 257.9 V', c: '#9fc3e8' }], [{ t: 'Waiting...', c: '#ffe08a', s: 28, w: 800 }, { t: 'Reconnect in ' + (60 - (k % Math.round(n / 6)) * 4) + ' s' }, { t: 'Vac: 246.0 V', c: '#9fc3e8' }]][ph];
+    return inverter(st.concat([{ t: clock + '  hôm nay', c: '#7fa6cc', s: 18 }]), ['green', 'red', 'yellow'][ph]); },
+  // thử – đo – thử
+  vid_test: (k, n) => { const step = Math.min(2, Math.floor(k / (n / 3)));
+    const lab = [['Bước 1', 'Đo ổ cắm', 'đang có điện'], ['Bước 2', 'Đo mạch', 'cần làm việc'], ['Bước 3', 'Đo lại ổ cắm', 'đang có điện']][step];
+    return meter(['231.4', '0.0', '230.9'][step], 'AC  AUTO', 'V', T(20, 200, 30, lab[0], '#6B3FD8', 800) + T(20, 236, 17, lab[1], '#333', 700) + T(20, 260, 17, lab[2], '#333', 700) + T(20, 470, 14, 'Video mô phỏng', '#777', 400)); },
+};
+window.renderV = (id, k, n) => { document.getElementById('stage').innerHTML = SV[id](k, n); };
+window.vids = Object.keys(SV);
+
+window.render = (id) => { document.getElementById('stage').innerHTML = SC[id](); };
+window.ids = Object.keys(SC);
+</script></body></html>

@@ -1,7 +1,7 @@
 {
-  "version": "605dc40a89",
-  "date": "2026-10-31T12:46:11Z",
-  "notes": "Phần Thi riêng: đề trộn Dễ/TB/Khó, chấm thang 10, bảng điểm thi",
+  "version": "683d1597a6",
+  "date": "2026-10-31T13:05:22Z",
+  "notes": "Thêm 150 câu hỏi (có hình và video mô phỏng), không có câu tính toán",
   "apk": {
     "version": "1.2.0",
     "url": "https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk",

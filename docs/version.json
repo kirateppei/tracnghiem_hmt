@@ -1,7 +1,7 @@
 {
-  "version": "52ccdfc088",
-  "date": "2026-10-31T13:57:22Z",
-  "notes": "Thêm 5 câu hỏi máy đo điện trở đất Kyoritsu 4105A",
+  "version": "027ca8c274",
+  "date": "2026-10-31T14:02:58Z",
+  "notes": "Thêm 9 câu hỏi về biến tần Huawei, GoodWe (có ảnh)",
   "apk": {
     "version": "1.2.0",
     "url": "https://github.com/kirateppei/tracnghiem_hmt/releases/download/apk-latest/trac-nghiem-dmt.apk",
